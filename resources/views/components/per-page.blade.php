@@ -1,0 +1,1 @@
+<label class="per-page-control">Per page<select name="per_page" class="form-select" aria-label="Records per page">@foreach([10,25,50] as $size)<option value="{{ $size }}" @selected(\App\Services\Records::pageSize()===$size)>{{ $size }} per page</option>@endforeach</select></label>

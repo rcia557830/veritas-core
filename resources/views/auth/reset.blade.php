@@ -1,0 +1,3 @@
+@extends('layouts.guest')
+@section('title','Reset password')
+@section('content')<h2 class="modal-title">Choose a new password</h2><form method="post" action="{{ route('password.update') }}">@csrf<input type="hidden" name="token" value="{{ $token }}"><x-field name="email" label="Email address" type="email" :value="$email" :required="true"/><x-field name="password" label="New password (at least 10 characters)" type="password" :required="true"/><x-field name="password_confirmation" label="Confirm password" type="password" :required="true"/><button class="btn btn-primary">Reset password</button></form>@endsection

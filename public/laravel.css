@@ -1,0 +1,75 @@
+/* Blade integration: retain the original Veritas Core design tokens. */
+a.nav-item, .profile-button, .chip { text-decoration: none; }
+.sidebar .nav-item { padding-top: 9px; padding-bottom: 9px; }
+.sidebar .nav-label { margin-top: var(--space-5); }
+.sidebar .nav-divider { margin: var(--space-3) 0; }
+.brand-caption { white-space: normal; }
+.brand-logo { width: 40px; height: 44px; object-fit: contain; }
+.auth-shell { min-height: 100vh; display: flex; justify-content: center; align-items: center; gap: 60px; padding: var(--space-7); background: var(--ink-950); }
+.auth-brand { color: var(--on-dark); max-width: 400px; }
+.auth-brand .brand-mark { margin-bottom: var(--space-6); }
+.auth-brand h1 { font-size: 36px; }
+.auth-card { width: 460px; max-width: 100%; height: auto; padding: var(--space-8); }
+.alert-success { color: var(--success); background: var(--success-soft); border-color: var(--success-line); }
+.alert-danger { color: var(--danger); background: var(--danger-soft); border-color: var(--danger-line); }
+.page-link { color: var(--ink-700); }
+.active > .page-link { background: var(--ink-900); border-color: var(--ink-900); }
+[data-line-body] input[type=number] { min-width: 100px; }
+[data-line-body] input[type=text] { min-width: 180px; }
+.notification-item.is-unread { border-left: 3px solid var(--brand); }
+@media(max-width: 767.98px) { .auth-shell { flex-direction: column; gap: 24px; } .auth-brand { text-align: center; } .auth-brand .brand-mark,.auth-brand .hero-summary { display: none; } }
+@media print { .actions, .btn, .filters, .pagination { display: none !important; } }
+
+
+/* Readability refinements: preserve the navy/gold palette and existing layout. */
+:root { --ink-500: #4d6078; --muted-dark: #ccd6e3; }
+body { font-size: 15px; }
+h1 { font-size: 28px; font-weight: 600; }
+.sidebar .nav-item { font-size: 15px; color: var(--muted-dark); }
+.sidebar .nav-item.active, .sidebar .nav-item:hover { color: var(--on-dark); }
+.brand-caption, .nav-label { font-size: 12px; }
+.eyebrow { font-size: 11px; }
+.search-trigger, .profile-copy strong, .profile-copy span { font-size: 13px; }
+.hero-summary { font-size: 15px; }
+.hero-date, .hero-note { font-size: 13px; }
+.toolbar-copy, .section-description, .subtext, .form-text,
+.empty-state p, .article-preview, .metric-label { font-size: 14px; color: var(--ink-500); }
+.section-title { font-size: 16px; }
+.btn { --bs-btn-font-size: 14px; --bs-btn-font-weight: 600; }
+.btn-sm { font-size: 13px; }
+.form-label, .filters > label { font-size: 15px; font-weight: 600; color: var(--ink-700); }
+.form-control, .form-select { font-size: 15px; }
+.form-control::placeholder { color: #65758a; opacity: 1; }
+.table { font-size: 15px; --bs-table-hover-bg: #f0f3f7; }
+.table thead th { font-size: 15px; font-weight: 700; color: var(--ink-700); padding: 12px 14px; }
+.table tbody td, .table tfoot th { font-size: 15px; padding: 12px 14px; vertical-align: middle; }
+.table .subtext, .timeline .subtext { font-size: 13px; }
+.table .numeric { text-align: right; font-weight: 600; white-space: nowrap; }
+.badge-status { font-size: 12px; font-weight: 600; padding: 5px 9px; }
+.stat-label { font-size: 14px; font-weight: 600; color: var(--ink-700); }
+.stat-value { font-size: clamp(28px, 2.6vw, 36px); font-weight: 700; }
+.stat-note { font-size: 13px; color: var(--ink-500); }
+.stat-note:empty { display: none; }
+.stat-icon { font-size: 21px; }
+.timeline .timeline-content, .prose, .detail-grid dd { font-size: 15px; }
+.detail-grid dt, .mini-stat span, .deadline-date, .tag, .chip { font-size: 13px; }
+.notification-item, .command-result { font-size: 14px; }
+.command-result small, .command-footer { font-size: 12px; }
+.record-pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-top: 20px; }
+.pagination-summary { margin: 0; font-size: 14px; color: var(--ink-500); }
+.record-pagination nav { max-width: 100%; }
+.record-pagination .pagination { display: flex; flex-wrap: wrap; gap: 4px; margin: 0; }
+.record-pagination .page-link { min-width: 38px; min-height: 40px; padding: 8px 12px; text-align: center; font-size: 14px; border-radius: var(--radius-sm); margin: 0; }
+.record-pagination .page-link:hover { color: var(--ink-950); background: var(--brand-soft); border-color: var(--brand); }
+.record-pagination .active > .page-link { color: var(--on-dark); background: var(--ink-900); border-color: var(--ink-900); }
+.record-pagination .disabled > .page-link { color: var(--ink-500); background: var(--surface); opacity: 1; }
+.filters .per-page-control { min-width: 130px; max-width: 155px; }
+@media (max-width: 767.98px) {
+  h1 { font-size: 25px; }
+  .form-control, .form-select { font-size: 16px; }
+  .record-pagination { align-items: flex-start; }
+  .record-pagination nav { width: 100%; }
+  .record-pagination .page-link { min-height: 44px; padding: 9px 11px; }
+  .filters > label { min-width: min(140px, 100%); }
+}
+@media print { .record-pagination { display: none !important; } }

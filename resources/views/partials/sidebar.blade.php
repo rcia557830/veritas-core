@@ -1,0 +1,13 @@
+<aside class="sidebar" id="sidebar" aria-label="Workspace navigation"><a class="brand" href="{{ route('dashboard') }}">@if($firm?->logo_path)<img class="brand-mark" style="object-fit:contain" src="{{ asset('storage/'.$firm->logo_path) }}" alt="Firm logo">@else<span class="brand-mark" aria-hidden="true">V</span>@endif<span><span class="brand-name">VERITAS CORE</span><span class="brand-caption">{{ $firm?->firm_name ?? 'RBCIA Accounting Firm' }}</span></span></a>
+<button class="icon-button sidebar-close" id="sidebarClose" aria-label="Close navigation"><i class="bi bi-x-lg" aria-hidden="true"></i></button><div class="nav-label">YOUR WORKSPACE</div><nav id="mainNav" aria-label="Primary navigation">
+<a class="nav-item {{ request()->routeIs('dashboard')?'active':'' }}" href="{{ route('dashboard') }}" @if(request()->routeIs('dashboard')) aria-current="page" @endif><i class="bi bi-grid-1x2" aria-hidden="true"></i>Overview</a>
+@foreach(\App\Support\Modules::all() as $key=>$item)@can('viewAny',$item['model'])<a class="nav-item {{ request()->routeIs($key.'.*')?'active':'' }}" href="{{ route($key.'.index') }}" @if(request()->routeIs($key.'.*')) aria-current="page" @endif><i class="bi bi-{{ $item['icon'] }}" aria-hidden="true"></i>{{ $item['title'] }}</a>@endcan
+@endforeach
+@can('notice.view')<a class="nav-item {{ request()->routeIs('notices.*')?'active':'' }}" href="{{ route('notices.index') }}"><i class="bi bi-megaphone" aria-hidden="true"></i>Notices</a>@endcan
+@can('report.view')<a class="nav-item {{ request()->routeIs('reports.*')?'active':'' }}" href="{{ route('reports.index') }}"><i class="bi bi-bar-chart" aria-hidden="true"></i>Reports</a>@endcan
+@if(auth()->user()->hasRole('owner'))<div class="nav-divider"></div>
+@can('workspace.manage')<a class="nav-item {{ request()->routeIs('workspace.*')?'active':'' }}" href="{{ route('workspace.edit') }}"><i class="bi bi-sliders2" aria-hidden="true"></i>Workspace</a>@endcan
+@can('viewAny',\App\Models\User::class)<a class="nav-item {{ request()->routeIs('admin.users.*')?'active':'' }}" href="{{ route('admin.users.index') }}"><i class="bi bi-person-gear" aria-hidden="true"></i>User Management</a>@endcan
+@can('audit.view')<a class="nav-item {{ request()->routeIs('admin.audit.*')?'active':'' }}" href="{{ route('admin.audit.index') }}"><i class="bi bi-clock-history" aria-hidden="true"></i>Audit Logs</a>@endcan
+@endif
+</nav></aside>

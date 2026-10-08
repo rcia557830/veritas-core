@@ -1,0 +1,7 @@
+@extends('layouts.app')
+@section('title','Notices')
+@section('content')
+<div class="toolbar"><p class="toolbar-copy">Internal notices for Owners and Office Managers.</p>@can('create',\App\Models\Notice::class)<a class="btn btn-primary" href="{{ route('notices.create') }}">Create notice</a>@endcan</div>
+<form class="filters" method="get"><label>Search<input class="form-control" name="q" value="{{ \App\Services\Records::searchText(request()) }}"></label><label>Status<select name="status" class="form-select"><option value="">All statuses</option>@foreach(['Draft','Published','Archived'] as $status)<option @selected(request('status')===$status)>{{ $status }}</option>@endforeach</select></label><x-per-page/><button class="btn btn-primary">Apply</button><a class="btn btn-outline-secondary" href="{{ route('notices.index') }}">Clear</a></form>
+<section class="panel table-panel"><div class="table-responsive"><table class="table"><thead><tr><th>Notice</th><th>Client</th><th>Status</th><th>Updated</th></tr></thead><tbody>@forelse($notices as $notice)<tr><td><a href="{{ route('notices.show',$notice) }}">{{ $notice->title }}</a></td><td>{{ $notice->client?->business_name??'General notice' }}</td><td><x-badge :status="$notice->status"/></td><td>{{ $notice->updated_at->format('M j, Y') }}</td></tr>@empty<tr><td colspan="4"><div class="empty-state"><h2>No notices found</h2><p>Create a notice or clear your filters.</p></div></td></tr>@endforelse</tbody></table></div></section><x-pagination :records="$notices"/>
+@endsection

@@ -1,0 +1,3 @@
+@extends('layouts.guest')
+@section('title','Sign in')
+@section('content')<h2 class="modal-title">Welcome back</h2><p class="subtext mb-4">Sign in to your workspace.</p><form action="{{ route('login.store') }}" method="post">@csrf<x-field name="email" label="Email address" type="email" :required="true"/><x-field name="password" label="Password" type="password" :required="true"/><div class="form-check mb-4"><input class="form-check-input" name="remember" type="checkbox" id="remember"><label class="form-check-label" for="remember">Remember me</label></div><button class="btn btn-primary w-100">Sign in</button><a href="{{ route('password.request') }}" class="d-block mt-3">Forgot password?</a></form>@endsection

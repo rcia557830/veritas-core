@@ -1,0 +1,6 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>{{ $record->invoice_number }} · VERITAS CORE</title><style>body{font-family:DejaVu Sans,sans-serif;color:#18283e;font-size:12px;margin:32px}h1{color:#18283e;border-bottom:3px solid #c9a55f;padding-bottom:16px}table{width:100%;border-collapse:collapse;margin-top:24px}td,th{text-align:left;padding:12px 8px;border-bottom:1px solid #dfe4ea}.numeric{text-align:right}button{padding:10px}@media print{button{display:none}}</style></head><body>
+<h1>VERITAS CORE</h1><h2>{{ $firm?->firm_name }}</h2><p>{{ $firm?->firm_address }}<br>{{ $firm?->firm_email }} · {{ $firm?->contact_number }}</p>
+<h2>Invoice {{ $record->invoice_number }}</h2><p>Status: {{ $record->display_status }}<br>Issued: {{ $record->invoice_date->format('M j, Y') }} · Due: {{ $record->due_date->format('M j, Y') }}</p>
+<h3>Bill to {{ $record->client->business_name }}</h3><p>{{ $record->client->address }}<br>{{ $record->client->email }}<br>TIN: {{ $record->client->tin }}</p>
+@include('billing.items')<p>Amount paid: {{ \App\Support\Money::format($record->amount_paid) }}<br>Balance: {{ \App\Support\Money::format($record->balance) }}</p><p>{{ $record->notes }}</p>
+@if(empty($pdf))<button type="button" onclick="window.print()">Print invoice</button>@endif</body></html>

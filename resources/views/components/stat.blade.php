@@ -1,0 +1,1 @@
+@props(['label','value','note'=>'','icon'=>'grid','tone'=>'info'])<div class="col-sm-6 col-xl-3"><div class="panel stat"><div><div class="stat-label">{{ $label }}</div><div class="stat-value">{{ $value }}</div><div class="stat-note">{{ $note }}</div></div><span class="stat-icon tone-{{ $tone }}"><i class="bi bi-{{ $icon }}" aria-hidden="true"></i></span></div></div>
