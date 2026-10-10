@@ -53,6 +53,7 @@ class Summary
             'upcoming' => Access::query(ComplianceRecord::class)->where('status', '!=', 'Filed')->whereBetween('due_date', [today(), today()->addDays(10)])->count(),
             'overdue' => Access::query(ComplianceRecord::class)->where('status', '!=', 'Filed')->whereDate('due_date', '<', today())->count(),
             'billing' => self::billing(Access::query(Invoice::class)),
+            'requirements' => DocumentCompleteness::organization(),
         ];
     }
 }

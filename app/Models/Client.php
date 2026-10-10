@@ -65,4 +65,9 @@ class Client extends Model
     {
         return $this->hasMany(AuditLog::class);
     }
+
+    public function documentRequirements()
+    {
+        return $this->hasMany(DocumentRequirement::class);
+    }
 }

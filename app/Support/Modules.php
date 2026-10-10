@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Models\Client;
 use App\Models\ComplianceRecord;
 use App\Models\Document;
+use App\Models\DocumentRequirement;
 use App\Models\Invoice;
 use App\Models\KnowledgeArticle;
 use App\Models\LedgerEntry;
@@ -32,7 +33,7 @@ final class Modules
 
     public static function permissionFor(string $model): string
     {
-        return [Client::class => 'client', Document::class => 'document', LedgerEntry::class => 'bookkeeping', ComplianceRecord::class => 'compliance', Invoice::class => 'billing', KnowledgeArticle::class => 'knowledge', Notice::class => 'notice'][$model];
+        return [Client::class => 'client', Document::class => 'document', LedgerEntry::class => 'bookkeeping', ComplianceRecord::class => 'compliance', Invoice::class => 'billing', KnowledgeArticle::class => 'knowledge', Notice::class => 'notice', DocumentRequirement::class => 'requirement'][$model];
     }
 
     public static function get(string $key): array

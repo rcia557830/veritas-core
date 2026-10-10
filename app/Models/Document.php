@@ -35,4 +35,11 @@ class Document extends Model
     {
         return $this->belongsTo(User::class, 'uploaded_by');
     }
+
+    public function requirements()
+    {
+        return $this->belongsToMany(DocumentRequirement::class, 'requirement_documents', 'document_id', 'requirement_id')
+            ->withPivot('linked_by', 'id', 'created_at')
+            ->withTimestamps();
+    }
 }
