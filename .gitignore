@@ -25,6 +25,7 @@ yarn-error.log
 # Local credentials, data exports and Laragon placeholder
 .env.*
 !.env.example
+!.env.production.example
 /database/*.sqlite*
 /storage/app/private/backups/
 *.sql
