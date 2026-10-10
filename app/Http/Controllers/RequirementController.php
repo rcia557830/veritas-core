@@ -32,6 +32,7 @@ class RequirementController extends Controller
             'type' => ['required', 'string', 'in:'.implode(',', $this->types())],
             'description' => ['nullable', 'string', 'max:30000'],
             'accounting_period_id' => ['nullable', 'integer', 'exists:accounting_periods,id'],
+            'scope' => ['nullable', 'string', 'in:onboarding,periodic'],
             'is_required' => ['nullable', 'boolean'],
             'is_active' => ['nullable', 'boolean'],
             'due_date' => ['nullable', 'date_format:Y-m-d'],

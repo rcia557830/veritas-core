@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Http\Requests\RecordRequest;
+use App\Models\Client;
 use App\Models\User;
 use App\Services\Accounting\JournalWriter;
 use App\Support\Modules;
@@ -92,6 +93,7 @@ class RecordWriter
                 $previousStatus = null;
                 $previousDueDate = null;
                 $previousSubmission = null;
+                $previousClient = null;
                 if ($record) {
                     $record = $model::lockForUpdate()->findOrFail($record->id);
                     Gate::authorize('update', $record);
@@ -99,6 +101,9 @@ class RecordWriter
                     $previousStatus = $record->status;
                     $previousDueDate = $record->due_date?->toDateString();
                     $previousSubmission = $record->submission_deadline?->toDateString();
+                    if ($module === 'clients') {
+                        $previousClient = $record->only($this->clientTrackedFields());
+                    }
                 } else {
                     Gate::authorize('create', $model);
                 }
@@ -137,6 +142,13 @@ class RecordWriter
                 }
                 Audit::record($record->wasRecentlyCreated ? 'created' : 'updated', $module, $record, ucfirst(Modules::get($module)['singular']).' saved; status: '.($record->status ?? '').'.');
 
+                if ($module === 'clients' && ! $record->wasRecentlyCreated && $previousClient !== null) {
+                    $diff = $this->clientChangeSummary($previousClient, $record);
+                    if ($diff !== '') {
+                        Audit::record('client.updated', 'clients', $record, 'Client details changed: '.$diff.'.');
+                    }
+                }
+
                 if ($previousStatus !== $record->status) {
                     if ($module === 'documents' && $record->status !== 'Submitted') {
                         Audit::record('document.validated', $module, $record, 'Document decision: '.$record->status.'.');
@@ -165,6 +177,32 @@ class RecordWriter
         }
 
         return $saved;
+    }
+
+    private function clientTrackedFields(): array
+    {
+        return ['business_name', 'business_type', 'contact_person', 'email', 'phone', 'tin', 'address', 'registration_status', 'business_license_status', 'status', 'notes', 'assigned_to'];
+    }
+
+    private function clientChangeSummary(array $before, Client $after): string
+    {
+        $changes = [];
+        foreach ($this->clientTrackedFields() as $field) {
+            $old = (string) ($before[$field] ?? '');
+            $new = (string) ($after->{$field} ?? '');
+            if ($old === $new) {
+                continue;
+            }
+            if ($field === 'assigned_to') {
+                $oldLabel = $old !== '' ? User::find($old)?->name ?? 'Unknown' : 'Unassigned';
+                $newLabel = $after->assignee?->name ?? 'Unassigned';
+                $changes[] = 'assigned_to "'.$oldLabel.'" → "'.$newLabel.'"';
+                continue;
+            }
+            $changes[] = $field.' "'.($old === '' ? '—' : $old).'" → "'.($new === '' ? '—' : $new).'"';
+        }
+
+        return implode('; ', $changes);
     }
 
     /**

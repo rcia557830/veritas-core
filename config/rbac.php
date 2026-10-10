@@ -3,7 +3,7 @@
 return [
     'permissions' => [
         'account.view', 'account.create', 'account.update', 'account.deactivate', 'account.initialize', 'account-template.manage',
-        'client.view', 'client.create', 'client.update', 'client.assign', 'client.archive', 'client.restore',
+        'client.view', 'client.create', 'client.update', 'client.assign', 'client.activate', 'client.archive', 'client.restore',
         'document.view', 'document.upload', 'document.update', 'document.validate', 'document.approve', 'document.reject', 'document.download', 'document.archive',
         'bookkeeping.view', 'bookkeeping.create', 'bookkeeping.update', 'bookkeeping.submit', 'bookkeeping.review', 'bookkeeping.approve', 'bookkeeping.post', 'bookkeeping.delete',
         'compliance.view', 'compliance.create', 'compliance.update', 'compliance.assign', 'compliance.file', 'compliance.archive', 'compliance.follow-up',
@@ -30,7 +30,7 @@ return [
         ],
         'office-manager' => [
             'account.view', 'account.create', 'account.update', 'account.deactivate',
-            'client.view', 'client.create', 'client.update', 'client.assign', 'client.archive', 'client.restore',
+            'client.view', 'client.create', 'client.update', 'client.assign', 'client.activate', 'client.archive', 'client.restore',
             'document.view', 'document.upload', 'document.update', 'document.validate', 'document.approve', 'document.reject', 'document.download',
             'bookkeeping.view', 'bookkeeping.review', 'bookkeeping.approve', 'bookkeeping.post',
             'compliance.view', 'compliance.create', 'compliance.update', 'compliance.assign', 'compliance.file', 'compliance.follow-up',

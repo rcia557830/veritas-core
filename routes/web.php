@@ -59,6 +59,9 @@ Route::middleware(['auth', 'active', 'role:owner,bookkeeper,office-manager'])->g
     Route::patch('/profile', [AuthController::class, 'updateProfile'])->name('profile.update');
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::post('/clients/{record}/archive', [ClientController::class, 'archive'])->name('clients.archive');
+    Route::get('/clients/onboarding', [ClientController::class, 'onboarding'])->name('clients.onboarding');
+    Route::get('/clients/{client}/onboarding', [ClientController::class, 'onboardingChecklist'])->name('clients.onboarding.checklist');
+    Route::post('/clients/{client}/onboarding/complete', [ClientController::class, 'activate'])->name('clients.onboarding.complete');
     Route::get('/documents/{record}/validate', [DocumentController::class, 'validation'])->middleware('permission:document.validate')->name('documents.validation');
     Route::post('/documents/{record}/validate', [DocumentController::class, 'validateDocument'])->middleware('permission:document.validate')->name('documents.validate');
     Route::get('/documents/{record}/download', [DocumentController::class, 'download'])->name('documents.download');

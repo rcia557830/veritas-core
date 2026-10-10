@@ -58,8 +58,8 @@ class RecordRequest extends FormRequest
         }
         if ($module === 'clients') {
             $rules['email'] = ['nullable', 'email', 'max:255'];
-            $rules['phone'] = ['nullable', 'string', 'max:60'];
-            $rules['tin'] = ['nullable', 'regex:/^[0-9 -]{9,20}$/'];
+            $rules['phone'] = ['nullable', 'string', 'max:60', 'regex:/^[0-9+()\-. ]{7,20}$/'];
+            $rules['tin'] = ['nullable', 'string', 'max:30', 'regex:/^\d{3}[ -]?\d{3}[ -]?\d{3}([ -]?\d{0,3})?$/'];
             if ($this->user()->hasPermission('client.assign')) {
                 $rules['assigned_to'] = ['nullable', 'integer', Rule::exists('users', 'id')->where('status', 'Active')];
             }

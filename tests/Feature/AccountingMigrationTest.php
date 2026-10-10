@@ -94,7 +94,10 @@ class AccountingMigrationTest extends TestCase
             $this->assertContains($index, Schema::getIndexes('ledger_entries'));
         }
         $this->assertSequences();
-        $this->artisan('migrate:rollback', ['--step' => 8, '--force' => true])->assertExitCode(0);
+        // Roll back the accounting migrations (and the single Increment 6
+        // onboarding migration that now sorts after them) down to, but not
+        // including, account_templates, preserving the legacy ledger rows.
+        $this->artisan('migrate:rollback', ['--step' => 9, '--force' => true])->assertExitCode(0);
         $this->assertFalse(Schema::hasTable('accounts'));
         $this->assertSame($entryColumns, Schema::getColumnListing('ledger_entries'));
         $this->assertSame($lineColumns, Schema::getColumnListing('ledger_items'));

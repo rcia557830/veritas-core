@@ -9,11 +9,11 @@ class Client extends Model
 {
     use SoftDeletes;
 
-    protected $fillable = ['client_code', 'business_name', 'business_type', 'contact_person', 'email', 'phone', 'tin', 'address', 'registration_status', 'business_license_status', 'status', 'notes', 'created_by', 'assigned_to'];
+    protected $fillable = ['client_code', 'business_name', 'business_type', 'contact_person', 'email', 'phone', 'tin', 'address', 'registration_status', 'business_license_status', 'status', 'notes', 'created_by', 'assigned_to', 'onboarded_at', 'onboarded_by'];
 
     protected function casts(): array
     {
-        return [];
+        return ['onboarded_at' => 'datetime'];
     }
 
     public function documents()
@@ -59,6 +59,11 @@ class Client extends Model
     public function assignee()
     {
         return $this->belongsTo(User::class, 'assigned_to');
+    }
+
+    public function onboardedBy()
+    {
+        return $this->belongsTo(User::class, 'onboarded_by');
     }
 
     public function auditLogs()

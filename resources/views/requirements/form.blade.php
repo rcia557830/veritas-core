@@ -47,6 +47,15 @@
         @error('accounting_period_id')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
       </div>
       <div class="col-md-6 mb-3">
+        <label class="form-label" for="field_scope">Scope</label>
+        <select id="field_scope" name="scope" class="form-select @error('scope')is-invalid @enderror">
+          <option value="onboarding" @selected(old('scope',$requirement->scope ?? 'onboarding')==='onboarding')>Onboarding (registration / activation documents)</option>
+          <option value="periodic" @selected(old('scope',$requirement->scope)==='periodic')>Periodic (accounting-period documents)</option>
+        </select>
+        <div class="form-text">Onboarding documents count toward client readiness; periodic documents are excluded.</div>
+        @error('scope')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+      </div>
+      <div class="col-md-6 mb-3">
         <label class="form-label" for="field_due_date">Due date</label>
         <input id="field_due_date" name="due_date" type="date" class="form-control @error('due_date')is-invalid @enderror" value="{{ old('due_date',$requirement->due_date?->format('Y-m-d')) }}">
         @error('due_date')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
