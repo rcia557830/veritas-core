@@ -95,7 +95,7 @@ if (in_array('--vouchers', $argv, true)) {
             config(['filesystems.disks.local.root' => dirname(getenv('VERITAS_TEST_DATADIR')).'/browser-files']);
             Storage::disk('local')->put('documents/synthetic-voucher.pdf', 'SYNTHETIC VOUCHER EVIDENCE');
             Document::create(['client_id' => $client->id, 'document_number' => 'SYN-VOUCHER-EVIDENCE', 'title' => 'SYNTHETIC Voucher Evidence', 'document_type' => 'Receipt', 'status' => 'Submitted',
-                'received_date' => '2026-04-12', 'file_path' => 'documents/synthetic-voucher.pdf', 'original_file_name' => 'synthetic-voucher.pdf', 'mime_type' => 'application/pdf', 'created_by' => $client->assigned_to]);
+                'received_date' => '2026-04-12', 'file_path' => 'documents/synthetic-voucher.pdf', 'original_file_name' => 'synthetic-voucher.pdf', 'mime_type' => 'application/pdf', 'uploaded_by' => $client->assigned_to]);
         }
     };
     $fixtures->seedVoucherClient();

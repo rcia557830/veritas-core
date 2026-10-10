@@ -63,7 +63,7 @@ final class VoucherWriter
             $check = isset($data['check_number']) ? trim($data['check_number']) : null;
             $voucher->fill(['party' => isset($data['party']) ? trim($data['party']) : null, 'cash_account_id' => $data['cash_account_id'] ?? null,
                 'amount' => isset($data['amount']) ? Money::decimal(Money::cents($data['amount'])) : null,
-                'check_number' => $check ?: null, 'check_key' => $check ? hash('sha256', strtoupper($check)) : null, 'check_date' => $data['check_date'] ?? null]);
+                'check_number' => $check === '' ? null : $check, 'check_key' => $check !== null && $check !== '' ? hash('sha256', strtoupper($check)) : null, 'check_date' => $data['check_date'] ?? null]);
             if ($voucher->check_key && Voucher::where('client_id', $client->id)->where('cash_account_id', $voucher->cash_account_id)->where('check_key', $voucher->check_key)->when(! $new, fn ($q) => $q->where('id', '!=', $voucher->id))->exists()) {
                 throw ValidationException::withMessages(['check_number' => 'This check number is already associated with a voucher for this client and cash/bank account.']);
             }
@@ -86,17 +86,17 @@ final class VoucherWriter
     private static function validateMetadata(Voucher $voucher, LedgerEntry $entry): void
     {
         if ($voucher->type === 'JV') {
-            if ($voucher->party || $voucher->cash_account_id || $voucher->amount !== null || $voucher->check_number || $voucher->check_date) {
+            if ($voucher->party !== null && $voucher->party !== '' || $voucher->cash_account_id || $voucher->amount !== null || $voucher->check_number !== null || $voucher->check_date) {
                 throw ValidationException::withMessages(['voucher' => 'Journal Vouchers use journal lines only; receipt, payment and check fields must be empty.']);
             }
 
             return;
         }
         $cash = Account::whereKey($voucher->cash_account_id)->where('client_id', $entry->client_id)->where('classification', 'Asset')->where('is_active', true)->first();
-        if (! $voucher->party || ! $cash || $voucher->amount === null || Money::cents($voucher->amount) <= 0) {
+        if ($voucher->party === null || trim($voucher->party) === '' || ! $cash || $voucher->amount === null || Money::cents($voucher->amount) <= 0) {
             throw ValidationException::withMessages(['voucher' => 'A payer/payee, active same-client asset account designated as cash/bank, and positive amount are required.']);
         }
-        if ($voucher->type === 'CV' ? (! $voucher->check_number || ! $voucher->check_date) : ($voucher->check_number || $voucher->check_date)) {
+        if ($voucher->type === 'CV' ? ($voucher->check_number === null || trim($voucher->check_number) === '' || ! $voucher->check_date) : ($voucher->check_number !== null || $voucher->check_date)) {
             throw ValidationException::withMessages(['check_number' => 'Check number and date are required only for Check Vouchers.']);
         }
         $side = $voucher->type === 'CR' ? 'debit' : 'credit';

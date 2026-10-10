@@ -237,4 +237,43 @@ class VoucherTest extends TestCase
         $this->expectException(\RuntimeException::class);
         $migration->down();
     }
+
+    public function test_zero_check_number_is_retained_and_duplicate_protected(): void
+    {
+        $payload = array_replace($this->voucherPayload($this->client, 'CV'), ['check_number' => '0']);
+        $voucher = VoucherWriter::save($payload);
+        $this->assertSame('0', $voucher->check_number);
+        $this->post('/vouchers', array_replace($payload, ['creation_token' => (string) Str::uuid()]))->assertSessionHasErrors('check_number');
+        $this->post('/vouchers', array_replace($this->voucherPayload($this->client), ['check_number' => '0']))->assertSessionHasErrors('voucher');
+        $this->assertDatabaseCount('vouchers', 1);
+    }
+
+    #[DataProvider('types')]
+    public function test_split_cent_lines_post_and_failed_edits_preserve_original(string $type): void
+    {
+        $payload = $this->voucherPayload($this->client, $type);
+        $incoming = in_array($type, ['JV', 'CR'], true);
+        $side = $incoming ? 'debit' : 'credit';
+        $opposite = $incoming ? 'credit' : 'debit';
+        $payload['items'][0][$side] = '0.10';
+        $payload['items'][1][$opposite] = '0.30';
+        $payload['items'][] = array_replace($payload['items'][0], [$side => '0.20']);
+        if ($type !== 'JV') {
+            $payload['amount'] = '0.30';
+        }
+        $voucher = VoucherWriter::save($payload);
+        $original = $voucher->journal->items()->orderBy('id')->get()->toArray();
+        $invalid = $payload;
+        $invalid['description'] = 'Must roll back';
+        $invalid['items'][1][$opposite] = '0.29';
+        $this->put('/vouchers/'.$voucher->id, $invalid)->assertSessionHasErrors();
+        $this->assertSame($payload['description'], $voucher->journal->fresh()->description);
+        $this->assertSame($original, $voucher->journal->items()->orderBy('id')->get()->toArray());
+        JournalWriter::transition($voucher->journal, 'submit', null);
+        $this->actingAs(User::where('email', 'manager@veritascore.local')->firstOrFail());
+        JournalWriter::transition($voucher->journal, 'review', null);
+        JournalPosting::post($voucher->journal);
+        $trial = (new FinancialReports)->generate($this->client, 'trial-balance', '2026-04-01', '2026-04-30');
+        $this->assertSame([30, 30, 0], [$trial['debits'], $trial['credits'], $trial['difference']]);
+    }
 }

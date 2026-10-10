@@ -1,0 +1,75 @@
+﻿VERITAS CORE - INCREMENT 3.2 RESULTS
+Date: October 10, 2026
+
+Increment 3.2 — Accounting Voucher Management
+
+Continued from 63a558e on feature/increment-3.2. The checkpoint's voucher module was retained and completed through targeted fixes and verification. Increment 4 is outside this change.
+
+Accounting behavior
+
+- Journal Vouchers (JV) use balanced journal lines without payment or check metadata.
+- Check Vouchers (CV) require a payee, designated active same-client cash/bank asset account, positive exact amount, check number, and valid check date. The designated account's credits must equal the payment.
+- Cash Receipts (CR) require a payer/source, designated account, and positive exact amount matching that account's debits. Check metadata is rejected.
+- Cash Disbursements (CD) require a payee, designated account, and positive exact amount matching that account's credits. Check metadata is rejected.
+
+Each voucher owns exactly one authoritative General Journal entry. No separate financial postings or balances were introduced. Draft/Needs Correction records can be edited by authorized preparers; submission, independent review, and authorized Owner/Office Manager posting reuse the existing journal workflow. Correction clears approval; posting revalidates metadata, open period, active accounts, balancing, evidence integrity, and the review digest. Posted journals contribute once to the General Ledger, Trial Balance, Income Statement, Balance Sheet, and Accounts Ledger.
+
+Client assignment and accounting permissions apply to list, create, edit, show, evidence, and print actions. Supporting attachment versions remain private and permission checked. Issued voucher identity and reference are fixed. Per-client/per-type sequence allocation, UUID request replay protection, and duplicate checks use the existing client transaction lock and database constraints. Reviewed/posted metadata and posted financial lines retain their model/database protections.
+
+Changes made after the checkpoint
+
+File - Change
+app/Services/Accounting/VoucherWriter.php - Use explicit empty/null checks so check number 0 is retained, duplicate protected, and rejected on non-check types; handle payer/payee values consistently.
+resources/views/ledger/form-content.blade.php - Require an open period in the voucher form, matching server validation. Generic journal draft behavior is preserved.
+resources/views/vouchers/form.blade.php - Preserve an explicitly selected client when choosing the voucher type.
+resources/views/vouchers/print.blade.php - Include retained notes and wrap long text in print output.
+tests/Feature/VoucherTest.php - Add zero-check-number regression and split-cent posting/failed-edit atomic rollback coverage for all four types.
+tests/Browser/vouchers.mjs - Exercise mobile creation for all types, mobile receipt editing, print notes, and General Ledger/all four financial reports.
+tests/Browser/prepare.php - Correct the interrupted voucher evidence fixture to use the document model's required uploaded_by field.
+tests/verify-accounting.ps1 - Add reproducible disposable MySQL provisioning, guarded focused/full suites, synthetic browser fixtures, and server cleanup.
+docs/INCREMENT-3.2.md - Completion report and operational limitations.
+
+The existing controller, model, migration, journal services, financial report services, routes, and private-evidence architecture were inspected and reused. No additional application migration or accounting schema change was needed.
+
+Verification
+
+PHP 8.3.30, PHPUnit 11.5.56, and MySQL 8.4.3 were used.
+
+Check - Actual result
+Focused voucher suite, SQLite - 21 tests: 18 passed, 3 MySQL-only skipped; 210 assertions; 5.653 seconds.
+Full regression, SQLite - 195 tests: 182 passed, 13 MySQL-only skipped; 1,689 assertions; 35.753 seconds.
+Focused voucher suite, disposable MySQL - 21 passed; 234 assertions; no skips; 41.179 seconds.
+Full regression, disposable MySQL - 195 passed; 1,790 assertions; no skips; 214.163 seconds.
+Headless Chrome desktop/mobile and print workflow - Passed: all four voucher types, independent review/posting, receipt editing, private evidence, filters, print notes, General Ledger and every financial report; no JavaScript exceptions.
+Scoped Pint, browser JavaScript syntax, Git whitespace check - Passed.
+
+MySQL coverage includes real competing-process locks for new voucher numbers, identical request retries, duplicate checks, and the existing journal posting/account/period concurrency regressions. New split-cent tests post 0.10 + 0.20 = 0.30 for each voucher type and verify that rejected edits roll back description and journal-line changes. Existing voucher tests also cover client boundaries, permissions, immutable issued references, posted database/model writes, corrections invalidating review, evidence tampering, duplicate posting, and reconciliation in every report.
+
+JUnit results are retained in ignored private storage: storage/app/private/increment32-vouchers-sqlite.xml, storage/app/private/increment32-sqlite.xml, and storage/app/private/increment32-0ce0f454afb44c55855e385fde383aff/{vouchers,regression}.xml.
+
+Browser verification uses 1440px desktop and 390px mobile emulation. All four types are saved and submitted from the mobile layout; the receipt is edited there. A different Manager reviews and posts each voucher. Posted edit controls disappear, the type/client/status filter returns only the requested voucher, print controls are hidden under print-media emulation, and all four print layouts retain notes and evidence metadata. Browser assertions independently verify Trial Balance totals of PHP 1,500 per side, revenue PHP 500, expenses PHP 300, income PHP 200, assets/equity PHP 1,200, and all four references in the cash Accounts Ledger and General Ledger. Existing account/template and General Journal browser regressions also pass.
+
+Desktop/mobile form screenshots, posted detail, and all four print views were visually inspected. Journal tables scroll within their mobile container. Browser automation dispatches actual input events for displayed exact totals and waits for page initialization and sidebar animations before actions/screenshots.
+
+The first browser preparation exposed the checkpoint's incorrect document uploader field; it was corrected before the browser rerun. The runner now checks the explicit fixture-success marker as well as process status, because Laravel's CLI exception handler can print a preparation error without a nonzero exit status. An early browser attempt also exposed a test synchronization issue after review; waiting for complete page initialization resolved it. The final application/database test results above are successful.
+
+Final browser screenshots and HTTP logs are retained under storage/app/private/increment32-eee7dceddf314b2089eea8ab3844bf7d/. All test web and MySQL listeners were stopped after verification. Cleanup verifies the actual MySQL data directory before graceful shutdown, including Windows cases where the server outlives its launcher.
+
+Reproduction on this Windows/Laragon setup:
+
+php vendor/bin/phpunit --filter Voucher
+php vendor/bin/phpunit
+powershell -ExecutionPolicy Bypass -File tests/verify-accounting.ps1
+
+The PowerShell runner accepts -MySqlBin, -Browser, -SkipBrowser, and -BrowserOnly (fresh synthetic browser verification without repeating PHPUnit). It initializes a new private MySQL data directory, binds loopback on an unused high port, and creates a random synthetic database, restricted test user, and identity marker. Binary logging is disabled only on this disposable server so migration triggers do not require SUPER. The existing test guard verifies the environment, database name, actual server data directory, marker token, and foreign keys before migrations. SQLite uses :memory: with foreign keys. The runner stops its own web/MySQL processes and restores its process environment in finally; private synthetic data and verification artifacts are retained for inspection.
+
+Remaining limitations
+
+- Numbering remains the checkpoint's disclosed provisional TYPE-000001 sequence, separate for each client and type; no annual reset or approved statutory series policy is inferred.
+- Cash/bank designation is explicit selection of an active Asset account. There is no new cash/bank account subtype or automatic counterpart inference.
+- Supporting documents remain optional under the existing workflow; attached versions must pass integrity and permission checks.
+- Vouchers record accounting evidence, not actual payment execution, bank/check clearing, or reconciliation. No void/cancel/reversal workflow is introduced. Issued references are retained; posted corrections require separately authorized journal entries.
+- Printing uses browser print layouts. Printer hardware and statutory form certification are outside this verification.
+- Existing financial reports retain their posted-ledger basis and provisional unclosed-earnings presentation documented in Increment 3.1. No closing entries or year-end transfers are generated.
+
+No real accounting data, production migrations, .env changes, or Increment 4 work are part of this completion.
