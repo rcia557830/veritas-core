@@ -94,7 +94,7 @@ class AccountingMigrationTest extends TestCase
             $this->assertContains($index, Schema::getIndexes('ledger_entries'));
         }
         $this->assertSequences();
-        $this->artisan('migrate:rollback', ['--step' => 7, '--force' => true])->assertExitCode(0);
+        $this->artisan('migrate:rollback', ['--step' => 8, '--force' => true])->assertExitCode(0);
         $this->assertFalse(Schema::hasTable('accounts'));
         $this->assertSame($entryColumns, Schema::getColumnListing('ledger_entries'));
         $this->assertSame($lineColumns, Schema::getColumnListing('ledger_items'));

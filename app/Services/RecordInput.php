@@ -63,7 +63,7 @@ class RecordInput
                 Gate::authorize('compliance.file');
             }
             if ($user->hasRole('bookkeeper')) {
-                foreach (['client_id', 'agency', 'requirement', 'reporting_period', 'due_date', 'filed_date', 'reference_number', 'assigned_to'] as $key) {
+                foreach (['client_id', 'agency', 'requirement', 'reporting_period', 'due_date', 'submission_deadline', 'submission_deadline_override_reason', 'submission_deadline_is_manual', 'filed_date', 'reference_number', 'assigned_to'] as $key) {
                     abort_if($changed($key), 403, 'Bookkeepers may update preparation status and notes only.');
                 }
             }

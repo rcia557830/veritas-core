@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\Account;
 use App\Models\AccountTemplate;
 use App\Models\Client;
+use App\Models\ComplianceFollowUp;
 use App\Models\ComplianceRecord;
 use App\Models\Document;
 use App\Models\DocumentFollowUp;
@@ -18,6 +19,7 @@ use App\Models\Setting;
 use App\Models\User;
 use App\Policies\AccountPolicy;
 use App\Policies\AccountTemplatePolicy;
+use App\Policies\ComplianceFollowUpPolicy;
 use App\Policies\FollowUpPolicy;
 use App\Policies\RequirementPolicy;
 use App\Policies\RequirementTemplatePolicy;
@@ -54,6 +56,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(DocumentRequirement::class, RequirementPolicy::class);
         Gate::policy(DocumentRequirementTemplate::class, RequirementTemplatePolicy::class);
         Gate::policy(DocumentFollowUp::class, FollowUpPolicy::class);
+        Gate::policy(ComplianceFollowUp::class, ComplianceFollowUpPolicy::class);
 
         View::composer(['layouts.app', 'billing.print'], function ($view) {
             $view->with('firm', Setting::first());

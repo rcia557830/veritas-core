@@ -36,7 +36,7 @@ class RecordRequest extends FormRequest
     {
         $module = $this->module();
         if ($module === 'compliance' && $this->user()->hasRole('bookkeeper')) {
-            return ['status' => 'required|in:Pending,In Preparation,Ready for Filing', 'notes' => 'nullable|string|max:30000'];
+            return ['status' => 'required|in:Pending,In Preparation,Awaiting Client Documents,Ready for Filing', 'notes' => 'nullable|string|max:30000'];
         }
         $config = Modules::get($module);
         $rules = [];
@@ -71,6 +71,8 @@ class RecordRequest extends FormRequest
             $rules['assigned_to'] = ['nullable', 'integer', Rule::exists('users', 'id')->where('status', 'Active')];
             $rules['filed_date'] = ['nullable', 'required_if:status,Filed', 'date_format:Y-m-d', 'before_or_equal:today'];
             $rules['reference_number'] = ['nullable', 'required_if:status,Filed', 'string', 'max:255'];
+            $rules['submission_deadline'] = ['nullable', 'date_format:Y-m-d'];
+            $rules['submission_deadline_override_reason'] = ['nullable', 'string', 'max:30000'];
         }
         if (in_array($module, ['ledger', 'billing'])) {
             $rules['items'] = ['required', 'array', 'min:'.($module === 'ledger' ? 2 : 1), 'max:100'];

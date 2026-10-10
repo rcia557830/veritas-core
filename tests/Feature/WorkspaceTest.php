@@ -185,7 +185,8 @@ class WorkspaceTest extends TestCase
         $this->put('/compliance/'.$record->id, array_merge($data, ['status' => 'Filed', 'filed_date' => today()->toDateString(), 'reference_number' => 'ACK-2026']))->assertRedirect();
         $this->assertSame('Filed', $record->fresh()->display_status);
         $this->put('/compliance/'.$record->id, array_merge($data, ['status' => 'Pending']))->assertRedirect();
-        $this->assertSame('Overdue', $record->fresh()->display_status);
+        $this->assertSame('Pending', $record->fresh()->display_status);
+        $this->assertSame('Filing Overdue', $record->fresh()->urgency);
     }
 
     public function test_knowledge_authorization_and_escaped_content(): void
