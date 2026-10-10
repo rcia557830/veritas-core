@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Services\Accounting\JournalWriter;
 use App\Support\Modules;
 use App\Support\Money;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
@@ -18,6 +19,9 @@ class RecordWriter
     public function save(string $module, RecordRequest $request, $record = null)
     {
         $data = $request->validated();
+        if ($module === 'compliance' && ! $request->user()->hasRole('bookkeeper')) {
+            $data = $this->prepareComplianceDeadlines($data, $record);
+        }
         if ($module === 'ledger') {
             return JournalWriter::save($data, $record);
         }
@@ -81,15 +85,20 @@ class RecordWriter
                 $data['uploaded_by'] = $request->user()->id;
             }
         }
+        $deadlineChanged = false;
         try {
-            $saved = DB::transaction(function () use ($module, $record, $data, $items, $request, &$path) {
+            $saved = DB::transaction(function () use ($module, $record, $data, $items, $request, &$path, &$deadlineChanged) {
                 $model = Modules::get($module)['model'];
                 $previousStatus = null;
+                $previousDueDate = null;
+                $previousSubmission = null;
                 if ($record) {
                     $record = $model::lockForUpdate()->findOrFail($record->id);
                     Gate::authorize('update', $record);
                     RecordInput::authorize($module, $request->user(), $data, $record);
                     $previousStatus = $record->status;
+                    $previousDueDate = $record->due_date?->toDateString();
+                    $previousSubmission = $record->submission_deadline?->toDateString();
                 } else {
                     Gate::authorize('create', $model);
                 }
@@ -109,6 +118,14 @@ class RecordWriter
                     $record->update($data);
                 } else {
                     $record = $model::create($data);
+                }
+                if ($module === 'compliance' && $record) {
+                    $newDueDate = $record->due_date?->toDateString();
+                    $newSubmission = $record->submission_deadline?->toDateString();
+                    if ($previousDueDate !== $newDueDate || $previousSubmission !== $newSubmission) {
+                        $deadlineChanged = true;
+                        Audit::record('compliance.deadline-changed', $module, $record, 'Deadline adjusted by '.($request->user()->name ?? 'staff').': filing '.($previousDueDate ?? '—').' → '.($newDueDate ?? '—').'; submission '.($previousSubmission ?? '—').' → '.($newSubmission ?? '—').'.');
+                    }
                 }
                 if ($path && $oldPath) {
                     // Retain the original privately; the audit reference preserves traceability.
@@ -143,9 +160,51 @@ class RecordWriter
             Notify::record($saved, 'documents', 'Document '.$saved->status.': '.$saved->title);
         }
         if ($module === 'compliance') {
-            Notify::record($saved, 'compliance', 'Compliance assignment: '.$saved->requirement);
+            $title = $deadlineChanged ? 'Compliance deadline changed: '.$saved->requirement : 'Compliance assignment: '.$saved->requirement;
+            Notify::record($saved, 'compliance', $title);
         }
 
         return $saved;
+    }
+
+    /**
+     * Resolve and persist the internal client submission deadline for a
+     * compliance record. A stored (manually overridden) deadline is preserved
+     * when the official filing deadline changes; otherwise the submission
+     * deadline is recalculated from the filing deadline.
+     */
+    private function prepareComplianceDeadlines(array $data, $record): array
+    {
+        $filingRaw = $data['due_date'] ?? ($record ? $record->due_date?->toDateString() : null);
+        if (empty($filingRaw)) {
+            return $data;
+        }
+        $filing = Carbon::parse($filingRaw, 'Asia/Manila')->startOfDay();
+        $auto = DeadlineCalculator::submissionDeadline($filing);
+
+        $submitted = $data['submission_deadline'] ?? null;
+        $hasManualInput = $submitted !== null && $submitted !== '';
+
+        if ($hasManualInput) {
+            $submission = Carbon::parse($submitted, 'Asia/Manila')->startOfDay();
+            if ($submission->gt($filing)) {
+                throw ValidationException::withMessages(['submission_deadline' => 'The internal submission deadline must be on or before the official filing deadline.']);
+            }
+            $isOverride = $submission->ne($auto);
+            if ($isOverride && empty(trim((string) ($data['submission_deadline_override_reason'] ?? '')))) {
+                throw ValidationException::withMessages(['submission_deadline_override_reason' => 'Provide a reason for overriding the automatic submission deadline.']);
+            }
+            $data['submission_deadline'] = $submission->toDateString();
+            $data['submission_deadline_is_manual'] = $isOverride;
+        } elseif ($record && (bool) $record->submission_deadline_is_manual && $record->getRawOriginal('submission_deadline') !== null) {
+            // Preserve a prior manual override when the filing deadline changes.
+            $data['submission_deadline'] = $record->getRawOriginal('submission_deadline');
+            $data['submission_deadline_is_manual'] = true;
+        } else {
+            $data['submission_deadline'] = $auto->toDateString();
+            $data['submission_deadline_is_manual'] = false;
+        }
+
+        return $data;
     }
 }

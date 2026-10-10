@@ -54,7 +54,7 @@ abstract class ModuleController extends Controller
         $context = $this->context();
         if ($this->module === 'compliance' && $request->user()->hasRole('bookkeeper')) {
             $context['config']['fields'] = array_intersect_key($context['config']['fields'], array_flip(['status', 'notes']));
-            $context['config']['fields']['status'][1] = ['Pending', 'In Preparation', 'Ready for Filing'];
+            $context['config']['fields']['status'][1] = ['Pending', 'In Preparation', 'Awaiting Client Documents', 'Ready for Filing'];
         }
         if ($this->module === 'clients' && ! $request->user()->hasPermission('client.archive')) {
             unset($context['config']['fields']['status']);

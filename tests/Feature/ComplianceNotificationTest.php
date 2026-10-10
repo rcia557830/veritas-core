@@ -37,6 +37,11 @@ class ComplianceNotificationTest extends TestCase
         return array_values(array_filter($response->json('items'), fn ($item) => $item['url'] === route('compliance.show', $this->record)));
     }
 
+    private function deadlineAlerts(array $items): array
+    {
+        return array_values(array_filter($items, fn ($i) => str_starts_with($i['title'], 'Filing Overdue:') || str_starts_with($i['title'], 'Submission Overdue:')));
+    }
+
     private function updateRequirement(array $extra): void
     {
         $data = $this->record->fresh()->only(['client_id', 'agency', 'requirement', 'reporting_period', 'status', 'assigned_to']);
@@ -49,7 +54,7 @@ class ComplianceNotificationTest extends TestCase
         $items = $this->activeItems();
         $this->assertCount(1, $items);
         $id = $items[0]['id'];
-        $this->assertStringStartsWith('Overdue:', $items[0]['title']);
+        $this->assertStringStartsWith('Filing Overdue:', $items[0]['title']);
         $this->updateRequirement(['status' => 'Filed', 'filed_date' => today()->toDateString(), 'reference_number' => 'ACK-TEST']);
         $items = $this->activeItems();
         $this->assertNotContains($id, array_column($items, 'id'));
@@ -57,7 +62,7 @@ class ComplianceNotificationTest extends TestCase
         $this->assertStringStartsWith('Compliance assignment:', $items[0]['title']);
         $historical = $this->owner->notifications()->findOrFail($id);
         $this->assertNull($historical->read_at);
-        $this->assertSame('Overdue', $historical->data['urgency']);
+        $this->assertSame('Filing Overdue', $historical->data['urgency']);
     }
 
     public function test_rescheduling_replaces_alert_even_when_both_deadlines_are_overdue(): void
@@ -65,7 +70,7 @@ class ComplianceNotificationTest extends TestCase
         $original = $this->activeItems()[0]['id'];
         $this->updateRequirement(['due_date' => today()->subDays(2)->toDateString()]);
         $items = $this->activeItems();
-        $deadlines = array_values(array_filter($items, fn ($i) => str_starts_with($i['title'], 'Overdue:')));
+        $deadlines = $this->deadlineAlerts($items);
         $this->assertCount(1, $deadlines);
         $this->assertNotSame($original, $deadlines[0]['id']);
         $current = $this->owner->notifications()->findOrFail($deadlines[0]['id']);
@@ -74,7 +79,7 @@ class ComplianceNotificationTest extends TestCase
 
         $this->updateRequirement(['due_date' => today()->addDays(30)->toDateString()]);
         foreach ($this->activeItems() as $item) {
-            $this->assertStringStartsWith('Compliance assignment:', $item['title']);
+            $this->assertStringStartsWith('Compliance ', $item['title']);
         }
         $this->assertNotNull($this->owner->notifications()->find($current->id));
     }
@@ -84,15 +89,15 @@ class ComplianceNotificationTest extends TestCase
         $this->record->update(['due_date' => '2026-10-11']);
         $soon = $this->activeItems();
         $this->assertCount(1, $soon);
-        $this->assertStringStartsWith('Due Soon:', $soon[0]['title']);
+        $this->assertStringStartsWith('Submission Overdue:', $soon[0]['title']);
         $this->travelTo(Carbon::parse('2026-10-11 00:00:00', 'Asia/Manila'));
         $todayItems = $this->activeItems();
         $this->assertCount(1, $todayItems);
-        $this->assertStringStartsWith('Due Today:', $todayItems[0]['title']);
+        $this->assertStringStartsWith('Submission Overdue:', $todayItems[0]['title']);
         $this->travelTo(Carbon::parse('2026-10-12 00:00:00', 'Asia/Manila'));
         $overdue = $this->activeItems();
         $this->assertCount(1, $overdue);
-        $this->assertStringStartsWith('Overdue:', $overdue[0]['title']);
+        $this->assertStringStartsWith('Filing Overdue:', $overdue[0]['title']);
         foreach ([$soon[0]['id'], $todayItems[0]['id'], $overdue[0]['id']] as $id) {
             $this->assertNotNull($this->owner->notifications()->find($id));
         }

@@ -35,11 +35,19 @@ class Notify
             // replace their active display with dated alerts from due().
             return ! preg_match('/^(Overdue|Due Today|Due Soon|Upcoming): /', $data['title'] ?? '');
         }
+        if (in_array($record->status, ['Filed', 'Completed'], true)) {
+            return false;
+        }
 
-        return ! in_array($record->status, ['Filed', 'Completed'])
-            && $record->due_date->lte(today()->addDays(10))
+        return ($data['submission_deadline'] ?? null) === ($record->submission_deadline?->toDateString())
             && ($data['due_date'] ?? null) === $record->due_date->toDateString()
-            && ($data['urgency'] ?? null) === $record->urgency;
+            && ($data['urgency'] ?? null) === $record->urgency
+            && DeadlineCalculator::needsAlert($record);
+    }
+
+    public static function deadlineKey(ComplianceRecord $record): string
+    {
+        return 'due:v3:'.$record->id.':'.($record->submission_deadline?->toDateString() ?? 'none').':'.$record->due_date->toDateString().':'.$record->urgency;
     }
 
     public static function record($record, string $module, string $title): void
@@ -57,13 +65,27 @@ class Notify
         }
         $users = $only ? collect([$only]) : User::where('status', 'Active')->with('role')->get();
         foreach ($users as $user) {
-            Access::query(ComplianceRecord::class, $user)->whereNotIn('status', ['Filed', 'Completed'])->whereDate('due_date', '<=', today()->addDays(10))->with('client')->chunkById(100, function ($records) use ($user) {
-                foreach ($records as $r) {
-                    self::send($user, $r, 'compliance', $r->urgency.': '.$r->requirement, 'due:v2:'.$r->id.':'.$r->due_date->toDateString().':'.$r->urgency, [
-                        'event' => 'compliance.deadline', 'due_date' => $r->due_date->toDateString(), 'urgency' => $r->urgency,
-                    ]);
-                }
-            });
+            $leadWindow = today()->addDays(DeadlineCalculator::filingApproachDays() + DeadlineCalculator::leadDays());
+            Access::query(ComplianceRecord::class, $user)
+                ->whereNotIn('status', ['Filed', 'Completed'])
+                ->where(function ($q) use ($leadWindow) {
+                    $q->whereDate('due_date', '<=', $leadWindow)
+                      ->orWhereDate('submission_deadline', '<=', today()->addDays(DeadlineCalculator::submissionApproachDays()));
+                })
+                ->with('client')
+                ->chunkById(100, function ($records) use ($user) {
+                    foreach ($records as $r) {
+                        if (! DeadlineCalculator::needsAlert($r)) {
+                            continue;
+                        }
+                        self::send($user, $r, 'compliance', $r->urgency.': '.$r->requirement, self::deadlineKey($r), [
+                            'event' => 'compliance.deadline',
+                            'due_date' => $r->due_date->toDateString(),
+                            'submission_deadline' => $r->submission_deadline?->toDateString(),
+                            'urgency' => $r->urgency,
+                        ]);
+                    }
+                });
             Access::query(Invoice::class, $user)->where('status', 'Open')->whereDate('due_date', '<', today())->with(['client', 'items', 'payments'])->chunkById(100, function ($records) use ($user) {
                 foreach ($records as $r) {
                     if ($r->balance_cents > 0) {

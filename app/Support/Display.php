@@ -25,7 +25,10 @@ class Display
     public static function tone(string $status): string
     {
         return match ($status) {
-            'Paid','Reviewed','Approved','Filed','Active','Published','Verified' => 'success','Overdue','Needs Clarification','Rejected','Needs Correction','Incomplete' => 'danger','Draft','Open','Pending','Inactive','Archived','For Review','Awaiting verification','Not submitted','Missing' => 'warning',default => 'info'
+            'Paid','Reviewed','Approved','Filed','Active','Published','Verified','Completed','On Track' => 'success',
+            'Overdue','Needs Clarification','Rejected','Needs Correction','Incomplete','Filing Overdue','Submission Overdue' => 'danger',
+            'Draft','Open','Pending','Inactive','Archived','For Review','Awaiting verification','Not submitted','Missing','In Preparation','Awaiting Client Documents','Ready for Filing','Filing Deadline Approaching','Submission Deadline Approaching' => 'warning',
+            default => 'info'
         };
     }
 }

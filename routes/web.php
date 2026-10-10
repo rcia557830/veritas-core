@@ -89,6 +89,11 @@ Route::middleware(['auth', 'active', 'role:owner,bookkeeper,office-manager'])->g
     Route::post('/billing/{record}/payments', [PaymentController::class, 'store'])->name('billing.payments.store');
     Route::get('/billing/{record}/print', [InvoiceController::class, 'print'])->name('billing.print');
     Route::get('/billing/{record}/pdf', [InvoiceController::class, 'pdf'])->name('billing.pdf');
+    Route::get('/compliance/monitoring', [ComplianceController::class, 'monitor'])->name('compliance.monitoring');
+    Route::get('/clients/{client}/compliance', [ComplianceController::class, 'checklist'])->name('compliance.checklist');
+    Route::post('/compliance/{record}/follow-ups', [ComplianceController::class, 'storeFollowUp'])->name('compliance.follow-ups.store');
+    Route::put('/compliance-follow-ups/{followUp}', [ComplianceController::class, 'updateFollowUp'])->name('compliance.follow-ups.update');
+    Route::delete('/compliance-follow-ups/{followUp}', [ComplianceController::class, 'destroyFollowUp'])->name('compliance.follow-ups.destroy');
     foreach (['clients' => ClientController::class, 'documents' => DocumentController::class, 'ledger' => LedgerController::class, 'compliance' => ComplianceController::class, 'billing' => InvoiceController::class, 'knowledge' => KnowledgeController::class] as $module => $controller) {
         Route::resource($module, $controller)->parameters([$module => 'record'])->except($module === 'billing' ? ['destroy'] : []);
     }
