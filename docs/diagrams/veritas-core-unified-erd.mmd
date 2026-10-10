@@ -1,0 +1,293 @@
+erDiagram
+    %% One diagram. Solid = database FK; dotted = application-level reference only.
+    %% Composite FK column pairs are listed in the child entities and explained in the companion document.
+    roles {
+        bigint id PK
+        string name
+        string slug
+    }
+    permissions {
+        bigint id PK
+        string name
+    }
+    permission_role {
+        bigint permission_id PK, FK
+        bigint role_id PK, FK
+    }
+    users {
+        bigint id PK
+        bigint role_id FK "nullable"
+        string email
+        string status
+    }
+    clients {
+        bigint id PK
+        bigint created_by FK
+        bigint assigned_to FK "nullable"
+        bigint onboarded_by FK "nullable"
+        string client_code
+        string status
+        datetime onboarded_at "nullable"
+    }
+    documents {
+        bigint id PK
+        bigint client_id FK
+        bigint uploaded_by FK
+        string document_number
+        string status
+    }
+    document_requirement_templates {
+        bigint id PK
+        string name
+        string type
+    }
+    document_requirements {
+        bigint id PK
+        bigint client_id FK
+        bigint template_id FK "nullable"
+        bigint accounting_period_id FK "nullable"
+        bigint created_by FK
+        string scope "nullable"
+    }
+    requirement_documents {
+        bigint id PK
+        bigint requirement_id FK
+        bigint document_id FK
+        bigint linked_by FK
+    }
+    document_follow_ups {
+        bigint id PK
+        bigint requirement_id FK
+        bigint assigned_to FK "nullable"
+        bigint created_by FK
+        string status
+    }
+    account_templates {
+        bigint id PK
+        string name
+        int version
+    }
+    account_template_items {
+        bigint id PK
+        bigint account_template_id FK
+        string code
+        string classification
+    }
+    accounts {
+        bigint id PK
+        bigint client_id FK
+        bigint account_template_item_id FK "nullable"
+        string code
+        string classification
+    }
+    accounting_years {
+        bigint id PK
+        bigint client_id FK
+        date starts_on
+        date ends_on
+    }
+    accounting_periods {
+        bigint id PK
+        bigint client_id FK
+        bigint accounting_year_id FK
+        bigint closed_by FK "nullable"
+        string status
+    }
+    ledger_entries {
+        bigint id PK
+        bigint client_id FK
+        bigint accounting_period_id FK "nullable"
+        bigint created_by FK
+        bigint reviewed_by FK "nullable"
+        bigint posted_by FK "nullable"
+        string status
+    }
+    ledger_items {
+        bigint id PK
+        bigint ledger_entry_id FK
+        bigint client_id FK "nullable"
+        bigint account_id FK "nullable"
+        decimal debit
+        decimal credit
+    }
+    journal_documents {
+        bigint id PK
+        bigint ledger_entry_id FK
+        bigint client_id FK
+        bigint document_id FK
+        bigint attached_by FK
+        datetime detached_at "nullable"
+    }
+    vouchers {
+        bigint id PK
+        bigint ledger_entry_id FK "unique"
+        bigint client_id FK
+        bigint cash_account_id FK "nullable"
+        string type
+        string reference
+    }
+    compliance_records {
+        bigint id PK
+        bigint client_id FK
+        bigint assigned_to FK "nullable"
+        bigint created_by FK
+        date due_date
+        date submission_deadline "nullable"
+        string status
+    }
+    compliance_follow_ups {
+        bigint id PK
+        bigint compliance_record_id FK
+        bigint assigned_to FK "nullable"
+        bigint created_by FK
+        string status
+    }
+    invoices {
+        bigint id PK
+        bigint client_id FK
+        bigint created_by FK
+        string invoice_number
+        string status
+    }
+    invoice_items {
+        bigint id PK
+        bigint invoice_id FK
+        decimal quantity
+        decimal unit_price
+    }
+    payments {
+        bigint id PK
+        bigint invoice_id FK
+        bigint recorded_by FK
+        decimal amount
+    }
+    knowledge_articles {
+        bigint id PK
+        bigint author_id FK
+        string title
+        string status
+    }
+    notices {
+        bigint id PK
+        bigint client_id FK "nullable"
+        bigint created_by FK
+        string status
+    }
+    settings {
+        bigint id PK
+        string firm_name
+    }
+    notifications {
+        uuid id PK
+        string notifiable_type "logical"
+        bigint notifiable_id "logical"
+        datetime read_at "nullable"
+    }
+    notification_events {
+        bigint id PK
+        bigint user_id FK
+        string event_key
+    }
+    audit_logs {
+        bigint id PK
+        bigint user_id FK "nullable"
+        bigint client_id FK "nullable"
+        bigint record_id "logical"
+        string module
+        string action
+    }
+    password_reset_tokens {
+        string email PK
+        string token
+    }
+    sessions {
+        string id PK
+        bigint user_id "nullable logical"
+        string payload
+    }
+    cache {
+        string key PK
+        mediumtext value
+    }
+    cache_locks {
+        string key PK
+        string owner
+    }
+    jobs {
+        bigint id PK
+        string queue
+    }
+    job_batches {
+        string id PK
+        string name
+    }
+    failed_jobs {
+        bigint id PK
+        string uuid
+    }
+    migrations {
+        int id PK
+        string migration
+        int batch
+    }
+
+    roles |o--o{ users : role_id
+    roles ||--o{ permission_role : role_id
+    permissions ||--o{ permission_role : permission_id
+    users ||--o{ clients : created_by
+    users |o--o{ clients : assigned_to
+    users |o--o{ clients : onboarded_by
+    clients ||--o{ documents : client_id
+    users ||--o{ documents : uploaded_by
+    clients ||--o{ document_requirements : client_id
+    document_requirement_templates |o--o{ document_requirements : template_id
+    accounting_periods |o--o{ document_requirements : accounting_period_id
+    users ||--o{ document_requirements : created_by
+    document_requirements ||--o{ requirement_documents : requirement_id
+    documents ||--o| requirement_documents : document_id_unique
+    users ||--o{ requirement_documents : linked_by
+    document_requirements ||--o{ document_follow_ups : requirement_id
+    users |o--o{ document_follow_ups : assigned_to
+    users ||--o{ document_follow_ups : created_by
+    account_templates ||--o{ account_template_items : account_template_id
+    clients ||--o{ accounts : client_id
+    account_template_items |o--o{ accounts : account_template_item_id
+    clients ||--o{ accounting_years : client_id
+    clients ||--o{ accounting_periods : client_id
+    accounting_years ||--o{ accounting_periods : "accounting_year_id + client_id"
+    users |o--o{ accounting_periods : closed_by
+    clients ||--o{ ledger_entries : client_id
+    accounting_periods |o--o{ ledger_entries : "accounting_period_id + client_id"
+    users ||--o{ ledger_entries : created_by
+    users |o--o{ ledger_entries : reviewed_by
+    users |o--o{ ledger_entries : posted_by
+    ledger_entries ||--o{ ledger_items : ledger_entry_id
+    ledger_entries |o--o{ ledger_items : "ledger_entry_id + client_id"
+    accounts |o--o{ ledger_items : "account_id + client_id"
+    ledger_entries ||--o{ journal_documents : "ledger_entry_id + client_id"
+    documents ||--o{ journal_documents : "document_id + client_id"
+    users ||--o{ journal_documents : attached_by
+    ledger_entries ||--o| vouchers : "ledger_entry_id + client_id"
+    accounts |o--o{ vouchers : "cash_account_id + client_id"
+    clients ||--o{ compliance_records : client_id
+    users |o--o{ compliance_records : assigned_to
+    users ||--o{ compliance_records : created_by
+    compliance_records ||--o{ compliance_follow_ups : compliance_record_id
+    users |o--o{ compliance_follow_ups : assigned_to
+    users ||--o{ compliance_follow_ups : created_by
+    clients ||--o{ invoices : client_id
+    users ||--o{ invoices : created_by
+    invoices ||--o{ invoice_items : invoice_id
+    invoices ||--o{ payments : invoice_id
+    users ||--o{ payments : recorded_by
+    users ||--o{ knowledge_articles : author_id
+    clients |o--o{ notices : client_id
+    users ||--o{ notices : created_by
+    users ||--o{ notification_events : user_id
+    users |o--o{ audit_logs : user_id
+    clients |o--o{ audit_logs : client_id
+    users |o..o{ sessions : "user_id; index only"
+    users |o..o{ notifications : "notifiable_type/id; polymorphic"
+    users |o..o{ password_reset_tokens : "email; no FK"
+
+

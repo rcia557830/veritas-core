@@ -1,0 +1,138 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype ortho
+actor Owner as O
+actor "Office Manager" as M
+actor Bookkeeper as B
+
+rectangle "Veritas Core web application" {
+  package "Access and workspace" {
+    usecase "Log in / log out" as Auth
+    usecase "Reset own password / edit profile" as Profile
+    usecase "Manage users and roles" as Users
+    usecase "Manage workspace settings" as Settings
+    usecase "View audit logs" as Audit
+  }
+  package "Clients and documents" {
+    usecase "Manage clients" as Clients
+    usecase "Complete client onboarding" as Onboard
+    usecase "Manage document requirements\nand templates" as Requirements
+    usecase "Track document follow-ups" as DocFollow
+    usecase "Upload / manage documents" as Documents
+    usecase "Validate / approve / reject documents" as Validate
+  }
+  package "Accounting" {
+    usecase "View chart of accounts" as CoAView
+    usecase "Manage client accounts" as CoAEdit
+    usecase "Manage account templates / initialize CoA" as CoAInit
+    usecase "View accounting years and periods\nas journal / report context" as Periods
+    usecase "General Journal: create / edit / submit" as JournalCreate
+    usecase "Review / approve journal" as JournalReview
+    usecase "Post journal" as JournalPost
+    usecase "Create / edit Journal Voucher" as JV
+    usecase "Create / edit Check Voucher" as CV
+    usecase "Create / edit Cash Receipt" as CR
+    usecase "Create / edit Cash Disbursement" as CD
+    usecase "View General Ledger" as GL
+    usecase "Generate / print financial reports" as Fin
+  }
+  package "Operations" {
+    usecase "Monitor / manage compliance" as Compliance
+    usecase "Track compliance follow-ups" as CompFollow
+    usecase "Manage billing / record payments" as Billing
+    usecase "Read / draft knowledge articles" as Knowledge
+    usecase "Publish knowledge articles" as KnowledgePublish
+    usecase "View / mark notifications read" as Notifications
+    usecase "Manage notices" as Notices
+    usecase "Generate / export module reports" as Reports
+  }
+}
+
+O -- Auth
+M -- Auth
+B -- Auth
+O -- Profile
+M -- Profile
+B -- Profile
+O -- Users
+O -- Settings
+O -- Audit
+O -- Clients
+M -- Clients
+B -- Clients
+O -- Onboard
+M -- Onboard
+O -- Requirements
+M -- Requirements
+O -- DocFollow
+M -- DocFollow
+B -- DocFollow
+O -- Documents
+M -- Documents
+B -- Documents
+O -- Validate
+M -- Validate
+O -- CoAView
+M -- CoAView
+B -- CoAView
+O -- CoAEdit
+M -- CoAEdit
+O -- CoAInit
+O -- Periods
+M -- Periods
+B -- Periods
+O -- JournalCreate
+B -- JournalCreate
+O -- JournalReview
+M -- JournalReview
+O -- JournalPost
+M -- JournalPost
+O -- JV
+B -- JV
+O -- CV
+B -- CV
+O -- CR
+B -- CR
+O -- CD
+B -- CD
+O -- GL
+M -- GL
+B -- GL
+O -- Fin
+M -- Fin
+B -- Fin
+O -- Compliance
+M -- Compliance
+B -- Compliance
+O -- CompFollow
+M -- CompFollow
+B -- CompFollow
+O -- Billing
+M -- Billing
+B -- Billing
+O -- Knowledge
+M -- Knowledge
+B -- Knowledge
+O -- KnowledgePublish
+M -- KnowledgePublish
+O -- Notifications
+M -- Notifications
+B -- Notifications
+O -- Notices
+M -- Notices
+O -- Reports
+M -- Reports
+B -- Reports
+
+note bottom of JournalPost
+  Requires an eligible reviewed journal and a
+  poster different from its creator. Posting grant
+  is provisional outside local/testing environments.
+end note
+note bottom of Periods
+  Read-only context in web UI. There is no route
+  to create accounting years or periods.
+end note
+@enduml
