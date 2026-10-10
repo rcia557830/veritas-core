@@ -67,7 +67,7 @@ log-error=$($artifacts.Replace('\','/'))/mysql.log
         if ($LASTEXITCODE -ne 0 -or "$prepared" -notmatch 'Disposable browser fixtures prepared\.') { throw 'Browser fixture preparation failed.' }
         $listener.Start(); $webPort = $listener.LocalEndpoint.Port; $listener.Stop()
         $web = Start-Process 'php' -ArgumentList @('-S', "127.0.0.1:$webPort", '-t', 'public', 'tests/Browser/server.php') -WindowStyle Hidden -PassThru -RedirectStandardOutput "$artifacts/web.log" -RedirectStandardError "$artifacts/web-error.log"
-        Run-Checked 'node' @('tests/Browser/chart-of-accounts.mjs', "http://127.0.0.1:$webPort", $Browser, "$artifacts/browser", 'tests/Browser/vouchers.mjs')
+        Run-Checked 'node' @('tests/Browser/chart-of-accounts.mjs', "http://127.0.0.1:$webPort", $Browser, "$artifacts/browser", 'tests/Browser/onboarding.mjs')
     }
 } finally {
     if ($web -and ! $web.HasExited) { Stop-Process -Id $web.Id }

@@ -15,5 +15,6 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trimStrings(except: ['code']);
         $middleware->alias(['active' => ActiveAccount::class, 'role' => RoleMiddleware::class, 'permission' => PermissionMiddleware::class]);
     })
+    ->withCommands()
     ->withExceptions(function (Exceptions $exceptions) {})
     ->create();
