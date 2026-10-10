@@ -32,3 +32,9 @@ yarn-error.log
 *.pem
 *.key
 /index.php
+
+# Temporary Codex Stage 3.2 files
+/storage/stage32-*
+
+# Local VS Code workspace
+/workspace.code-workspace

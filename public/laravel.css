@@ -1,4 +1,6 @@
 /* Blade integration: retain the original Veritas Core design tokens. */
+/* Keep absolute accessibility labels inside the journal's scrolling table. */
+[data-journal-form] .table-responsive { position: relative; }
 a.nav-item, .profile-button, .chip { text-decoration: none; }
 .sidebar .nav-item { padding-top: 9px; padding-bottom: 9px; }
 .sidebar .nav-label { margin-top: var(--space-5); }
@@ -73,3 +75,12 @@ h1 { font-size: 28px; font-weight: 600; }
   .filters > label { min-width: min(140px, 100%); }
 }
 @media print { .record-pagination { display: none !important; } }
+
+/* Retained evidence hashes must fit narrow journal detail screens. */
+.journal-audit-event { overflow-wrap: anywhere; }
+
+.general-ledger-detail .table { min-width: 760px; }
+.general-ledger-detail .table td { overflow-wrap: anywhere; }
+.ledger-balances dd { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+
+.financial-report-heading{text-align:center;border-bottom:3px solid var(--gold,#c9a55f);padding-bottom:16px;margin-bottom:24px}.financial-report .table{min-width:760px}.financial-report .table td{overflow-wrap:anywhere}.financial-report .detail-grid dd{font-variant-numeric:tabular-nums;overflow-wrap:anywhere}.report-warning{padding:16px;border:1px solid #957126;border-radius:8px;background:#fff8e8;color:#59420e}.report-reconciliation{font-weight:600}

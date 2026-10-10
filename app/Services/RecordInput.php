@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\User;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 
 class RecordInput
 {
@@ -37,6 +38,10 @@ class RecordInput
             }
         }
         if ($module === 'documents') {
+            if ($changed('status') && in_array($record?->status, ['Reviewed', 'Approved']) && ! in_array($input['status'], ['Reviewed', 'Approved'])) {
+                Gate::authorize('validate', $record);
+                throw ValidationException::withMessages(['status' => 'Use Validate document on the document page to explicitly reopen review before replacing its attachment.']);
+            }
             if (isset($input['file'])) {
                 Gate::authorize('document.upload');
             }

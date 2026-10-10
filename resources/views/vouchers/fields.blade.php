@@ -1,0 +1,9 @@
+<input type="hidden" name="type" value="{{ $voucher->type }}">
+@unless($voucher->exists)<input type="hidden" name="creation_token" value="{{ old('creation_token', (string)\Illuminate\Support\Str::uuid()) }}">@endunless
+<p class="system-alert">{{ $voucher->reference ?? 'Reference assigned on first save' }} · Provisional numbering: {{ $voucher->type }}-000001 onward, separately for each client and voucher type. Issued references and types are fixed; cancellation and voiding are not configured.</p>
+@if($voucher->type !== 'JV')
+<div class="row"><div class="col-md-6"><x-field name="party" :label="$voucher->type === 'CR' ? 'Payer / source' : 'Payee'" :value="$voucher->party" :required="true"/></div>
+<div class="col-md-6"><x-field name="amount" :label="$voucher->type === 'CR' ? 'Amount received' : 'Amount paid'" :value="$voucher->amount" :required="true"/></div>
+<div class="col-md-6"><label class="form-label" for="voucher_cash">Cash / bank account</label><select class="form-select mb-3" name="cash_account_id" id="voucher_cash" required><option value="">Choose a same-client asset account</option>@foreach($options['accounts'] as $account)@if($account['classification'] === 'Asset')<option value="{{ $account['id'] }}" @selected((string)old('cash_account_id',$voucher->cash_account_id)===(string)$account['id'])>{{ $account['code'] }} · {{ $account['name'] }}</option>@endif @endforeach</select><p class="form-text">Designate the actual cash/bank asset account. Its journal {{ $voucher->type === 'CR' ? 'debits' : 'credits' }} must equal the amount exactly.</p></div>
+@if($voucher->type === 'CV')<div class="col-md-6"><x-field name="check_number" label="Check number" :value="$voucher->check_number" :required="true"/><x-field name="check_date" label="Check date" type="date" :value="$voucher->check_date?->toDateString()" :required="true"/></div>@endif</div>
+@endif

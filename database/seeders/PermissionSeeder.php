@@ -18,7 +18,16 @@ class PermissionSeeder extends Seeder
             }
             foreach (config('rbac.roles') as $slug => $name) {
                 $grants = $slug === 'owner' ? config('rbac.permissions') : config('rbac.grants.'.$slug, []);
-                Role::where('slug', $slug)->firstOrFail()->permissions()->sync(Permission::whereIn('name', $grants)->pluck('id'));
+                $role = Role::where('slug', $slug)->firstOrFail();
+                // Posting grants are provisional for development. An existing
+                // business installation requires an explicit permission rollout.
+                if (! app()->environment(['local', 'testing'])) {
+                    $grants = array_values(array_diff($grants, ['bookkeeping.post']));
+                    if ($role->permissions()->where('name', 'bookkeeping.post')->exists()) {
+                        $grants[] = 'bookkeeping.post';
+                    }
+                }
+                $role->permissions()->sync(Permission::whereIn('name', $grants)->pluck('id'));
             }
         });
     }

@@ -1,0 +1,7 @@
+<h3 class="section-title mt-4">Transaction history</h3>
+<p>Balance brought forward on this page: <strong data-ledger-carry>{{ \App\Support\Money::balance($result['page_opening']) }}</strong></p>
+<div class="table-responsive" tabindex="0" role="region" aria-label="General Ledger transaction history"><table class="table"><thead><tr><th>Date</th><th>Journal / reference</th><th>Description</th><th class="numeric">Debit</th><th class="numeric">Credit</th><th class="numeric">Running balance</th></tr></thead><tbody>
+@forelse($movements as $line)
+<tr data-ledger-line="{{ $line['line_id'] }}"><td>{{ $line['date'] }}</td><td><a href="{{ route('ledger.show', $line['journal_id']) }}">Journal #{{ $line['journal_id'] }}</a><div class="subtext">{{ $line['reference'] ?: 'No reference' }}</div></td><td>{{ $line['description'] }}</td><td class="numeric">{{ \App\Support\Money::formatExact(\App\Support\Money::decimal($line['debit'])) }}</td><td class="numeric">{{ \App\Support\Money::formatExact(\App\Support\Money::decimal($line['credit'])) }}</td><td class="numeric" data-ledger-running>{{ \App\Support\Money::balance($line['running']) }}</td></tr>
+@empty<tr><td colspan="6"><div class="empty-state"><h3>{{ $movements->total() ? 'No movements on this page' : 'No posted movements in this date range' }}</h3><p>{{ $movements->total() ? 'Choose an available page below. Summary balances still cover the full date range.' : 'Any earlier posted balance is carried forward. Unposted and unmapped journals are excluded.' }}</p></div></td></tr>@endforelse
+</tbody></table></div>

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Http\Requests\RecordRequest;
 use App\Models\User;
+use App\Services\Accounting\JournalWriter;
 use App\Support\Modules;
 use App\Support\Money;
 use Illuminate\Support\Facades\DB;
@@ -17,8 +18,10 @@ class RecordWriter
     public function save(string $module, RecordRequest $request, $record = null)
     {
         $data = $request->validated();
+        if ($module === 'ledger') {
+            return JournalWriter::save($data, $record);
+        }
         $path = null;
-        $oldPath = $record?->file_path;
         if ($record) {
             Gate::authorize('update', $record);
         }
@@ -50,15 +53,6 @@ class RecordWriter
         }
         $items = $data['items'] ?? [];
         unset($data['items'],$data['file']);
-        if ($module === 'ledger') {
-            foreach ($items as $index => $item) {
-                $d = Money::cents($item['debit']);
-                $c = Money::cents($item['credit']);
-                if (($d > 0) == ($c > 0)) {
-                    throw ValidationException::withMessages(["items.$index.debit" => 'Each line must contain either a positive debit or a positive credit.']);
-                }
-            }
-        }
         if ($module === 'billing') {
             $total = Money::cents($data['tax']);
             foreach ($items as $item) {
@@ -88,14 +82,7 @@ class RecordWriter
             }
         }
         try {
-            if ($module === 'documents' && $request->hasFile('file')) {
-                $file = $request->file('file');
-                $path = $file->store('documents', 'local');
-                $data['file_path'] = $path;
-                $data['original_file_name'] = $file->getClientOriginalName();
-                $data['mime_type'] = $file->getMimeType();
-            }
-            $saved = DB::transaction(function () use ($module, $record, $data, $items, $request) {
+            $saved = DB::transaction(function () use ($module, $record, $data, $items, $request, &$path) {
                 $model = Modules::get($module)['model'];
                 $previousStatus = null;
                 if ($record) {
@@ -103,12 +90,31 @@ class RecordWriter
                     Gate::authorize('update', $record);
                     RecordInput::authorize($module, $request->user(), $data, $record);
                     $previousStatus = $record->status;
-                    $record->update($data);
                 } else {
                     Gate::authorize('create', $model);
+                }
+                $oldPath = $record?->file_path;
+                if ($module === 'documents' && $request->hasFile('file')) {
+                    // Check the locked state, not the potentially stale route-bound record.
+                    if ($record && (in_array($record->status, ['Reviewed', 'Approved']) || in_array($data['status'] ?? $record->status, ['Reviewed', 'Approved']))) {
+                        throw ValidationException::withMessages(['file' => 'Reopen review using Validate document before replacing the attachment. Save the replacement before verifying it in a separate action.']);
+                    }
+                    $file = $request->file('file');
+                    $path = $file->store('documents', 'local');
+                    $data['file_path'] = $path;
+                    $data['original_file_name'] = $file->getClientOriginalName();
+                    $data['mime_type'] = $file->getMimeType();
+                }
+                if ($record) {
+                    $record->update($data);
+                } else {
                     $record = $model::create($data);
                 }
-                if (in_array($module, ['ledger', 'billing'])) {
+                if ($path && $oldPath) {
+                    // Retain the original privately; the audit reference preserves traceability.
+                    Audit::record('document.attachment-replaced', $module, $record, 'Attachment replaced; retained original: '.$oldPath.'; replacement: '.$path.'.');
+                }
+                if ($module === 'billing') {
                     $record->items()->delete();
                     $record->items()->createMany($items);
                 }
@@ -132,9 +138,6 @@ class RecordWriter
             if ($path) {
                 Storage::disk('local')->delete($path);
             }throw $error;
-        }
-        if ($path && $oldPath) {
-            Storage::disk('local')->delete($oldPath);
         }
         if ($module === 'documents') {
             Notify::record($saved, 'documents', 'Document '.$saved->status.': '.$saved->title);

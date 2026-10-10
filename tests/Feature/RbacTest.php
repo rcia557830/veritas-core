@@ -7,7 +7,6 @@ use App\Models\ComplianceRecord;
 use App\Models\Document;
 use App\Models\Invoice;
 use App\Models\KnowledgeArticle;
-use App\Models\LedgerEntry;
 use App\Models\Notice;
 use App\Models\Permission;
 use App\Models\Role;
@@ -17,7 +16,7 @@ use Tests\TestCase;
 
 class RbacTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, \Tests\Support\JournalFixtures;
 
     private User $owner;
 
@@ -122,7 +121,7 @@ class RbacTest extends TestCase
 
     public function test_manager_reviews_but_cannot_create_or_edit_original_ledger_entries(): void
     {
-        $entry = LedgerEntry::first();
+        $entry = $this->structuredJournal($this->bookkeeper, 'For Review');
         $this->actingAs($this->manager);
         $this->get('/ledger/create')->assertForbidden();
         $this->post('/ledger', [])->assertForbidden();
@@ -141,7 +140,7 @@ class RbacTest extends TestCase
 
     public function test_even_owner_cannot_approve_their_own_ledger_entry(): void
     {
-        $entry = LedgerEntry::first();
+        $entry = $this->structuredJournal($this->bookkeeper, 'For Review');
         $entry->update(['created_by' => $this->owner->id]);
         $this->actingAs($this->owner)->post('/ledger/'.$entry->id.'/transition', ['action' => 'review'])->assertForbidden();
         $this->actingAs($this->manager)->post('/ledger/'.$entry->id.'/transition', ['action' => 'review'])->assertRedirect();

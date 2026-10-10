@@ -1,0 +1,11 @@
+@extends('layouts.app')
+@section('title','Initialize client accounts')
+@section('content')
+<section class="panel panel-pad"><h2 class="section-title">{{ $client->business_name }}</h2><p>Copy active template items into independent client accounts. Existing accounts will never be overwritten. A conflicting code cancels the entire copy. Repeating the same template retains previously copied accounts.</p>
+<form method="get" class="filters"><input type="hidden" name="client_id" value="{{ $client->id }}"><label>Template version<select class="form-select" name="template_id" required><option value="">Select a template</option>@foreach($templates as $option)<option value="{{ $option->id }}" @selected($template?->id===$option->id)>{{ $option->name }} · v{{ $option->version }}</option>@endforeach</select></label><button class="btn btn-primary">Preview accounts</button></form>
+@if($templates->isEmpty())<div class="empty-state"><p>No active templates are available. An Owner with template permissions can create and activate a template.</p></div>@endif
+@if($template)<h3 class="section-title mt-3">{{ $template->name }} · v{{ $template->version }}</h3><div class="table-responsive"><table class="table"><thead><tr><th>Code</th><th>Name</th><th>Classification</th></tr></thead><tbody>@forelse($items as $item)<tr><td>{{ $item->code }}</td><td>{{ $item->name }}</td><td>{{ $item->classification }}</td></tr>@empty<tr><td colspan="3">This template has no active items.</td></tr>@endforelse</tbody></table></div>
+@if($items->isNotEmpty())<form data-accounting-form method="post" action="{{ route('accounts.initialize') }}" data-confirm="Copy accounts from this template into {{ $client->business_name }}? Existing client accounts will be retained.">@csrf<input type="hidden" name="client_id" value="{{ $client->id }}"><input type="hidden" name="template_id" value="{{ $template->id }}"><div class="form-check my-3"><input class="form-check-input" type="checkbox" name="confirmed" value="1" id="confirmed" required><label class="form-check-label" for="confirmed">I have reviewed the selected client and template version.</label></div><button class="btn btn-primary">Initialize accounts</button></form>@endif
+@endif
+<a class="btn btn-outline-secondary mt-3" href="{{ route('accounts.index',['client_id'=>$client->id]) }}">Back to client chart</a></section>
+@endsection

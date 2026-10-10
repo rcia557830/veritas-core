@@ -75,9 +75,17 @@ class RecordRequest extends FormRequest
         if (in_array($module, ['ledger', 'billing'])) {
             $rules['items'] = ['required', 'array', 'min:'.($module === 'ledger' ? 2 : 1), 'max:100'];
             if ($module === 'ledger') {
-                $rules['items.*.account_name'] = ['required', 'string', 'max:255'];
+                $rules['items'][] = 'list';
+                $rules['items.*'] = ['required', 'array:id,account_id,debit,credit'];
+                $rules['items.*.id'] = ['nullable', 'integer', 'min:1', 'distinct'];
+                $rules['items.*.account_id'] = ['required', 'integer', 'min:1'];
+                $rules['accounting_period_id'] = ['nullable', 'integer', 'min:1'];
+                $rules['document_ids'] = ['sometimes', 'array', 'list', 'max:100'];
+                $rules['document_ids.*'] = ['required', 'integer', 'min:1', 'distinct'];
+                $rules['refresh_document_ids'] = ['sometimes', 'array', 'list', 'max:100'];
+                $rules['refresh_document_ids.*'] = ['required', 'integer', 'min:1', 'distinct'];
                 foreach (['debit', 'credit'] as $key) {
-                    $rules['items.*.'.$key] = ['required', 'numeric', 'min:0', 'max:999999999.99', 'decimal:0,2'];
+                    $rules['items.*.'.$key] = ['required', 'regex:/^\d{1,9}(?:\.\d{1,2})?$/'];
                 }
             } else {
                 $rules['due_date'] = ['required', 'date_format:Y-m-d', 'after_or_equal:invoice_date'];

@@ -9,7 +9,13 @@
 <div class="{{ $field[1]==='textarea'?'col-12':'col-md-6' }}"><x-field :name="$name" :label="$field[0]" :type="is_array($field[1])?'select':$field[1]" :options="is_array($field[1])?array_combine($field[1],$field[1]):[]" :required="$field[2]??false" :value="$value"/></div>
 @endforeach
 @if(($module==='clients' && auth()->user()->hasPermission('client.assign')) || ($module==='compliance' && auth()->user()->hasPermission('compliance.assign')))<div class="col-md-6"><x-field name="assigned_to" label="Assigned employee" type="select" :value="$record->assigned_to" :options="[''=>'Unassigned']+$users->pluck('name','id')->all()"/></div>@endif
-@if($module==='documents' && auth()->user()->hasPermission('document.upload'))<div class="col-12"><x-field name="file" label="Attachment" type="file"/><p class="form-text">PDF, Word, Excel, JPG or PNG. Maximum 20 MB. Downloads require authorized access. @if($record->file_path)Current file: {{ $record->original_file_name }}. Uploading replaces it.@endif</p></div>@endif
+@if($module==='documents' && auth()->user()->hasPermission('document.upload'))<div class="col-12">
+@if(in_array($record->status,['Reviewed','Approved']))
+<p class="form-text">The attachment is locked. Use Validate document on the document page to reopen review before uploading a replacement.</p>
+@else
+<x-field name="file" label="Attachment" type="file"/><p class="form-text">PDF, Word, Excel, JPG or PNG. Maximum 20 MB. Downloads require authorized access. @if($record->file_path)Current file: {{ $record->original_file_name }}. The original is retained privately when replaced. Save a replacement before verifying it in a separate action.@endif</p>
+@endif
+</div>@endif
 </div>
 @if(in_array($module,['ledger','billing']))@include('records.lines')@endif
 <div class="actions mt-4"><a href="{{ $record->exists?route($module.'.show',$record):route($module.'.index') }}" class="btn btn-outline-secondary">Cancel</a><button class="btn btn-primary" type="submit">Save {{ $config['singular'] }}</button></div></form>

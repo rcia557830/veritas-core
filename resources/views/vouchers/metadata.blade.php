@@ -1,0 +1,5 @@
+<h2 class="section-title">{{ \App\Models\Voucher::TYPES[$voucher->type] }} · {{ $voucher->reference }}</h2>
+<dl class="detail-grid"><div><dt>Client</dt><dd>{{ $record->client->business_name }}</dd></div><div><dt>Transaction date</dt><dd>{{ $record->transaction_date->toDateString() }}</dd></div><div><dt>Status</dt><dd>{{ $record->status }}</dd></div><div><dt>Source journal</dt><dd><a href="{{ route('ledger.show',$record) }}">Journal #{{ $record->id }}</a></dd></div>
+@if($voucher->type !== 'JV')<div><dt>{{ $voucher->type==='CR'?'Payer / source':'Payee' }}</dt><dd>{{ $voucher->party }}</dd></div><div><dt>{{ $voucher->type==='CR'?'Amount received':'Amount paid' }}</dt><dd>{{ \App\Support\Money::formatExact($voucher->amount) }}</dd></div><div><dt>Cash / bank account</dt><dd>{{ $voucher->cashAccount->code }} · {{ $voucher->cashAccount->name }}</dd></div>@endif
+@if($voucher->type==='CV')<div><dt>Check number / date</dt><dd>{{ $voucher->check_number }} · {{ $voucher->check_date->toDateString() }}</dd></div>@endif</dl>
+<p>Provisional voucher reference convention. This record does not establish check clearing, payment execution, voiding, or reversal.</p>

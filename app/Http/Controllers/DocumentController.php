@@ -43,8 +43,9 @@ class DocumentController extends ModuleController
             if ($data['status'] === 'Rejected') {
                 Gate::authorize('reject', $document);
             }
+            $reopened = in_array($document->status, ['Reviewed', 'Approved']) && ! in_array($data['status'], ['Reviewed', 'Approved']);
             $document->update($data);
-            Audit::record('document.validated', 'documents', $document, 'Document validated: '.$document->status.'.');
+            Audit::record($reopened ? 'document.reopened' : 'document.validated', 'documents', $document, ($reopened ? 'Document review reopened: ' : 'Document validated: ').$document->status.'.');
         });
         Notify::record($record->fresh(), 'documents', 'Document '.$data['status'].': '.$record->title);
 

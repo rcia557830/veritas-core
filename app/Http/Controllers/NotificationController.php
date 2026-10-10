@@ -23,7 +23,7 @@ class NotificationController extends Controller
             }
             $model = Modules::get($module)['model'];
             $record = $model::find($data['record_id']);
-            if (! $record || ! Gate::allows('view', $record)) {
+            if (! $record || ! Gate::allows('view', $record) || ! Notify::isCurrent($record, $data)) {
                 continue;
             }
             if (! $notification->read_at) {

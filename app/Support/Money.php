@@ -19,11 +19,54 @@ final class Money
 
     public static function decimal(int $cents): string
     {
-        return sprintf('%d.%02d', intdiv($cents, 100), $cents % 100);
+        // Divide before taking the absolute value so PHP_INT_MIN stays an integer.
+        return sprintf('%s%d.%02d', $cents < 0 ? '-' : '', abs(intdiv($cents, 100)), abs($cents % 100));
+    }
+
+    public static function addCents(int $left, int $right): int
+    {
+        if (($right > 0 && $left > PHP_INT_MAX - $right) || ($right < 0 && $left < PHP_INT_MIN - $right)) {
+            throw ValidationException::withMessages(['ledger' => 'Ledger totals exceed the supported integer-cent range. No partial balance can be displayed.']);
+        }
+
+        return $left + $right;
+    }
+
+    public static function subtractCents(int $left, int $right): int
+    {
+        if (($right > 0 && $left < PHP_INT_MIN + $right) || ($right < 0 && $left > PHP_INT_MAX + $right)) {
+            throw ValidationException::withMessages(['ledger' => 'Ledger totals exceed the supported integer-cent range. No partial balance can be displayed.']);
+        }
+
+        return $left - $right;
+    }
+
+    public static function balance(int $cents): string
+    {
+        return self::formatExact(ltrim(self::decimal($cents), '-')).($cents > 0 ? ' Dr' : ($cents < 0 ? ' Cr' : ''));
+    }
+
+    // Read the full signed DECIMAL(15,2) journal storage range without relaxing
+    // the stricter non-negative limits used to validate new user input.
+    public static function storedCents(string $value): int
+    {
+        if (! preg_match('/^(-?)(\d{1,13})\.(\d{2})$/', $value, $matches)) {
+            throw ValidationException::withMessages(['amount' => 'Invalid stored monetary amount.']);
+        }
+        $cents = (int) $matches[2] * 100 + (int) $matches[3];
+
+        return $matches[1] === '-' ? -$cents : $cents;
     }
 
     public static function format($value): string
     {
         return '₱'.number_format((float) $value, 2);
+    }
+
+    public static function formatExact(string $decimal): string
+    {
+        [$whole, $fraction] = explode('.', $decimal);
+
+        return '₱'.preg_replace('/\B(?=(\d{3})+(?!\d))/', ',', $whole).'.'.$fraction;
     }
 }

@@ -1,11 +1,15 @@
 <?php
 
+use App\Http\Controllers\AccountController;
+use App\Http\Controllers\AccountTemplateController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ComplianceController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\FinancialReportController;
+use App\Http\Controllers\GeneralLedgerController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\KnowledgeController;
 use App\Http\Controllers\LedgerController;
@@ -16,6 +20,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\VoucherController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/dashboard');
@@ -28,6 +33,23 @@ Route::middleware('guest')->group(function () {
     Route::post('/reset-password', [AuthController::class, 'reset'])->middleware('throttle:5,1')->name('password.update');
 });
 Route::middleware(['auth', 'active', 'role:owner,bookkeeper,office-manager'])->group(function () {
+    Route::get('/vouchers/{voucher}/print', [VoucherController::class, 'print'])->name('vouchers.print');
+    Route::resource('vouchers', VoucherController::class)->except('destroy');
+    Route::get('/financial-reports', [FinancialReportController::class, 'index'])->name('financial-reports.index');
+    Route::get('/financial-reports/print', [FinancialReportController::class, 'print'])->name('financial-reports.print');
+    Route::get('/general-ledger', [GeneralLedgerController::class, 'index'])->name('general-ledger.index');
+    Route::get('/general-ledger/print', [GeneralLedgerController::class, 'print'])->name('general-ledger.print');
+    Route::get('/accounts/initialize', [AccountController::class, 'initialization'])->name('accounts.initialization');
+    Route::post('/accounts/initialize', [AccountController::class, 'initialize'])->name('accounts.initialize');
+    Route::post('/accounts/{account}/status', [AccountController::class, 'status'])->name('accounts.status');
+    Route::resource('accounts', AccountController::class)->except('destroy');
+    Route::post('/account-templates/{accountTemplate}/version', [AccountTemplateController::class, 'version'])->name('account-templates.version');
+    Route::get('/account-templates/{accountTemplate}/items/create', [AccountTemplateController::class, 'createItem'])->name('account-templates.items.create');
+    Route::post('/account-templates/{accountTemplate}/items', [AccountTemplateController::class, 'storeItem'])->name('account-templates.items.store');
+    Route::get('/account-templates/{accountTemplate}/items/{item}/edit', [AccountTemplateController::class, 'editItem'])->name('account-templates.items.edit');
+    Route::put('/account-templates/{accountTemplate}/items/{item}', [AccountTemplateController::class, 'updateItem'])->name('account-templates.items.update');
+    Route::delete('/account-templates/{accountTemplate}/items/{item}', [AccountTemplateController::class, 'destroyItem'])->name('account-templates.items.destroy');
+    Route::resource('account-templates', AccountTemplateController::class)->parameters(['account-templates' => 'accountTemplate'])->except('destroy');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::get('/profile', [AuthController::class, 'profile'])->name('profile.edit');
     Route::patch('/profile', [AuthController::class, 'updateProfile'])->name('profile.update');
@@ -36,7 +58,10 @@ Route::middleware(['auth', 'active', 'role:owner,bookkeeper,office-manager'])->g
     Route::get('/documents/{record}/validate', [DocumentController::class, 'validation'])->middleware('permission:document.validate')->name('documents.validation');
     Route::post('/documents/{record}/validate', [DocumentController::class, 'validateDocument'])->middleware('permission:document.validate')->name('documents.validate');
     Route::get('/documents/{record}/download', [DocumentController::class, 'download'])->name('documents.download');
+    Route::post('/ledger/{record}/post', [LedgerController::class, 'post'])->name('ledger.post');
     Route::post('/ledger/{record}/transition', [LedgerController::class, 'transition'])->name('ledger.transition');
+    Route::get('/ledger/options', [LedgerController::class, 'options'])->name('ledger.options');
+    Route::get('/ledger/{record}/evidence/{evidence}', [LedgerController::class, 'evidence'])->name('ledger.evidence');
     Route::post('/billing/{record}/transition', [InvoiceController::class, 'transition'])->name('billing.transition');
     Route::post('/billing/{record}/payments', [PaymentController::class, 'store'])->name('billing.payments.store');
     Route::get('/billing/{record}/print', [InvoiceController::class, 'print'])->name('billing.print');

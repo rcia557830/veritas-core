@@ -1,0 +1,57 @@
+import assert from 'node:assert/strict';
+
+// The existing dependency-free browser harness calls this named workflow hook.
+export async function runJournal({ cdp, evaluate, fill, click, go, loaded, hasText, submit, shot, text, until }) {
+  await cdp('Emulation.setDeviceMetricsOverride', { width: 1440, height: 1000, deviceScaleFactor: 1, mobile: false });
+  await go('/general-ledger'); await hasText('Select a client');
+  const client = await evaluate(`[...document.querySelector('[name=client_id]').options].find(o=>o.text==='SYNTHETIC LEDGER CLIENT').value`);
+  await fill('[name=client_id]', client); await submit('[data-ledger-client]', 'Select an account');
+  const cash = await evaluate(`[...document.querySelector('[name=account_id]').options].find(o=>o.text.startsWith('001-SYN')).value`);
+  const revenue = await evaluate(`[...document.querySelector('[name=account_id]').options].find(o=>o.text.startsWith('002-SYN')).value`);
+  await fill('[name=account_id]', cash);
+  await fill('[data-ledger-filters] [name=start_date]', '2026-04-01');
+  await fill('[data-ledger-filters] [name=end_date]', '2026-04-30');
+  await fill('[name=per_page]', '10');
+  await submit('[data-ledger-filters]', 'Transaction history');
+  await loaded('[data-ledger-closing]');
+  const cell = selector => evaluate(`document.querySelector(${JSON.stringify(selector)}).textContent.trim()`);
+  assert.equal(await cell('[data-ledger-opening]'), '₱1,000.00 Dr');
+  assert.equal(await cell('[data-ledger-debits]'), '₱221.00');
+  assert.equal(await cell('[data-ledger-credits]'), '₱96.00');
+  assert.equal(await cell('[data-ledger-closing]'), '₱1,125.00 Dr');
+  assert.ok(!(await text()).includes('GL-UNPOSTED-HIDDEN'));
+  assert.equal(await evaluate('document.querySelectorAll("[data-ledger-line]").length'), 10);
+  await shot('general-ledger-desktop');
+  const pageOne = await evaluate('location.pathname + location.search');
+  const secondUrl = await evaluate(`document.querySelector('.record-pagination a[rel=next]').getAttribute('href')`);
+  await go(new URL(secondUrl).pathname + new URL(secondUrl).search);
+  await loaded('[data-ledger-carry]');
+  assert.equal(await cell('[data-ledger-carry]'), '₱1,215.00 Dr');
+  assert.equal(await evaluate('document.querySelectorAll("[data-ledger-line]").length'), 4);
+  assert.equal(await evaluate('[...document.querySelectorAll("[data-ledger-running]")].at(-1).textContent.trim()'), '₱1,125.00 Dr');
+  const pageTwo = await evaluate('location.pathname + location.search');
+  const journalUrl = await evaluate('document.querySelector("[data-ledger-line] a").getAttribute("href")');
+  await go(new URL(journalUrl).pathname); await hasText('Posted by'); await loaded('main');
+  assert.ok(!(await text()).includes('Post journal'));
+  await go(pageTwo);
+  const printUrl = await evaluate(`document.querySelector('a[href*="general-ledger/print"]').getAttribute('href')`);
+  await go(new URL(printUrl).pathname + new URL(printUrl).search, 'table');
+  await hasText('Page 2 of 2'); await hasText('₱1,215.00 Dr');
+  await shot('general-ledger-print');
+  await go(pageOne); await loaded('[data-ledger-filters]');
+  await fill('[name=account_id]', revenue); await submit('[data-ledger-filters]', 'SYNTHETIC Revenue');
+  await loaded('[data-ledger-closing]'); assert.equal(await cell('[data-ledger-closing]'), '₱1,125.00 Cr');
+  await go(pageOne);
+  await cdp('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
+  await until(() => evaluate('document.querySelector("#sidebar").getBoundingClientRect().right <= 0'), 'mobile sidebar hidden');
+  await until(() => evaluate('document.documentElement.clientWidth === 390 && document.documentElement.scrollWidth <= 390'), 'ledger mobile layout fits');
+  await shot('general-ledger-mobile');
+  await fill('[data-ledger-filters] [name=start_date]', '2026-01-01');
+  await fill('[data-ledger-filters] [name=end_date]', '2026-01-31');
+  await submit('[data-ledger-filters]', 'No posted movements in this date range');
+  await loaded('[data-ledger-closing]'); assert.equal(await cell('[data-ledger-closing]'), '₱0.00');
+  await fill('[data-ledger-client] [name=client_id]', '2'); await submit('[data-ledger-client]', 'Select an account');
+  assert.equal(await evaluate('document.querySelector("[name=account_id]").value'), '');
+  assert.ok(!(await evaluate('location.search')).includes('account_id'));
+  console.log('PASS: General Ledger client/account/date filters, posted-only balances, inactive history, signed credit balances, pagination carry-forward, journal navigation, selected-page printing, empty states, selection clearing, desktop/mobile rendering.');
+}

@@ -21,6 +21,21 @@ class Client extends Model
         return $this->hasMany(Document::class);
     }
 
+    public function accounts()
+    {
+        return $this->hasMany(Account::class);
+    }
+
+    public function accountingYears()
+    {
+        return $this->hasMany(AccountingYear::class);
+    }
+
+    public function accountingPeriods()
+    {
+        return $this->hasMany(AccountingPeriod::class);
+    }
+
     public function ledgerEntries()
     {
         return $this->hasMany(LedgerEntry::class);

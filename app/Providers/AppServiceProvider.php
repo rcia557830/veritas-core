@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\Account;
+use App\Models\AccountTemplate;
 use App\Models\Client;
 use App\Models\ComplianceRecord;
 use App\Models\Document;
@@ -11,6 +13,8 @@ use App\Models\LedgerEntry;
 use App\Models\Notice;
 use App\Models\Setting;
 use App\Models\User;
+use App\Policies\AccountPolicy;
+use App\Policies\AccountTemplatePolicy;
 use App\Support\Modules;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Gate;
@@ -24,6 +28,8 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        Gate::policy(Account::class, AccountPolicy::class);
+        Gate::policy(AccountTemplate::class, AccountTemplatePolicy::class);
         // Register outside web.php so record binding also works with cached routes.
         Route::bind('record', function ($value, $route) {
             $module = explode('.', $route->getName())[0];

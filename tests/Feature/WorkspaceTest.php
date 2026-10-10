@@ -21,7 +21,7 @@ use Tests\TestCase;
 
 class WorkspaceTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, \Tests\Support\JournalFixtures;
 
     protected User $admin;
 
@@ -42,7 +42,7 @@ class WorkspaceTest extends TestCase
 
     private function ledgerData(string $credit = '100.00'): array
     {
-        return ['client_id' => Client::first()->id, 'transaction_date' => today()->toDateString(), 'reference_number' => 'TEST-LEDGER', 'description' => 'Test balanced entry', 'items' => [['account_name' => 'Cash', 'debit' => '100.00', 'credit' => '0.00'], ['account_name' => 'Revenue', 'debit' => '0.00', 'credit' => $credit]]];
+        return $this->journalPayload(Client::first(), $credit);
     }
 
     private function invoiceData(): array

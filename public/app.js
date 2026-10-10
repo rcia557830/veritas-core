@@ -49,26 +49,46 @@
     if (add) {
       const section = add.closest('[data-lines]'), body = section.querySelector('[data-line-body]');
       const row = body.firstElementChild.cloneNode(true);
-      row.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
-      row.querySelectorAll('input').forEach(input => { input.value = input.name.includes('quantity') ? '1' : input.type === 'number' ? '0' : ''; input.classList.remove('is-invalid'); });
-      body.append(row); reindex(section); row.querySelector('input').focus(); updateTotals(section);
+      row.querySelectorAll('.invalid-feedback,.text-danger').forEach(el => el.remove());
+      if (body.children.length >= 100) return toast('Use at most 100 lines.');
+      row.querySelectorAll('input,select').forEach(input => { input.value = input.name.includes('quantity') ? '1' : input.type === 'number' || /\[(debit|credit)\]$/.test(input.name) ? '0' : ''; input.classList.remove('is-invalid'); });
+      body.append(row); reindex(section); row.querySelector('select,input:not([type=hidden])').focus(); updateTotals(section);
     }
     if (remove) {
       const section = remove.closest('[data-lines]');
-      if (section.querySelectorAll('[data-line-body] tr').length <= (section.dataset.lines === 'ledger' ? 2 : 1)) return toast('Keep at least ' + (section.dataset.lines === 'ledger' ? 'two ledger lines.' : 'one invoice item.'));
+      if (section.querySelectorAll('[data-line-body] tr').length <= (['ledger','journal'].includes(section.dataset.lines) ? 2 : 1)) return toast('Keep at least ' + (['ledger','journal'].includes(section.dataset.lines) ? 'two journal lines.' : 'one invoice item.'));
       remove.closest('tr').remove(); reindex(section); updateTotals(section);
     }
     if (event.target.closest('[data-print]')) window.print();
     if (!event.target.closest('.notification-wrap')) closeNotifications();
   });
   function reindex(section) {
-    section.querySelectorAll('[data-line-body] tr').forEach((row, index) => row.querySelectorAll('input').forEach(input => {
+    section.querySelectorAll('[data-line-body] tr').forEach((row, index) => row.querySelectorAll('input,select').forEach(input => {
       const key = input.name.match(/\[([^\]]+)\]$/)[1]; input.name = `items[${index}][${key}]`;
       input.id = `item_${index}_${key}`; 
-      input.previousElementSibling?.setAttribute('for', input.id);
+      if (input.previousElementSibling?.tagName === 'LABEL') {
+        input.previousElementSibling.setAttribute('for', input.id);
+        const labels = { account_id: 'Account', account_name: 'Account', debit: 'Debit', credit: 'Credit', description: 'Service description', quantity: 'Quantity', unit_price: 'Unit price' };
+        input.previousElementSibling.textContent = (labels[key] || key) + ' line ' + (index + 1);
+      }
     }));
   }
   function updateTotals(section) {
+    if (section.dataset.lines === 'journal') {
+      let debit = 0n, credit = 0n, valid = true;
+      const cents = value => {
+        if (!/^\d{1,9}(?:\.\d{1,2})?$/.test(value)) { valid = false; return 0n; }
+        const [whole, fraction = ''] = value.split('.');
+        return BigInt(whole) * 100n + BigInt(fraction.padEnd(2, '0'));
+      };
+      section.querySelectorAll('[data-line-body] tr').forEach(row => {
+        debit += cents(row.querySelector('[name$="[debit]"]').value);
+        credit += cents(row.querySelector('[name$="[credit]"]').value);
+      });
+      const format = value => 'PHP ' + (value / 100n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '.' + (value % 100n).toString().padStart(2, '0');
+      section.querySelector('[data-line-total]').textContent = valid ? `Debit ${format(debit)} · Credit ${format(credit)} · ${debit === credit && debit > 0n ? 'Balanced' : 'Unbalanced — Draft only'}` : 'Enter non-negative amounts with at most two decimal places.';
+      return;
+    }
     let debit = 0, credit = 0, subtotal = 0;
     section.querySelectorAll('[data-line-body] tr').forEach(row => {
       const value = key => Math.round(Number(row.querySelector(`[name$="[${key}]"]`)?.value || 0) * 100);
@@ -85,13 +105,45 @@
     if (section) updateTotals(section);
   });
   document.querySelectorAll('[data-lines]').forEach(updateTotals);
+  const journalRequests = new WeakMap();
+  document.addEventListener('change', async event => {
+    const form = event.target.closest('[data-journal-form]');
+    if (!form || event.target.name !== 'client_id') return;
+    journalRequests.get(form)?.abort();
+    const controller = new AbortController(); journalRequests.set(form, controller);
+    const client = event.target.value, status = form.querySelector('[data-journal-options-status]');
+    const accountSelects = () => form.querySelectorAll('[name$="[account_id]"], [name="cash_account_id"]');
+    const reset = (select, prompt) => { select.replaceChildren(new Option(prompt, '')); };
+    accountSelects().forEach(select => reset(select, 'Choose an active account'));
+    const period = form.querySelector('[name=accounting_period_id]'); reset(period, 'Select an open period');
+    const documents = form.querySelector('[data-journal-documents]'); documents.replaceChildren();
+    status.textContent = client ? 'Loading client accounts, periods and documents…' : 'Choose a client.';
+    if (!client) return;
+    try {
+      const response = await fetch(form.dataset.optionsUrl + '?client_id=' + encodeURIComponent(client), { signal: controller.signal, headers: { Accept: 'application/json' }, credentials: 'same-origin' });
+      if (!response.ok) throw new Error('Client options could not load. Select the client again to retry.');
+      const data = await response.json();
+      if (controller.signal.aborted || event.target.value !== client) return;
+      accountSelects().forEach(select => data.accounts.filter(account => select.name !== 'cash_account_id' || account.classification === 'Asset').forEach(account => select.add(new Option(account.code + ' · ' + account.name, account.id))));
+      data.periods.forEach(item => period.add(new Option(`${item.label} · ${item.starts_on} – ${item.ends_on}`, item.id)));
+      data.documents.forEach(item => {
+        const wrap = node('div', '', 'form-check'), input = document.createElement('input'), label = node('label', item.label, 'form-check-label');
+        input.type = 'checkbox'; input.name = 'document_ids[]'; input.value = item.id; input.id = 'journal_doc_' + item.id; input.className = 'form-check-input'; label.htmlFor = input.id; wrap.append(input, label); documents.append(wrap);
+      });
+      if (!data.documents.length) documents.append(node('p', 'No accessible documents for this client.', 'subtext'));
+      status.textContent = data.accounts.length ? (data.periods.length ? 'Client options loaded. Previous client selections were cleared.' : 'No open periods configured. You may save a Draft, but cannot submit it yet.') : 'No active accounts. An authorized employee must configure this client’s Chart of Accounts.';
+    } catch (error) { if (error.name !== 'AbortError') status.textContent = error.message; }
+  });
   document.addEventListener('submit', event => {
     const form = event.target;
     if (form.dataset.confirm && approvedForm !== form) {
       event.preventDefault(); pendingForm = form; $('confirmText').textContent = form.dataset.confirm; confirmModal.show(); return;
     }
     // Avoid disabling named submitters before the browser builds the form data.
-    setTimeout(() => form.querySelectorAll('button[type=submit],button:not([type])').forEach(button => { button.disabled = true; }), 0);
+    setTimeout(() => form.querySelectorAll('button[type=submit],button:not([type])').forEach(button => {
+      button.disabled = true;
+      if (form.hasAttribute('data-accounting-form')) { button.textContent = 'Saving…'; form.setAttribute('aria-busy', 'true'); }
+    }), 0);
   });
   $('confirmAccept').addEventListener('click', () => {
     approvedForm = pendingForm; confirmModal.hide(); approvedForm?.requestSubmit();
