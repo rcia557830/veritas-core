@@ -15,7 +15,7 @@ class Summary
 {
     public static function billing(Builder $query): array
     {
-        $totals = ['billed' => 0, 'collected' => 0, 'outstanding' => 0, 'overdue' => 0, 'paid' => 0, 'open' => 0, 'count' => 0];
+        $totals = ['billed' => 0, 'collected' => 0, 'outstanding' => 0, 'overdue' => 0, 'overdue_count' => 0, 'paid' => 0, 'open' => 0, 'count' => 0];
         (clone $query)->reorder()->with(['items', 'payments'])->chunkById(200, function ($invoices) use (&$totals) {
             foreach ($invoices as $i) {
                 $totals['count']++;
@@ -32,6 +32,7 @@ class Summary
                 }
                 if ($i->display_status === 'Overdue') {
                     $totals['overdue'] += $i->balance_cents;
+                    $totals['overdue_count']++;
                 }
             }
         });
@@ -92,11 +93,15 @@ class Summary
             'review' => Access::query(Document::class)->where('status', 'Under Review')->count(),
             'clarification' => Access::query(Document::class)->where('status', 'Needs Clarification')->count(),
             'ledger' => Access::query(LedgerEntry::class)->where('status', 'For Review')->count(),
+            'ledger_draft' => Access::query(LedgerEntry::class)->where('status', 'Draft')->count(),
+            'ledger_reviewed' => Access::query(LedgerEntry::class)->where('status', 'Reviewed')->count(),
+            'ledger_posted' => Access::query(LedgerEntry::class)->where('status', 'Posted')->count(),
             'upcoming' => $compliance['filing_approaching'],
             'overdue' => $compliance['filing_overdue'],
             'compliance' => $compliance,
             'billing' => self::billing(Access::query(Invoice::class)),
             'requirements' => DocumentCompleteness::organization(),
+            'onboarding' => OnboardingReadiness::organization(),
         ];
     }
 }

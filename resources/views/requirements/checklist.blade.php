@@ -33,6 +33,7 @@
         </div>
         <div class="actions">
           <x-badge :status="$requirement->is_required ? 'Required' : 'Optional'"/>
+          <x-badge :status="$requirement->scope === 'periodic' ? 'Periodic' : 'Onboarding'"/>
           <x-badge :status="$requirement->is_active ? 'Active' : 'Inactive'"/>
           <x-badge :status="\App\Services\DocumentCompleteness::label($state)"/>
         </div>

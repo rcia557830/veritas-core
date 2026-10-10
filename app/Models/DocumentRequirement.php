@@ -10,7 +10,7 @@ class DocumentRequirement extends Model
 {
     use SoftDeletes;
 
-    protected $fillable = ['client_id', 'template_id', 'name', 'type', 'description', 'accounting_period_id', 'is_required', 'is_active', 'due_date', 'remarks', 'created_by'];
+    protected $fillable = ['client_id', 'template_id', 'name', 'type', 'description', 'accounting_period_id', 'scope', 'is_required', 'is_active', 'due_date', 'remarks', 'created_by'];
 
     protected function casts(): array
     {
@@ -19,6 +19,15 @@ class DocumentRequirement extends Model
 
     protected static function booted(): void
     {
+        static::creating(function (self $requirement) {
+            // Ensure every requirement is classified for onboarding readiness.
+            // Legacy/template paths that omit `scope` default to "onboarding"
+            // unless an accounting period ties the item to periodic reporting.
+            if ($requirement->scope === null) {
+                $requirement->scope = $requirement->accounting_period_id ? 'periodic' : 'onboarding';
+            }
+        });
+
         static::updating(function (self $requirement) {
             if ($requirement->isDirty('client_id') && $requirement->documents()->exists()) {
                 throw ValidationException::withMessages(['client_id' => 'A requirement already linked to a document cannot change clients.']);

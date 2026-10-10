@@ -18,4 +18,9 @@ class ClientPolicy extends RecordPolicy
     {
         return $this->view($user, $record) && $user->hasPermission('client.restore');
     }
+
+    public function activate(User $user, Client $record): bool
+    {
+        return $this->view($user, $record) && $user->hasPermission('client.activate');
+    }
 }

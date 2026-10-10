@@ -16,6 +16,26 @@
   @endif
   @can('viewAny',\App\Models\DocumentRequirement::class)<a class="btn btn-sm btn-outline-secondary" href="{{ route('requirements.checklist',$record) }}">Open checklist</a>@endcan
 </section>
+@php($readiness = \App\Services\OnboardingReadiness::calculate($record))
+@php($profile = \App\Services\OnboardingReadiness::profileProgress($record))
+@php($cblReq = $readiness['requirements']->first(fn($r) => \App\Services\OnboardingReadiness::isCbl($r)))
+@php($corReq = $readiness['requirements']->first(fn($r) => \App\Services\OnboardingReadiness::isCor($r)))
+<section class="panel panel-pad mb-4">
+  <div class="toolbar">
+    <h2 class="section-title">Onboarding</h2>
+    <div class="actions">
+      <x-badge :status="\App\Services\OnboardingReadiness::label($readiness['state'])"/>
+      <a class="btn btn-sm btn-outline-secondary" href="{{ route('clients.onboarding.checklist',$record) }}">Open checklist</a>
+    </div>
+  </div>
+  @if(!$readiness['not_configured'])
+    <progress class="metric-progress" aria-label="Onboarding progress" value="{{ $readiness['percentage'] }}" max="100"></progress>
+    <p class="subtext mt-2">{{ $readiness['counts']['verified'] }} of {{ $readiness['total'] }} required documents verified · {{ $readiness['counts']['missing'] }} missing</p>
+  @else
+    <p class="subtext">No required onboarding documents configured.</p>
+  @endif
+  <p class="subtext">Registration: {{ $profile['complete'] }}/{{ $profile['total'] }} profile fields complete.@if($cblReq || $corReq) · CBL: {{ $cblReq ? \App\Services\DocumentCompleteness::label(\App\Services\DocumentCompleteness::stateOf($cblReq)) : 'Not configured' }} · COR: {{ $corReq ? \App\Services\DocumentCompleteness::label(\App\Services\DocumentCompleteness::stateOf($corReq)) : 'Not configured' }}@endif</p>
+</section>
 @can('viewAny',\App\Models\ComplianceRecord::class)@php($complianceRecords = \App\Services\Access::query(\App\Models\ComplianceRecord::class)->where('client_id',$record->id)->get())<section class="panel panel-pad mb-4"><div class="toolbar"><h2 class="section-title">Compliance checklist</h2><a class="btn btn-sm btn-outline-secondary" href="{{ route('compliance.checklist',$record) }}">Open checklist</a></div>@if($complianceRecords->isEmpty())<p class="subtext">No compliance requirements configured for this client.</p>@else<p class="subtext">{{ $complianceRecords->where('status','Filed')->count() }} filed · {{ $complianceRecords->where('status','Completed')->count() }} completed · {{ $complianceRecords->whereNotIn('status',['Filed','Completed'])->count() }} outstanding</p>@endif</section>@endcan
 
 <div class="row g-4">@foreach($related as $label=>$items)@php($key=['Documents'=>'documents','Ledger Review'=>'ledger','Compliance'=>'compliance','Billing'=>'billing'][$label])<div class="col-lg-6"><section class="panel panel-pad"><div class="toolbar"><h2 class="section-title">{{ $label }}</h2><a href="{{ route($key.'.index',['client_id'=>$record->id]) }}" class="btn btn-sm btn-outline-secondary">View all</a></div><ul class="timeline">@forelse($items as $item)<li><div class="timeline-content"><a href="{{ route($key.'.show',$item) }}">{{ $item->{\App\Support\Modules::get($key)['label']} }}</a></div><x-badge :status="$item->display_status??$item->status"/></li>@empty<li class="subtext">No related records yet. @can('create',\App\Support\Modules::get($key)['model'])<a data-modal href="{{ route($key.'.create',['client_id'=>$record->id]) }}">Add one</a>@endcan</li>@endforelse</ul></section></div>@endforeach</div>
