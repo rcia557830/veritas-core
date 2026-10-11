@@ -9,7 +9,11 @@ return new class extends Migration
 {
     public function up(): void
     {
+        $installTriggers = \App\Support\AccountingSchema::installsTriggers();
         Schema::table('ledger_entries', fn (Blueprint $t) => $t->string('review_digest', 64)->nullable());
+        if (! $installTriggers) {
+            return;
+        }
         foreach ($this->guards() as $name => [$table, $event, $condition]) {
             if (DB::getDriverName() === 'sqlite') {
                 DB::unprepared("CREATE TRIGGER $name BEFORE $event ON $table WHEN $condition BEGIN SELECT RAISE(ABORT, 'Posted accounting evidence is immutable'); END");
@@ -46,7 +50,7 @@ return new class extends Migration
         if (DB::table('ledger_entries')->where('status', 'Posted')->orWhereNotNull('review_digest')->exists()) {
             throw new RuntimeException('Posting rollback refused: reviewed or posted evidence must be retained.');
         }
-        foreach (array_keys($this->guards()) as $name) {
+        foreach (\App\Support\AccountingSchema::installsTriggers() ? array_keys($this->guards()) : [] as $name) {
             DB::unprepared("DROP TRIGGER IF EXISTS $name");
         }
         Schema::table('ledger_entries', fn (Blueprint $t) => $t->dropColumn('review_digest'));

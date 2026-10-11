@@ -8,6 +8,18 @@ use RuntimeException;
 
 final class AccountingSchema
 {
+    public static function installsTriggers(): bool
+    {
+        if (! config('demo.skip_accounting_triggers', false)) {
+            return true;
+        }
+        if (! config('demo.enabled', false)) {
+            throw new RuntimeException('Skipping accounting triggers requires explicit DEMO_MODE=true.');
+        }
+
+        return false;
+    }
+
     public static function checks(string $table, array $checks): void
     {
         if (DB::getDriverName() === 'mysql') {

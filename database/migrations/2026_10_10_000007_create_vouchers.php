@@ -9,6 +9,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        $installTriggers = \App\Support\AccountingSchema::installsTriggers();
         Schema::create('vouchers', function (Blueprint $t) {
             $t->id();
             $t->unsignedBigInteger('client_id');
@@ -32,7 +33,7 @@ return new class extends Migration
             $t->foreign(['ledger_entry_id', 'client_id'])->references(['id', 'client_id'])->on('ledger_entries')->restrictOnDelete();
             $t->foreign(['cash_account_id', 'client_id'])->references(['id', 'client_id'])->on('accounts')->restrictOnDelete();
         });
-        foreach ($this->guards() as $name => [$table, $event, $condition]) {
+        foreach ($installTriggers ? $this->guards() : [] as $name => [$table, $event, $condition]) {
             if (DB::getDriverName() === 'sqlite') {
                 DB::unprepared("CREATE TRIGGER $name BEFORE $event ON $table WHEN $condition BEGIN SELECT RAISE(ABORT, 'Voucher identity and reviewed or posted records are protected'); END");
             } else {
@@ -61,7 +62,7 @@ return new class extends Migration
         if (DB::table('vouchers')->exists()) {
             throw new RuntimeException('Voucher rollback refused: issued references must be retained.');
         }
-        foreach (array_keys($this->guards()) as $name) {
+        foreach (\App\Support\AccountingSchema::installsTriggers() ? array_keys($this->guards()) : [] as $name) {
             DB::unprepared("DROP TRIGGER IF EXISTS $name");
         }
         Schema::dropIfExists('vouchers');
