@@ -1,9 +1,10 @@
 services:
   - type: web
-    name: veritas-core-demo
+    name: veritas-core-college-demo
     runtime: docker
     branch: feature/render-demo
     plan: free
+    region: frankfurt
     healthCheckPath: /up
     autoDeployTrigger: off
     envVars:

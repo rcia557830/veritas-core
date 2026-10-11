@@ -1,0 +1,55 @@
+VERITAS CORE - COLLEGE DEMO DEPLOYMENT
+Date: 2026-10-11 (Asia/Singapore)
+
+LIVE URL
+https://veritas-core-college-demo.onrender.com
+
+HOSTING
+Render Free Docker web service, Frankfurt region.
+Clever Cloud MySQL DEV: dedicated demonstration database.
+Deployed application commit: 5627624 on feature/render-demo.
+Suspending the older Singapore service was blocked by a local DNS failure.
+In Render, suspend only veritas-core-demo; retain veritas-core-college-demo.
+Existing unrelated Render services were not changed.
+
+DATABASE AND LOGIN
+Verified empty before provisioning; no real/local accounting data imported.
+15 migrations applied; 38 tables; 72 permissions; 3 roles; 1 owner account.
+Zero clients and accounting transactions were imported.
+Use DEMO_OWNER_EMAIL and DEMO_OWNER_PASSWORD from your local .env.render-demo.
+Create separate bookkeeper/manager accounts in Users for independent review.
+Database triggers skipped only through the explicit two-flag demo exception.
+Default installations continue requiring triggers.
+
+ACTUAL VERIFICATION
+Render Docker image build: passed.
+Hosted migrations and owner provisioning: passed.
+HTTPS health/login pages: HTTP 200.
+Owner login: HTTP 302 to HTTPS dashboard; authenticated access passed.
+Dashboard, clients, vouchers, voucher creation, General Journal, General Ledger,
+financial reports, accounts, documents, users, workspace: all HTTP 200.
+Built CSS and JavaScript: HTTP 200.
+Public /.env and /.git/config: HTTP 404.
+Frankfurt live checks: 17.45 seconds total.
+Earlier local demo tests: 2 passed, 48 assertions (four voucher types covered).
+Earlier clean local regression: 306 passed, 14 skipped, 2,098 assertions.
+Earlier frontend production build: passed.
+
+LIMITATIONS
+Only synthetic classroom data should be used.
+Render Free sleeps when idle. Uploaded supporting files are temporary and can
+be lost on restart/redeploy; the MySQL database is external and persistent.
+No database-level immutability triggers, scheduled notification worker, or email
+delivery are enabled. Application permissions and accounting checks remain.
+The database connection did not use TLS. A trusted-CA TLS connection attempt
+failed validation; certificate verification was not disabled to bypass it.
+Hosted mobile/print visuals and full voucher transactions were not rechecked:
+no interactive browser was available. Local voucher workflow tests passed.
+No real database migrations were run and the local .env was not modified.
+Final report/configuration updates are committed locally; their GitHub push was
+blocked by the same DNS failure. The deployed application is already on GitHub.
+
+SECRETS
+Credentials are not included in this report or committed to Git.
+Keep .env.render-demo private, retain APP_KEY, and revoke the deployment API key
+from Render account settings when you no longer need automated deployment access.

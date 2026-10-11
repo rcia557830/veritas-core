@@ -1,7 +1,9 @@
 # Render + Clever Cloud classroom demonstration
 
-This configuration is for synthetic classroom data only. No hosted service has
-been created by adding these files. Never import the local accounting database.
+This configuration is for synthetic classroom data only. The demo was deployed
+on 2026-10-11 at https://veritas-core-college-demo.onrender.com using Render Free
+in Frankfurt and a dedicated Clever Cloud MySQL DEV database. Never import the
+local accounting database. See RENDER-DEMO-RESULTS.txt for the verified results.
 
 ## Accounts and first deployment
 
@@ -68,3 +70,34 @@ out of screenshots/logs and never copy .env or real accounting data into the ima
   ZIP explicitly enabled and passed. No real database migrations were run.
 - Docker is unavailable locally; the Docker image build, live migration, account
   provisioning, HTTPS/mobile/printing and restart checks remain pending.
+
+## Hosted verification (2026-10-11, Asia/Singapore)
+
+- Render successfully built the Docker image from commit 5627624.
+- All 15 migrations applied to the verified empty Clever Cloud database.
+  It contains 38 tables, 72 permissions, one private owner login, zero clients,
+  and zero triggers. Normal application checks remain enabled.
+- The owner has an explicitly provisioned posting permission for this demo.
+  Independent review remains enforced: create separate staff accounts in Users
+  to demonstrate preparing and reviewing a voucher as different people.
+- HTTPS login POST redirected to the dashboard; all 11 authenticated module
+  checks returned 200. Built CSS and JavaScript returned 200; /.env and
+  /.git/config returned 404. Frankfurt checks completed in 17.45 seconds total.
+- The Singapore deployment worked but had slow database round trips. Frankfurt
+  was selected closer to the database, whose address resolves to Clever Cloud's
+  Paris network. Suspending the earlier Singapore service was attempted but
+  blocked by a local DNS failure; it may still be active. Suspend only the older
+  `veritas-core-demo` service manually; retain `veritas-core-college-demo`.
+- Browser UI access was unavailable: hosted mobile interactions, print layout,
+  attachment restart behavior and complete live voucher transactions were not
+  visually verified. Local voucher workflow/printing tests passed as above.
+- The initial direct database connection was not encrypted. TLS with the local
+  trusted CA bundle failed validation; certificate verification was not disabled.
+  A trusted provider CA and verified TLS are still required before any real use.
+- Mail delivery, scheduled notifications, durable uploads, and database triggers
+  are not provided by this free demonstration configuration.
+- API keys, database passwords, APP_KEY, and owner credentials remain only in
+  Git-ignored local configuration and the required hosting environment settings.
+- Final report/configuration changes are committed locally. Pushing this final
+  documentation update to GitHub failed because github.com could not resolve.
+  The deployed application commit and earlier deployment files are already pushed.
