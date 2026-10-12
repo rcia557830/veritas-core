@@ -5,6 +5,8 @@ Laravel 12 / PHP 8.2+ / MySQL application converted from the existing VERITAS CO
 
 ## Current updates
 
+V2 Phase 1 preparation is documented in the [current audit and verification report](docs/PHASE-1-AUDIT.md). The [Phase 2 handoff](docs/PHASE-2-PREPARATION.md) records the agreed four roles, separate Super Admin, invitations and minimum 12-character new passwords. Phase 2 (four-role RBAC with a separate Super Admin, secure employee invitations, 12-character passwords, password reset and session security) is implemented and verified on `feature/veritas-v2`; see [Phase 2 implementation](docs/PHASE-2-IMPLEMENTATION.md). It is not yet deployed.
+
 The three-role RBAC upgrade and usability improvements are implemented. See [role matrix and upgrade instructions](docs/RBAC.md), [complete RBAC code](docs/RBAC-CODE.md), and [file-by-file UI changes with full code](docs/UI-CHANGES.md).
 
 Pagination defaults to 10 with 25/50 options. Billing summary cards use all authorized invoices and remain unchanged by table filters. Office Managers oversee clients, validate documents, review bookkeeping, manage compliance/notices/knowledge and billing; only Owners administer accounts/settings. Bookkeepers retain assigned-client access, prepare their own bookkeeping, and can author their own draft articles. See the matrix for exact workflow limits.
@@ -72,6 +74,8 @@ php artisan optimize:clear
 ```
 
 The development seeder creates sample users, clients, documents, balanced ledger entries, compliance requirements, invoices, payments and articles. Sample documents have metadata but no actual attachments; edit one to upload a file. Existing browser/localStorage records from the old prototype are not automatically imported.
+
+`DatabaseSeeder` coordinates `StaffSeeder` (the same three development accounts and existing permission setup) and `SampleDataSeeder` (the same six-client dataset). For an accounts-only **disposable local/test installation**, use `php artisan db:seed --class=StaffSeeder`; it creates no client or accounting data. All three entry points refuse other environments and preserve existing user credentials. These are not production provisioning tools. Legacy sample journals lack mapped accounts, periods and retained evidence; use the accounting test fixtures for complete posting demonstrations.
 
 Do not use `migrate:fresh` on a database containing records you want to keep: it drops tables. Normal updates use `php artisan migrate`.
 
@@ -165,19 +169,15 @@ php vendor/bin/pint --test app bootstrap config database routes tests
 
 `phpunit.xml` forces an isolated SQLite memory database; tests do not reset `veritas_core_db`.
 
-To check MySQL behavior, create the dedicated test database once:
-
-```sql
-CREATE DATABASE veritas_core_test_codex CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
-
-Then run:
+To check MySQL behavior, use the guarded runner with a locally installed MySQL binary directory:
 
 ```powershell
-php vendor/bin/phpunit --configuration phpunit.mysql.xml
+powershell -NoProfile -File tests/verify-accounting.ps1 -MySqlBin C:/laragon/bin/mysql/mysql-8.4.3-winx64/bin -SkipBrowser
 ```
 
-This configuration forces `veritas_core_test_codex`, uses the MySQL connection credentials from `.env`, and refreshes only that test database. Do not point test configuration at a live database.
+The runner creates its own disposable server/database on a loopback high port. `TestDatabaseGuard` verifies the token, data directory, database name, user and foreign keys before allowing refresh migrations. Running `phpunit.mysql.xml` directly against its old fixed database name is rejected. Never change the guard to use an existing database. Backup tests isolate both source files and backup destinations in temporary storage. PHP ZIP support is required for file backup tests. Omit `-SkipBrowser` only when the runner's browser prerequisites are available.
+
+The following original-installation results are historical; see the Phase 1 report above for current verification:
 
 Verified on PHP 8.3.30 and MySQL 8.4.3: **34 tests, 456 assertions**, passing with both SQLite and MySQL. Coverage includes authentication/reset tokens, active accounts, direct-URL RBAC, assignment privacy, all main page/form rendering, CRUD, private uploads and validation, balanced ledger review, integer-cent invoice calculations, partial payments/overpayments, PDF output, notifications, filters, CSV and settings. Live MySQL HTTP checks also passed for login, main pages, search, notifications, CSV and PDF through the local server; the Apache virtual host returned HTTP 200. Browser visual/interaction checks were not completed because the computer-use helper was unavailable. See `docs/ACCEPTANCE.md` for the browser checklist.
 

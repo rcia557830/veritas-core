@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { runJournal as voucherFlow } from './vouchers.mjs';
+import { runFinalWorkflows } from './final-workflows.mjs';
 
 // Increment 7 onboarding / document / compliance browser flow. Chained after the
 // chart-of-accounts smoke test and before the voucher flow. Runs desktop and a
@@ -63,7 +64,10 @@ export async function runJournal(helpers) {
   }
   await cdp('Emulation.setDeviceMetricsOverride', { width: 1440, height: 1000, deviceScaleFactor: 1, mobile: false });
 
-  // 8. Continue with the existing voucher creation/posting flow (desktop + mobile).
+  // 8. Billing and knowledge workflows not covered by the Increment 8.1 chain.
+  await runFinalWorkflows(helpers);
+
+  // 9. Continue with the existing voucher creation/posting flow (desktop + mobile).
   await voucherFlow(helpers);
 
   console.log('PASS: Client registration, onboarding checklist, justified onboarding exemption, onboarding list, dashboard, document-requirements monitoring, compliance monitoring, and desktop/mobile rendering; then voucher creation and posting.');

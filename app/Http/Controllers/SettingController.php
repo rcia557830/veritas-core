@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Setting;
+use App\Services\AccountSecurity;
 use App\Services\Audit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -40,6 +41,7 @@ class SettingController extends Controller
             Storage::disk('public')->delete($old);
         }
         Audit::record('settings', 'workspace', $setting, 'Firm settings updated.');
+        AccountSecurity::record('workspace.updated');
 
         return back()->with('success', 'Workspace settings saved.');
     }

@@ -207,6 +207,19 @@ class DocumentRequirementTest extends TestCase
         $this->actingAs($this->bookkeeper)->put('/requirements/'.$requirement->id, $this->requirementData(['client_id' => $this->clientB->id]))->assertForbidden();
     }
 
+    public function test_bookkeeper_requirement_filters_hide_other_clients_periods(): void
+    {
+        $own = $this->makePeriod($this->clientA, '2024-01-01', '2024-12-31');
+        $other = $this->makePeriod($this->clientB, '2024-01-01', '2024-12-31');
+
+        foreach (['/requirements', '/requirements/monitoring'] as $url) {
+            $response = $this->actingAs($this->bookkeeper)->get($url)->assertOk();
+            $this->assertTrue($response->viewData('periods')->contains('id', $own->id));
+            $this->assertFalse($response->viewData('periods')->contains('id', $other->id));
+            $response->assertDontSee($this->clientB->business_name);
+        }
+    }
+
     public function test_follow_up_history(): void
     {
         $requirement = $this->makeRequirement();

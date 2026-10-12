@@ -16,5 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias(['active' => ActiveAccount::class, 'role' => RoleMiddleware::class, 'permission' => PermissionMiddleware::class]);
     })
     ->withCommands()
-    ->withExceptions(function (Exceptions $exceptions) {})
+    ->withExceptions(function (Exceptions $exceptions) {
+        $exceptions->dontFlash(['token', 'current_password', 'password', 'password_confirmation']);
+    })
     ->create();

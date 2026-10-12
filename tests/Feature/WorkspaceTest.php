@@ -14,14 +14,17 @@ use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Storage;
+use Tests\Support\SuperAdminFixtures;
 use Tests\TestCase;
 
 class WorkspaceTest extends TestCase
 {
     use RefreshDatabase, \Tests\Support\JournalFixtures;
+    use SuperAdminFixtures;
 
     protected User $admin;
 
@@ -68,7 +71,7 @@ class WorkspaceTest extends TestCase
     {
         $this->withoutExceptionHandling();
         $this->actingAs($this->admin);
-        foreach (['/dashboard', '/clients', '/documents', '/ledger', '/compliance', '/billing', '/knowledge', '/workspace', '/reports', '/admin/users', '/admin/audit-logs', '/profile', '/admin/users/create', '/admin/users/'.$this->staff->id.'/edit'] as $url) {
+        foreach (['/dashboard', '/clients', '/documents', '/ledger', '/compliance', '/billing', '/knowledge', '/reports', '/admin/audit-logs', '/profile'] as $url) {
             $this->get($url)->assertOk();
         }
         foreach (['clients' => Client::class, 'documents' => Document::class, 'ledger' => LedgerEntry::class, 'compliance' => ComplianceRecord::class, 'billing' => Invoice::class, 'knowledge' => KnowledgeArticle::class] as $module => $model) {
@@ -235,20 +238,22 @@ class WorkspaceTest extends TestCase
         $token = Password::createToken($this->staff);
         $this->post('/reset-password', ['email' => $this->staff->email, 'token' => $token, 'password' => 'newPassword456', 'password_confirmation' => 'newPassword456'])->assertRedirect('/login');
         $this->assertTrue(Hash::check('newPassword456', $this->staff->fresh()->password));
-        $this->actingAs($this->staff->fresh())->patch('/profile', ['name' => 'New Name', 'email' => $this->staff->email, 'current_password' => 'wrong'])->assertSessionHasErrors('current_password');
+        $this->actingAs($this->staff->fresh())->withSession(['security_version.'.$this->staff->id => $this->staff->fresh()->session_version])->patch('/profile', ['name' => 'New Name', 'email' => $this->staff->email, 'current_password' => 'wrong'])->assertSessionHasErrors('current_password');
         $this->patch('/profile', ['name' => 'New Name', 'email' => $this->staff->email, 'current_password' => 'newPassword456'])->assertRedirect();
         $this->assertSame('New Name', $this->staff->fresh()->name);
     }
 
     public function test_account_management_and_workspace_settings(): void
     {
-        $this->actingAs($this->admin);
-        $data = ['name' => 'Employee Two', 'email' => 'two@example.com', 'role_id' => $this->staff->role_id, 'status' => 'Active', 'password' => 'safePassword123', 'password_confirmation' => 'safePassword123'];
+        Mail::fake();
+        $technical = $this->superAdmin();
+        $this->actingAs($technical);
+        $data = ['name' => 'Employee Two', 'email' => 'two@example.com', 'role_id' => $this->staff->role_id];
         $this->post('/admin/users', $data)->assertRedirect();
         $user = User::where('email', 'two@example.com')->firstOrFail();
         $this->put('/admin/users/'.$user->id, array_merge($data, ['status' => 'Inactive']))->assertRedirect();
         $this->assertSame('Inactive', $user->fresh()->status);
-        $this->put('/admin/users/'.$this->admin->id, array_merge($data, ['email' => $this->admin->email, 'role_id' => $this->admin->role_id, 'status' => 'Inactive']))->assertForbidden();
+        $this->put('/admin/users/'.$technical->id, array_merge($data, ['email' => $technical->email, 'role_id' => $technical->role_id, 'status' => 'Inactive']))->assertForbidden();
         $this->put('/workspace', ['firm_name' => 'RBCIA Accounting Firm', 'firm_email' => 'firm@example.com', 'currency' => 'PHP', 'page_size' => 25, 'notifications_enabled' => 1])->assertRedirect();
         $this->assertDatabaseHas('settings', ['page_size' => 25]);
         $this->assertGreaterThan(0, AuditLog::count());

@@ -80,7 +80,9 @@ class RequirementController extends Controller
 
         $records = $query->orderBy('due_date')->paginate(15)->withQueryString();
         $clients = Access::query(Client::class)->orderBy('business_name')->limit(500)->get();
-        $periods = AccountingPeriod::with('client')->orderBy('ends_on', 'desc')->limit(1000)->get();
+        $periods = AccountingPeriod::with('client')
+            ->whereIn('client_id', Access::query(Client::class)->select('id'))
+            ->orderBy('ends_on', 'desc')->limit(1000)->get();
 
         return view('requirements.index', compact('records', 'clients', 'periods') + ['types' => $this->types()]);
     }

@@ -16,6 +16,9 @@ class DashboardController extends Controller
 {
     public function __invoke()
     {
+        if (auth()->user()->hasRole('super-admin')) {
+            return view('admin.overview');
+        }
         $stats = Summary::dashboard();
         $deadlines = Access::query(ComplianceRecord::class)->with('client')->where('status', '!=', 'Filed')->orderBy('due_date')->limit(6)->get();
         $clients = Access::query(Client::class)->latest()->limit(5)->get();

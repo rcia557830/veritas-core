@@ -16,7 +16,7 @@ class User extends Authenticatable
 
     protected function casts(): array
     {
-        return ['email_verified_at' => 'datetime', 'password' => 'hashed', 'last_login_at' => 'datetime'];
+        return ['email_verified_at' => 'datetime', 'password' => 'hashed', 'last_login_at' => 'datetime', 'invitation_accepted_at' => 'datetime', 'session_version' => 'integer'];
     }
 
     public function role()

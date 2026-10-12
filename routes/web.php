@@ -11,6 +11,7 @@ use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\FinancialReportController;
 use App\Http\Controllers\FollowUpController;
 use App\Http\Controllers\GeneralLedgerController;
+use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\KnowledgeController;
 use App\Http\Controllers\LedgerController;
@@ -22,6 +23,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RequirementController;
 use App\Http\Controllers\RequirementTemplateController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\SecurityLogController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VoucherController;
@@ -29,6 +31,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/dashboard');
 Route::middleware('guest')->group(function () {
+    Route::get('/invitations/{invitation}', [InvitationController::class, 'show'])->middleware('throttle:20,1')->name('invitations.show');
+    Route::post('/invitations/{invitation}', [InvitationController::class, 'accept'])->middleware('throttle:5,1')->name('invitations.accept');
     Route::get('/login', [AuthController::class, 'login'])->name('login');
     Route::post('/login', [AuthController::class, 'authenticate'])->middleware('throttle:10,1')->name('login.store');
     Route::get('/forgot-password', [AuthController::class, 'forgot'])->name('password.request');
@@ -37,6 +41,7 @@ Route::middleware('guest')->group(function () {
     Route::post('/reset-password', [AuthController::class, 'reset'])->middleware('throttle:5,1')->name('password.update');
 });
 Route::middleware(['auth', 'active', 'role:owner,bookkeeper,office-manager'])->group(function () {
+    Route::get('/admin/audit-logs', [AuditLogController::class, 'index'])->middleware(['role:owner', 'permission:audit.view'])->name('admin.audit.index');
     Route::get('/vouchers/{voucher}/print', [VoucherController::class, 'print'])->name('vouchers.print');
     Route::resource('vouchers', VoucherController::class)->except('destroy');
     Route::get('/financial-reports', [FinancialReportController::class, 'index'])->name('financial-reports.index');
@@ -54,10 +59,6 @@ Route::middleware(['auth', 'active', 'role:owner,bookkeeper,office-manager'])->g
     Route::put('/account-templates/{accountTemplate}/items/{item}', [AccountTemplateController::class, 'updateItem'])->name('account-templates.items.update');
     Route::delete('/account-templates/{accountTemplate}/items/{item}', [AccountTemplateController::class, 'destroyItem'])->name('account-templates.items.destroy');
     Route::resource('account-templates', AccountTemplateController::class)->parameters(['account-templates' => 'accountTemplate'])->except('destroy');
-    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-    Route::get('/profile', [AuthController::class, 'profile'])->name('profile.edit');
-    Route::patch('/profile', [AuthController::class, 'updateProfile'])->name('profile.update');
-    Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::post('/clients/{record}/archive', [ClientController::class, 'archive'])->name('clients.archive');
     Route::get('/clients/onboarding', [ClientController::class, 'onboarding'])->name('clients.onboarding');
     Route::get('/clients/{client}/onboarding', [ClientController::class, 'onboardingChecklist'])->name('clients.onboarding.checklist');
@@ -100,10 +101,6 @@ Route::middleware(['auth', 'active', 'role:owner,bookkeeper,office-manager'])->g
     foreach (['clients' => ClientController::class, 'documents' => DocumentController::class, 'ledger' => LedgerController::class, 'compliance' => ComplianceController::class, 'billing' => InvoiceController::class, 'knowledge' => KnowledgeController::class] as $module => $controller) {
         Route::resource($module, $controller)->parameters([$module => 'record'])->except($module === 'billing' ? ['destroy'] : []);
     }
-    Route::get('/search', SearchController::class)->middleware('throttle:90,1')->name('search');
-    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
-    Route::post('/notifications/read-all', [NotificationController::class, 'all'])->name('notifications.all');
-    Route::post('/notifications/{id}/read', [NotificationController::class, 'read'])->name('notifications.read');
     Route::get('/reports', [ReportController::class, 'index'])->middleware('permission:report.view,report.generate')->name('reports.index');
     Route::get('/reports/csv', [ReportController::class, 'csv'])->middleware('permission:report.export')->name('reports.csv');
     Route::middleware('permission:notice.view')->group(function () {
@@ -111,11 +108,24 @@ Route::middleware(['auth', 'active', 'role:owner,bookkeeper,office-manager'])->g
         Route::post('/notices/{notice}/archive', [NoticeController::class, 'archive'])->name('notices.archive');
         Route::resource('notices', NoticeController::class)->except('destroy');
     });
-    Route::middleware('role:owner')->group(function () {
+});
+Route::middleware(['auth', 'active', 'role:owner,bookkeeper,office-manager,super-admin'])->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+    Route::get('/profile', [AuthController::class, 'profile'])->name('profile.edit');
+    Route::patch('/profile', [AuthController::class, 'updateProfile'])->middleware('throttle:5,1')->name('profile.update');
+    Route::get('/dashboard', DashboardController::class)->name('dashboard');
+    Route::get('/search', SearchController::class)->middleware('throttle:90,1')->name('search');
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/read-all', [NotificationController::class, 'all'])->name('notifications.all');
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'read'])->name('notifications.read');
+    Route::patch('/profile/password', [AuthController::class, 'changePassword'])->middleware('throttle:5,1')->name('profile.password');
+    Route::middleware('role:super-admin')->group(function () {
         Route::get('/workspace', [SettingController::class, 'edit'])->middleware('permission:workspace.manage')->name('workspace.edit');
         Route::put('/workspace', [SettingController::class, 'update'])->middleware('permission:workspace.manage')->name('workspace.update');
         Route::resource('admin/users', UserController::class)->names('admin.users')->except(['show', 'destroy']);
-        Route::post('/admin/users/{user}/reset-password', [UserController::class, 'reset'])->name('admin.users.reset');
-        Route::get('/admin/audit-logs', [AuditLogController::class, 'index'])->middleware('permission:audit.view')->name('admin.audit.index');
+        Route::post('/admin/users/{user}/reset-password', [UserController::class, 'reset'])->middleware('throttle:5,1')->name('admin.users.reset');
+        Route::post('/admin/users/{user}/resend-invitation', [UserController::class, 'resend'])->middleware('throttle:5,1')->name('admin.users.resend');
+        Route::post('/admin/users/{user}/revoke-sessions', [UserController::class, 'revoke'])->middleware('throttle:10,1')->name('admin.users.revoke');
+        Route::get('/admin/security-logs', [SecurityLogController::class, 'index'])->middleware('permission:security.view')->name('admin.security.index');
     });
 });
