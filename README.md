@@ -213,3 +213,13 @@ Verified on PHP 8.3.30 and MySQL 8.4.3: **34 tests, 456 assertions**, passing wi
 - Missing Composer/PHP: use Laragon Terminal and its selected PHP version.
 
 Before deployment, change development passwords, configure real SMTP, use a dedicated MySQL account, HTTPS, `APP_ENV=production`, `APP_DEBUG=false` and secure cookies. Serve only `public`. Back up MySQL together with `storage/app/private`, `storage/app/public` and the existing `.env` application key. The source ZIP intentionally excludes dependencies, `.env`, uploaded documents, runtime logs and database contents; run `composer install` and migrations after extraction. It is a source distribution, not a backup of business data.
+
+### Hosted demo sample data
+
+For the dedicated Render demo only, set `DEMO_MODE=true`, `DEMO_OWNER_EMAIL` to the existing owner's email, and `DEMO_STAFF_PASSWORD` to a private password of at least 10 characters. Then run:
+
+```bash
+php artisan db:seed --class=DemoSeeder --force
+```
+
+This preserves existing accounts and creates missing manager/bookkeeper accounts plus 18 sample clients and their related records. Re-running uses existing sample identifiers. The staff emails are `manager@veritascore.local` and `bookkeeper@veritascore.local`; their initial password comes from `DEMO_STAFF_PASSWORD`. Never run demo seeders against real business data.
