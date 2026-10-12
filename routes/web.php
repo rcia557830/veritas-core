@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AccountController;
+use App\Http\Controllers\AccountingPeriodController;
 use App\Http\Controllers\AccountTemplateController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\AuthController;
@@ -41,6 +42,10 @@ Route::middleware('guest')->group(function () {
     Route::post('/reset-password', [AuthController::class, 'reset'])->middleware('throttle:5,1')->name('password.update');
 });
 Route::middleware(['auth', 'active', 'role:owner,bookkeeper,office-manager'])->group(function () {
+    Route::get('/accounting-periods', [AccountingPeriodController::class, 'index'])->name('accounting-periods.index');
+    Route::post('/clients/{client}/accounting-years', [AccountingPeriodController::class, 'storeYear'])->name('accounting-periods.year');
+    Route::post('/clients/{client}/accounting-periods', [AccountingPeriodController::class, 'storePeriod'])->name('accounting-periods.period');
+    Route::post('/accounting-periods/{period}/close', [AccountingPeriodController::class, 'close'])->name('accounting-periods.close');
     Route::get('/admin/audit-logs', [AuditLogController::class, 'index'])->middleware(['role:owner', 'permission:audit.view'])->name('admin.audit.index');
     Route::get('/vouchers/{voucher}/print', [VoucherController::class, 'print'])->name('vouchers.print');
     Route::resource('vouchers', VoucherController::class)->except('destroy');

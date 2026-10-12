@@ -10,9 +10,11 @@ use App\Services\Access;
 use App\Services\Audit;
 use App\Services\DeadlineCalculator;
 use App\Services\DocumentCompleteness;
+use App\Services\Records;
 use App\Services\Summary;
 use App\Support\Modules;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -62,18 +64,34 @@ class ComplianceController extends ModuleController
             $query->where('assigned_to', $assigned);
         }
 
-        $records = $query->orderBy('due_date')->orderBy('id')->paginate(15)->withQueryString();
-
+        $perPage = Records::pageSize($request);
+        $query->orderBy('due_date')->orderBy('id');
         $deadline = $request->query('deadline');
         if ($deadline && $deadline !== 'all') {
-            $filtered = $records->getCollection()->filter(fn ($r) => match ($deadline) {
-                'submission_approaching' => DeadlineCalculator::isSubmissionApproaching($r),
-                'submission_overdue' => DeadlineCalculator::isSubmissionOverdue($r),
-                'filing_approaching' => DeadlineCalculator::isFilingApproaching($r),
-                'filing_overdue' => DeadlineCalculator::isFilingOverdue($r),
-                default => true,
-            })->values();
-            $records->setCollection($filtered);
+            // Legacy deadlines may be derived using calendar or business days.
+            // Apply the same predicates as the dashboard before counting pages,
+            // retaining only this page in memory.
+            $page = $request->integer('page', 1);
+            $matches = 0;
+            $items = collect();
+            foreach ($query->lazy(500) as $r) {
+                $matchesDeadline = match ($deadline) {
+                    'submission_approaching' => DeadlineCalculator::isSubmissionApproaching($r),
+                    'submission_overdue' => DeadlineCalculator::isSubmissionOverdue($r),
+                    'filing_approaching' => DeadlineCalculator::isFilingApproaching($r),
+                    'filing_overdue' => DeadlineCalculator::isFilingOverdue($r),
+                    default => true,
+                };
+                if ($matchesDeadline) {
+                    if ($matches >= ($page - 1) * $perPage && $items->count() < $perPage) {
+                        $items->push($r);
+                    }
+                    $matches++;
+                }
+            }
+            $records = new LengthAwarePaginator($items, $matches, $perPage, $page, ['path' => $request->url(), 'query' => $request->query()]);
+        } else {
+            $records = $query->paginate($perPage)->withQueryString();
         }
 
         $agencies = Modules::get('compliance')['fields']['agency'][1];

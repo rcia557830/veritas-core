@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Role;
 use App\Services\RecordInput;
 use App\Support\Modules;
 use Illuminate\Foundation\Http\FormRequest;
@@ -61,7 +62,7 @@ class RecordRequest extends FormRequest
             $rules['phone'] = ['nullable', 'string', 'max:60', 'regex:/^[0-9+()\-. ]{7,20}$/'];
             $rules['tin'] = ['nullable', 'string', 'max:30', 'regex:/^\d{3}[ -]?\d{3}[ -]?\d{3}([ -]?\d{0,3})?$/'];
             if ($this->user()->hasPermission('client.assign')) {
-                $rules['assigned_to'] = ['nullable', 'integer', Rule::exists('users', 'id')->where('status', 'Active')];
+                $rules['assigned_to'] = ['nullable', 'integer', Rule::exists('users', 'id')->where('status', 'Active')->whereIn('role_id', Role::whereIn('slug', ['owner', 'office-manager', 'bookkeeper'])->pluck('id')->all())];
             }
         }
         if ($module === 'documents') {

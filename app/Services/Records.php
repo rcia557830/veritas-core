@@ -62,7 +62,7 @@ class Records
         $status = $request->query('status');
         if (is_string($status) && in_array($status, $config['statuses'])) {
             if ($module === 'compliance' && $status === 'Overdue') {
-                $query->where('status', '!=', 'Filed')->whereDate('due_date', '<', today());
+                $query->whereNotIn('status', DeadlineCalculator::TERMINAL)->whereDate('due_date', '<', DeadlineCalculator::today());
             } elseif ($module === 'billing' && ! in_array($status, ['Draft', 'Cancelled'])) {
                 self::invoiceStatus($query, $status);
             } else {
