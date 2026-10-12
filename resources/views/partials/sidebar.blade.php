@@ -1,25 +1,13 @@
-<aside class="sidebar" id="sidebar" aria-label="Workspace navigation"><a class="brand" href="{{ route('dashboard') }}">@if($firm?->logo_path)<img class="brand-mark" style="object-fit:contain" src="{{ asset('storage/'.$firm->logo_path) }}" alt="Firm logo">@else<span class="brand-mark" aria-hidden="true">V</span>@endif<span><span class="brand-name">VERITAS CORE</span><span class="brand-caption">{{ $firm?->firm_name ?? 'RBCIA Accounting Firm' }}</span></span></a>
-<button class="icon-button sidebar-close" id="sidebarClose" aria-label="Close navigation"><i class="bi bi-x-lg" aria-hidden="true"></i></button><div class="nav-label">YOUR WORKSPACE</div><nav id="mainNav" aria-label="Primary navigation">
-<a class="nav-item {{ request()->routeIs('dashboard')?'active':'' }}" href="{{ route('dashboard') }}" @if(request()->routeIs('dashboard')) aria-current="page" @endif><i class="bi bi-grid-1x2" aria-hidden="true"></i>Overview</a>
-@foreach(\App\Support\Modules::all() as $key=>$item)@can('viewAny',$item['model'])<a class="nav-item {{ request()->routeIs($key.'.*')?'active':'' }}" href="{{ route($key.'.index') }}" @if(request()->routeIs($key.'.*')) aria-current="page" @endif><i class="bi bi-{{ $item['icon'] }}" aria-hidden="true"></i>{{ $item['title'] }}</a>@endcan
+<aside class="sidebar" id="sidebar" aria-label="Workspace navigation">
+<a class="brand" href="{{ route('dashboard') }}">@if($firm?->logo_path)<img class="brand-mark" style="object-fit:contain" src="{{ asset('storage/'.$firm->logo_path) }}" alt="Firm logo">@else<span class="brand-mark" aria-hidden="true">V</span>@endif<span><span class="brand-name">VERITAS CORE</span><span class="brand-caption">{{ $firm?->firm_name ?? 'RBCIA Accounting Firm' }}</span></span></a>
+<button class="icon-button sidebar-close" id="sidebarClose" aria-label="Close navigation"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+<div class="nav-label">YOUR WORKSPACE</div>
+<nav id="mainNav" aria-label="Primary navigation">
+@foreach($navigation as $key => $group)
+<details class="nav-group" data-nav-group="{{ $key }}" @if($group['active']) open @endif>
+<summary><i class="bi bi-{{ $group['icon'] }}" aria-hidden="true"></i><span>{{ $group['label'] }}</span></summary>
+<div class="nav-children">@foreach($group['links'] as $link)
+<a class="nav-item {{ $link['active'] ? 'active' : '' }}" href="{{ $link['url'] }}" @if($link['active']) aria-current="page" @endif>{{ $link['label'] }}</a>
+@endforeach</div></details>
 @endforeach
-@can('viewAny',\App\Models\DocumentRequirement::class)<a class="nav-item {{ request()->routeIs('requirements.*') && ! request()->routeIs('requirements.monitoring')?'active':'' }}" href="{{ route('requirements.index') }}" @if(request()->routeIs('requirements.*') && ! request()->routeIs('requirements.monitoring')) aria-current="page" @endif><i class="bi bi-clipboard-check" aria-hidden="true"></i>Document Requirements</a>@endcan
-@can('viewAny',\App\Models\DocumentRequirement::class)<a class="nav-item {{ request()->routeIs('requirements.monitoring')?'active':'' }}" href="{{ route('requirements.monitoring') }}" @if(request()->routeIs('requirements.monitoring')) aria-current="page" @endif><i class="bi bi-clipboard-x" aria-hidden="true"></i>Missing Documents</a>@endcan
- @can('viewAny',\App\Models\Client::class)<a class="nav-item {{ request()->routeIs('clients.onboarding*')?'active':'' }}" href="{{ route('clients.onboarding') }}" @if(request()->routeIs('clients.onboarding*')) aria-current="page" @endif><i class="bi bi-clipboard-check" aria-hidden="true"></i>Client Onboarding</a>@endcan
- @can('viewAny',\App\Models\ComplianceRecord::class)<a class="nav-item {{ request()->routeIs('compliance.monitoring')?'active':'' }}" href="{{ route('compliance.monitoring') }}" @if(request()->routeIs('compliance.monitoring')) aria-current="page" @endif><i class="bi bi-calendar2-week" aria-hidden="true"></i>Compliance Monitoring</a>@endcan
-
-@can('viewAny',\App\Models\LedgerEntry::class)<a class="nav-item {{ request()->routeIs('vouchers.*')?'active':'' }}" href="{{ route('vouchers.index') }}" @if(request()->routeIs('vouchers.*')) aria-current="page" @endif><i class="bi bi-receipt" aria-hidden="true"></i>Accounting Vouchers</a>@endcan
-@can('generalLedger',\App\Models\LedgerEntry::class)<a class="nav-item {{ request()->routeIs('general-ledger.*')?'active':'' }}" href="{{ route('general-ledger.index') }}" @if(request()->routeIs('general-ledger.*')) aria-current="page" @endif><i class="bi bi-book" aria-hidden="true"></i>General Ledger</a>@endcan
-@can('viewAny',\App\Models\Account::class)<a class="nav-item {{ request()->routeIs('accounts.*')?'active':'' }}" href="{{ route('accounts.index') }}"><i class="bi bi-journal-bookmark" aria-hidden="true"></i>Chart of Accounts</a>@endcan
-@can('manage',\App\Models\AccountTemplate::class)<a class="nav-item {{ request()->routeIs('account-templates.*')?'active':'' }}" href="{{ route('account-templates.index') }}"><i class="bi bi-journals" aria-hidden="true"></i>Account Templates</a>@endcan
-@can('notice.view')<a class="nav-item {{ request()->routeIs('notices.*')?'active':'' }}" href="{{ route('notices.index') }}"><i class="bi bi-megaphone" aria-hidden="true"></i>Notices</a>@endcan
-@can('financialReports',\App\Models\LedgerEntry::class)<a class="nav-item {{ request()->routeIs('financial-reports.*')?'active':'' }}" href="{{ route('financial-reports.index') }}" @if(request()->routeIs('financial-reports.*')) aria-current="page" @endif><i class="bi bi-file-earmark-spreadsheet" aria-hidden="true"></i>Financial Reports</a>@endcan
-@can('report.view')<a class="nav-item {{ request()->routeIs('reports.*')?'active':'' }}" href="{{ route('reports.index') }}"><i class="bi bi-bar-chart" aria-hidden="true"></i>Reports</a>@endcan
-@can('generalLedger',\App\Models\LedgerEntry::class)<a class="nav-item {{ request()->routeIs('financial-audit.*','admin.audit.*')?'active':'' }}" href="{{ route('financial-audit.index') }}"><i class="bi bi-clock-history" aria-hidden="true"></i>Financial Audit Trail</a>@endcan
-@if(auth()->user()->hasAnyRole(['owner','super-admin']))<div class="nav-divider"></div>
-@can('workspace.manage')<a class="nav-item {{ request()->routeIs('workspace.*')?'active':'' }}" href="{{ route('workspace.edit') }}"><i class="bi bi-sliders2" aria-hidden="true"></i>Workspace</a>@endcan
-@can('viewAny',\App\Models\User::class)<a class="nav-item {{ request()->routeIs('admin.users.*')?'active':'' }}" href="{{ route('admin.users.index') }}"><i class="bi bi-person-gear" aria-hidden="true"></i>User Management</a>@endcan
-@can('security.view')<a class="nav-item" href="{{ route('admin.security.index') }}"><i class="bi bi-shield-lock" aria-hidden="true"></i>Security Logs</a>@endcan
-@endif
-@can('security.view')<a class="nav-item" href="{{ route('admin.activity.index') }}">System Activity Logs</a>@endcan
 </nav></aside>

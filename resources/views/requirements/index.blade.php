@@ -4,9 +4,8 @@
 <div class="toolbar">
   <p class="toolbar-copy">{{ $records->total() }} requirements · Expected documents for each client, independent of uploads</p>
   <div class="actions">
-    <a class="btn btn-outline-secondary" href="{{ route('requirements.monitoring') }}"><i class="bi bi-clipboard-check" aria-hidden="true"></i>Missing documents</a>
     <a class="btn btn-outline-secondary" href="{{ route('requirements.templates.index') }}">Templates</a>
-    @can('create', App\Models\DocumentRequirement::class)<a class="btn btn-primary" href="{{ route('requirements.create') }}"><i class="bi bi-plus-lg" aria-hidden="true"></i>New requirement</a>@endcan
+    @can('create', App\Models\DocumentRequirement::class)<a class="btn btn-primary" href="{{ route('requirements.create') }}"><i class="bi bi-plus-lg" aria-hidden="true"></i>Add requirement</a>@endcan
   </div>
 </div>
 
@@ -38,7 +37,7 @@
       </div></td>
     </tr>
   @empty
-    <tr><td colspan="9"><div class="empty-state"><div class="empty-icon"><i class="bi bi-clipboard-check" aria-hidden="true"></i></div><h2>No requirements configured</h2><p>Define expected documents for a client to start tracking completeness.</p>@can('create',App\Models\DocumentRequirement::class)<a class="btn btn-primary" href="{{ route('requirements.create') }}">New requirement</a>@endcan</div></td></tr>
+    <tr><td colspan="9"><div class="empty-state"><div class="empty-icon"><i class="bi bi-clipboard-check" aria-hidden="true"></i></div><h2>No requirements configured</h2><p>Define expected documents for a client to start tracking completeness.</p>@can('create',App\Models\DocumentRequirement::class)<a class="btn btn-primary" href="{{ route('requirements.create') }}">Add requirement</a>@endcan</div></td></tr>
   @endforelse
   </tbody></table></div>
 </div>

@@ -30,6 +30,12 @@
   $('sidebarToggle').addEventListener('click', () => sidebar(!sidebarOpen));
   [$('sidebarOverlay'), $('sidebarClose')].forEach(el => el.addEventListener('click', () => { sidebar(false); $('sidebarToggle').focus(); }));
   matchMedia('(min-width: 992px)').addEventListener('change', e => { if (e.matches) sidebar(false); });
+  document.querySelectorAll('.table-responsive').forEach(region => {
+    if (!region.hasAttribute('tabindex')) region.tabIndex = 0;
+    if (!region.hasAttribute('aria-label')) region.setAttribute('aria-label', 'Scrollable records');
+  });
+  const errorSummary = document.querySelector('[data-error-summary]');
+  if (errorSummary) errorSummary.focus();
   document.addEventListener('click', async event => {
     const modalLink = event.target.closest('a[data-modal]');
     if (modalLink && !event.ctrlKey && !event.metaKey) {
@@ -194,7 +200,7 @@
     }
     if (event.key === 'Escape') { closeNotifications(); if (sidebarOpen) { sidebar(false); $('sidebarToggle').focus(); } }
     if (event.key === 'Tab' && sidebarOpen) {
-      const items = [...$('sidebar').querySelectorAll('a,button')], first = items[0], last = items.at(-1);
+      const items = [...$('sidebar').querySelectorAll('a,button,summary')].filter(el => el.getClientRects().length), first = items[0], last = items.at(-1);
       if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
       if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
     }

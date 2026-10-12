@@ -12,6 +12,7 @@ class Records
     public static function query(string $module, Request $request): Builder
     {
         $request->validate([
+            'queue' => 'nullable|in:attention,validation,outstanding',
             'q' => 'nullable|string|max:150', 'search' => 'nullable|string|max:150', 'status' => 'nullable|string|max:60',
             'client_id' => 'nullable|integer|min:1', 'type' => 'nullable|string|max:255',
             'from' => 'nullable|date_format:Y-m-d', 'to' => 'nullable|date_format:Y-m-d',
@@ -58,6 +59,16 @@ class Records
             if (! in_array($module, ['clients', 'knowledge'])) {
                 $query->where('client_id', $client);
             }
+        }
+        if ($module === 'documents' && in_array($request->query('queue'), ['attention', 'validation'])) {
+            $query->whereIn('status', $request->query('queue') === 'validation' ? ['Submitted', 'Under Review'] : ['Submitted', 'Under Review', 'Needs Clarification']);
+        }
+        if ($module === 'billing' && $request->query('queue') === 'outstanding') {
+            $query->where('status', 'Open')->where(function ($unpaid) {
+                foreach (['Open', 'Partially Paid', 'Overdue'] as $label) {
+                    $unpaid->orWhere(fn ($q) => self::invoiceStatus($q, $label));
+                }
+            });
         }
         $status = $request->query('status');
         if (is_string($status) && in_array($status, $config['statuses'])) {

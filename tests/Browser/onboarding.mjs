@@ -102,6 +102,11 @@ export async function runJournal(helpers) {
   // 4. Dashboard navigation.
   await go('/dashboard');
   await hasText('Owner overview');
+  assert.equal(await evaluate('document.querySelectorAll(".overview-card").length'), 6, 'Business overview has six actionable cards');
+  assert.equal(await evaluate('document.querySelectorAll("#mainNav > details").length'), 6, 'Business navigation has six permitted groups');
+  assert.equal(await evaluate('!!document.querySelector("[data-nav-group=administration]")'), false, 'Owner cannot see technical administration');
+  await click('[data-nav-group=accounting] summary');
+  await until(() => evaluate('document.querySelector("[data-nav-group=accounting]").open'), 'Accounting submenu expands');
   await shot('dashboard-desktop');
 
   // 5. Document requirements monitoring.
@@ -118,6 +123,17 @@ export async function runJournal(helpers) {
     await go(url);
     await until(() => evaluate('document.documentElement.scrollWidth <= 390'), `${url} fits mobile`);
     assert.equal(await evaluate('document.documentElement.scrollWidth <= innerWidth'), true, `${url} should not overflow horizontally`);
+    if (url === '/dashboard') {
+      await click('#sidebarToggle');
+      await until(() => evaluate('document.querySelector("#sidebarToggle").getAttribute("aria-expanded") === "true"'), 'Mobile navigation opens');
+      await until(() => evaluate('Math.abs(document.querySelector("#sidebar").getBoundingClientRect().left) < 1'), 'Mobile sidebar transition finishes');
+      await click('[data-nav-group=documents] summary');
+      await until(() => evaluate('document.querySelector("[data-nav-group=documents]").open'), 'Mobile documents submenu expands');
+      await shot('phase5-navigation-mobile');
+      await cdp('Input.dispatchKeyEvent', {type:'keyDown', key:'Escape', code:'Escape', windowsVirtualKeyCode:27});
+      await until(() => evaluate('document.querySelector("#sidebarToggle").getAttribute("aria-expanded") === "false"'), 'Escape closes navigation');
+      assert.equal(await evaluate('document.activeElement.id'), 'sidebarToggle', 'Focus returns to navigation toggle');
+    }
     await shot(`${label}-mobile`);
   }
   await cdp('Emulation.setDeviceMetricsOverride', { width: 1440, height: 1000, deviceScaleFactor: 1, mobile: false });

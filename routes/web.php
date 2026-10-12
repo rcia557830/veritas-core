@@ -131,6 +131,7 @@ Route::middleware(['auth', 'active', 'role:owner,bookkeeper,office-manager,super
     Route::middleware('role:super-admin')->group(function () {
         Route::get('/workspace', [SettingController::class, 'edit'])->middleware('permission:workspace.manage')->name('workspace.edit');
         Route::put('/workspace', [SettingController::class, 'update'])->middleware('permission:workspace.manage')->name('workspace.update');
+        Route::get('/admin/roles', [UserController::class, 'roles'])->name('admin.roles.index');
         Route::resource('admin/users', UserController::class)->names('admin.users')->except(['show', 'destroy']);
         Route::post('/admin/users/{user}/reset-password', [UserController::class, 'reset'])->middleware('throttle:5,1')->name('admin.users.reset');
         Route::post('/admin/users/{user}/resend-invitation', [UserController::class, 'resend'])->middleware('throttle:5,1')->name('admin.users.resend');

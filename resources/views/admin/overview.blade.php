@@ -1,7 +1,10 @@
 @extends('layouts.app')
 @section('title','Super Admin overview')
 @section('content')
-<section class="panel panel-pad"><h2>Technical administration</h2><p>Manage employee invitations, account access and workspace configuration.</p>
-<div class="actions">@can('viewAny', \App\Models\User::class)<a class="btn btn-primary" href="{{ route('admin.users.index') }}">User Management</a>@endcan
-@can('security.view')<a class="btn btn-outline-secondary" href="{{ route('admin.security.index') }}">Security Logs</a>@endcan</div></section>
+<header class="overview-heading"><div><h2>Technical administration</h2><p>Manage employee invitations, access and system settings.</p></div></header>
+<x-overview-cards :cards="$cards"/>
+<section class="panel panel-pad mt-4"><h2 class="section-title">Administration tasks</h2><p>Review employee access and use the activity logs to investigate account changes.</p><div class="actions">
+@can('security.view')<a class="btn btn-outline-secondary" href="{{ route('admin.security.index') }}">Security Logs</a><a class="btn btn-outline-secondary" href="{{ route('admin.activity.index') }}">System Activity Logs</a>@endcan
+@can('workspace.manage')<a class="btn btn-outline-secondary" href="{{ route('workspace.edit') }}">System Settings</a>@endcan
+</div></section>
 @endsection

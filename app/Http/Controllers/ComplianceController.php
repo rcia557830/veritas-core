@@ -27,6 +27,7 @@ class ComplianceController extends ModuleController
     {
         Gate::authorize('viewAny', ComplianceRecord::class);
         $request->validate([
+            'follow_up' => 'nullable|in:open',
             'q' => 'nullable|string|max:150',
             'agency' => 'nullable|string|max:255',
             'reporting_period' => 'nullable|string|max:255',
@@ -38,6 +39,10 @@ class ComplianceController extends ModuleController
 
         $summary = Summary::compliance();
         $query = Access::query(ComplianceRecord::class)->with(['client', 'assignee']);
+
+        if ($request->query('follow_up') === 'open') {
+            $query->whereHas('followUps', fn ($q) => $q->whereIn('status', ['Open', 'In Progress']));
+        }
 
         if ($search = trim((string) $request->query('q'))) {
             $query->where(function ($q) use ($search) {
