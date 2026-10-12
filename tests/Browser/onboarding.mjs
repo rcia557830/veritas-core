@@ -29,12 +29,70 @@ export async function runJournal(helpers) {
   await hasText('SYNTHETIC Browser Client');
   const clientId = (await evaluate('location.pathname')).split('/').at(-1);
 
-  // 2. Onboarding checklist with a justified exemption (no configured requirements).
+  // 2. Upload, match, review and complete onboarding using actual evidence.
+  await go(`/requirements/create?client_id=${clientId}`, '[name=name]');
+  await fill('[name=name]', 'SYNTHETIC Browser Registration Requirement');
+  await fill('[name=type]', 'Certificate of Registration');
+  await fill('[name=remarks]', 'SYNTHETIC saved requirement remarks');
+  await submit('#viewRoot form', 'Document requirement created.');
+  await hasText('SYNTHETIC saved requirement remarks');
+  await go('/documents/create', '[name=file]');
+  await fill('[name=client_id]', clientId);
+  await fill('[name=title]', 'SYNTHETIC Browser Registration Upload');
+  await fill('[name=document_type]', 'Certificate of Registration');
+  await fill('[name=status]', 'Submitted');
+  await fill('[name=received_date]', '2026-04-12');
+  await evaluate(`(() => {
+    const transfer = new DataTransfer();
+    transfer.items.add(new File(['%PDF-1.4\\nSYNTHETIC browser registration evidence\\n%%EOF'], 'registration.pdf', {type:'application/pdf'}));
+    document.querySelector('[name=file]').files = transfer.files;
+  })()`);
+  await submit('#viewRoot form', 'Document created successfully.');
+  const documentPath = await evaluate('location.pathname');
+  const documentId = documentPath.split('/').at(-1);
+  await go(`/clients/${clientId}/checklist`);
+  await fill('form[action$="/link"] [name=document_id]', documentId);
+  await submit('form[action$="/link"]', 'Document linked to requirement.');
+  await hasText('Awaiting verification');
+  await go(documentPath);
+  await fill('#validation_status', 'Approved');
+  await submit('form[action$="/validate"]', 'Document validation saved.');
   await go(`/clients/${clientId}/onboarding`);
-  await hasText('No required onboarding documents');
-  await fill('[name=exemption_reason]', 'SYNTHETIC browser exemption justification');
-  await submit('#viewRoot form', 'Onboarded on');
-  await shot('onboarding-exemption-completed');
+  await hasText('Ready for activation');
+  await click('form[action$="/onboarding/complete"] button');
+  await until(() => evaluate('document.querySelector("#confirmModal").classList.contains("show")'), 'onboarding confirmation');
+  await click('#confirmAccept');
+  await hasText('Client onboarding completed.');
+  await shot('onboarding-document-verified-completed');
+
+  // Explicit fiscal calendar; dates are synthetic test inputs.
+  await go(`/accounting-periods?client_id=${clientId}`);
+  for (const [action, label] of [['accounting-years', 'year'], ['accounting-periods', 'period']]) {
+    const form = `form[action$="/${action}"]`;
+    await fill(`${form} [name=label]`, `SYNTHETIC Browser ${label}`);
+    await fill(`${form} [name=starts_on]`, '2026-01-01');
+    await fill(`${form} [name=ends_on]`, '2026-12-31');
+    await submit(form, `Accounting ${label} created.`);
+  }
+  await shot('accounting-calendar-created');
+
+  // Compliance target and follow-up saved through their forms.
+  await go('/compliance/create', '[name=requirement]');
+  await fill('[name=client_id]', clientId);
+  await fill('[name=agency]', 'Other');
+  await fill('[name=requirement]', 'SYNTHETIC Browser Compliance');
+  await fill('[name=reporting_period]', '2026');
+  await fill('[name=due_date]', '2026-12-31');
+  await fill('[name=status]', 'Awaiting Client Documents');
+  await submit('#viewRoot form', 'Requirement created successfully.');
+  await hasText('Dec 21, 2026');
+  await go(`/clients/${clientId}/compliance`);
+  await fill('form[action$="/follow-ups"] [name=remarks]', 'SYNTHETIC browser follow-up saved');
+  await submit('form[action$="/follow-ups"]', 'Follow-up recorded.');
+  await hasText('SYNTHETIC browser follow-up saved');
+  await go(`/compliance/monitoring?client_id=${clientId}`);
+  await hasText('SYNTHETIC Browser Compliance');
+  await shot('compliance-deadline-followup');
 
   // 3. Onboarding list reflects the onboarded client.
   await go('/clients/onboarding');
@@ -70,5 +128,5 @@ export async function runJournal(helpers) {
   // 9. Continue with the existing voucher creation/posting flow (desktop + mobile).
   await voucherFlow(helpers);
 
-  console.log('PASS: Client registration, onboarding checklist, justified onboarding exemption, onboarding list, dashboard, document-requirements monitoring, compliance monitoring, and desktop/mobile rendering; then voucher creation and posting.');
+  console.log('PASS: Client registration, onboarding checklist, evidence-backed onboarding, onboarding list, dashboard, document-requirements monitoring, compliance monitoring, and desktop/mobile rendering; then voucher creation and posting.');
 }

@@ -42,7 +42,7 @@
         <label class="form-label" for="field_accounting_period_id">Accounting period</label>
         <select id="field_accounting_period_id" name="accounting_period_id" class="form-select @error('accounting_period_id')is-invalid @enderror">
           <option value="">No specific period</option>
-          @foreach($periods as $id => $label)<option value="{{ $id }}" @selected((string)old('accounting_period_id',$requirement->accounting_period_id)===(string)$id)>{{ $label }}</option>@endforeach
+          @foreach($periods as $period)<option value="{{ $period->id }}" data-client="{{ $period->client_id }}" @selected((string)old('accounting_period_id',$requirement->accounting_period_id)===(string)$period->id)>{{ $period->client->business_name }} - {{ $period->label }}</option>@endforeach
         </select>
         @error('accounting_period_id')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
       </div>
@@ -66,6 +66,8 @@
       </div>
       <div class="col-12 mb-3">
         <label class="form-label" for="field_remarks">Staff remarks</label>
+        <textarea id="field_remarks" name="remarks" class="form-control" rows="2">{{ old('remarks',$requirement->remarks) }}</textarea>
+      </div>
       <div class="col-md-6 mb-3">
         <div class="form-check form-switch">
           <input type="hidden" name="is_required" value="0">
@@ -89,6 +91,18 @@
 </section>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
+    const client = document.getElementById('field_client_id');
+    const period = document.getElementById('field_accounting_period_id');
+    function filterPeriods() {
+      for (const option of period.options) {
+        option.hidden = !!option.value && option.dataset.client !== client.value;
+      }
+      const selected = period.selectedOptions[0];
+      period.setCustomValidity(selected?.value && selected.dataset.client !== client.value ? 'Choose an accounting period belonging to the selected client.' : '');
+    }
+    client.addEventListener('change', filterPeriods);
+    period.addEventListener('change', filterPeriods);
+    filterPeriods();
     const template = document.getElementById('field_template_id');
     template.addEventListener('change', function () {
       const option = this.options[this.selectedIndex];
@@ -106,6 +120,3 @@
   });
 </script>
 @endsection
-
-        <textarea id="field_remarks" name="remarks" class="form-control" rows="2">{{ old('remarks',$requirement->remarks) }}</textarea>
-      </div>

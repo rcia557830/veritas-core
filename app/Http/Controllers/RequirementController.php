@@ -7,11 +7,13 @@ use App\Models\Client;
 use App\Models\Document;
 use App\Models\DocumentRequirement;
 use App\Models\DocumentRequirementTemplate;
+use App\Models\User;
 use App\Services\Access;
 use App\Services\Audit;
 use App\Services\DocumentCompleteness;
 use App\Support\Modules;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
@@ -140,9 +142,10 @@ class RequirementController extends Controller
     public function update(Request $request, DocumentRequirement $requirement)
     {
         Gate::authorize('update', $requirement);
-        $data = $this->validated($request, false);
-
-        DB::transaction(function () use ($data, $requirement) {
+        DB::transaction(function () use ($request, $requirement) {
+            $requirement = DocumentRequirement::lockForUpdate()->findOrFail($requirement->id);
+            Gate::authorize('update', $requirement);
+            $data = $this->validated($request, false, $requirement);
             $requirement->update($data);
             Audit::record('updated', 'requirements', $requirement, 'Document requirement updated: '.$requirement->name.'.');
         });
@@ -187,7 +190,7 @@ class RequirementController extends Controller
 
         $stats = DocumentCompleteness::forClient($client);
         $documents = Access::query(Document::class)->where('client_id', $client->id)->latest()->limit(500)->get();
-        $users = \App\Models\User::where('status', 'Active')->orderBy('name')->get();
+        $users = User::where('status', 'Active')->orderBy('name')->get();
 
         return view('requirements.checklist', compact('client', 'requirements', 'stats', 'documents', 'users'));
     }
@@ -198,9 +201,15 @@ class RequirementController extends Controller
         $data = $request->validate(['document_id' => ['required', 'integer', 'exists:documents,id']]);
         $document = Document::findOrFail($data['document_id']);
 
-        $this->assertAssociable($requirement, $document);
-
         DB::transaction(function () use ($requirement, $document, $request) {
+            $requirement = DocumentRequirement::lockForUpdate()->findOrFail($requirement->id);
+            $document = Document::lockForUpdate()->findOrFail($document->id);
+            Gate::authorize('link', $requirement);
+            Gate::authorize('view', $document);
+            $this->assertAssociable($requirement, $document);
+            if ($requirement->documents()->whereKey($document->id)->exists()) {
+                return;
+            }
             $requirement->documents()->attach($document->id, ['linked_by' => $request->user()->id]);
             Audit::record('requirement.linked', 'requirements', $requirement, 'Document '.$document->document_number.' linked to requirement: '.$requirement->name.'.');
         });
@@ -222,7 +231,7 @@ class RequirementController extends Controller
 
     private function assertAssociable(DocumentRequirement $requirement, Document $document): void
     {
-        if ($document->client_id !== $requirement->client_id) {
+        if ((int) $document->client_id !== (int) $requirement->client_id) {
             throw ValidationException::withMessages(['document_id' => 'The document and requirement must belong to the same client.']);
         }
         if ($document->requirements()->wherePivot('requirement_id', '!=', $requirement->id)->exists()) {
@@ -231,8 +240,8 @@ class RequirementController extends Controller
         if ($requirement->accounting_period_id) {
             $period = AccountingPeriod::find($requirement->accounting_period_id);
             $date = $document->received_date;
-            $starts = $period ? \Illuminate\Support\Carbon::parse($period->starts_on) : null;
-            $ends = $period ? \Illuminate\Support\Carbon::parse($period->ends_on) : null;
+            $starts = $period ? Carbon::parse($period->starts_on) : null;
+            $ends = $period ? Carbon::parse($period->ends_on) : null;
             if (! $period || ! $date || ! $starts || ! $ends || $date->lt($starts) || $date->gt($ends)) {
                 $range = $period ? $period->label.': '.$starts->format('M j, Y').' to '.$ends->format('M j, Y') : 'the selected period';
                 throw ValidationException::withMessages(['document_id' => 'The document received date must fall within the requirement’s accounting period ('.$range.').']);
@@ -240,18 +249,24 @@ class RequirementController extends Controller
         }
     }
 
-    private function validated(Request $request, bool $forCreate): array
+    private function validated(Request $request, bool $forCreate, ?DocumentRequirement $requirement = null): array
     {
         $data = $request->validate($this->rules($forCreate));
 
         if (isset($data['client_id'])) {
             Access::client((int) $data['client_id']);
         }
-        if (! empty($data['accounting_period_id'])) {
-            $period = AccountingPeriod::find($data['accounting_period_id']);
-            $clientId = isset($data['client_id']) ? (int) $data['client_id'] : null;
-            if (! $period || ($clientId !== null && $period->client_id !== $clientId)) {
+        $effective = $requirement ? clone $requirement : new DocumentRequirement;
+        $effective->fill($data);
+        if ($effective->accounting_period_id) {
+            $period = AccountingPeriod::find($effective->accounting_period_id);
+            if (! $period || $period->client_id !== (int) $effective->client_id) {
                 throw ValidationException::withMessages(['accounting_period_id' => 'Choose an accounting period belonging to the selected client.']);
+            }
+        }
+        if ($requirement) {
+            foreach ($requirement->documents as $document) {
+                $this->assertAssociable($effective, $document);
             }
         }
 
@@ -260,9 +275,7 @@ class RequirementController extends Controller
 
     private function periodOptions(): array
     {
-        return AccountingPeriod::with('client')->orderBy('client_id')->orderBy('ends_on', 'desc')->get()
-            ->mapWithKeys(fn ($period) => [$period->id => $period->client->business_name.' — '.$period->label])
+        return AccountingPeriod::with('client')->whereIn('client_id', Access::query(Client::class)->select('id'))->orderBy('client_id')->orderBy('ends_on', 'desc')->get()
             ->all();
     }
 }
-

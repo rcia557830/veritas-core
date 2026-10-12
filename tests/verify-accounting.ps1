@@ -74,6 +74,7 @@ log-error=$($artifacts.Replace('\','/'))/mysql.log
         $web = Start-Process $phpBinary -ArgumentList @('-S', "127.0.0.1:$webPort", '-t', 'public', 'tests/Browser/server.php') -WindowStyle Hidden -PassThru -RedirectStandardOutput "$artifacts/web.log" -RedirectStandardError "$artifacts/web-error.log"
         $workflow = if ($SecurityBrowser) { 'tests/Browser/employee-security.mjs' } else { 'tests/Browser/onboarding.mjs' }
         Run-Checked 'node' @('tests/Browser/chart-of-accounts.mjs', "http://127.0.0.1:$webPort", $Browser, "$artifacts/browser", $workflow)
+        if (! $SecurityBrowser) { Run-Checked 'php' @('tests/Browser/verify-workflows.php') }
     }
 } finally {
     if ($web -and ! $web.HasExited) { Stop-Process -Id $web.Id }

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Http\Requests\RecordRequest;
 use App\Models\Client;
+use App\Models\Document;
 use App\Models\User;
 use App\Services\Accounting\JournalWriter;
 use App\Support\Modules;
@@ -20,9 +21,6 @@ class RecordWriter
     public function save(string $module, RecordRequest $request, $record = null)
     {
         $data = $request->validated();
-        if ($module === 'compliance' && ! $request->user()->hasRole('bookkeeper')) {
-            $data = $this->prepareComplianceDeadlines($data, $record);
-        }
         if ($module === 'ledger') {
             return JournalWriter::save($data, $record);
         }
@@ -52,9 +50,6 @@ class RecordWriter
             if (! $assignee->hasAnyRole(['owner', 'office-manager']) && $client->assigned_to !== $assignee->id) {
                 throw ValidationException::withMessages(['assigned_to' => 'Assign this requirement to the client’s assigned bookkeeper, Office Manager or Owner.']);
             }
-        }
-        if ($module === 'compliance' && ! $request->user()->hasRole('bookkeeper') && ($data['status'] ?? '') !== 'Filed') {
-            $data['filed_date'] = null;
         }
         $items = $data['items'] ?? [];
         unset($data['items'],$data['file']);
@@ -94,6 +89,9 @@ class RecordWriter
                 $previousDueDate = null;
                 $previousSubmission = null;
                 $previousClient = null;
+                if ($module === 'documents' && $request->hasFile('file')) {
+                    Client::whereKey($data['client_id'] ?? $record->client_id)->lockForUpdate()->firstOrFail();
+                }
                 if ($record) {
                     $record = $model::lockForUpdate()->findOrFail($record->id);
                     Gate::authorize('update', $record);
@@ -107,6 +105,16 @@ class RecordWriter
                 } else {
                     Gate::authorize('create', $model);
                 }
+                if ($module === 'compliance' && ! $request->user()->hasRole('bookkeeper')) {
+                    $data = $this->prepareComplianceDeadlines($data, $record);
+                    // Filing evidence remains historical evidence after a status change.
+                    if ($record?->filed_date && empty($data['filed_date'])) {
+                        $data['filed_date'] = $record->filed_date->toDateString();
+                    }
+                    if ($record?->reference_number && empty($data['reference_number'])) {
+                        $data['reference_number'] = $record->reference_number;
+                    }
+                }
                 $oldPath = $record?->file_path;
                 if ($module === 'documents' && $request->hasFile('file')) {
                     // Check the locked state, not the potentially stale route-bound record.
@@ -114,6 +122,24 @@ class RecordWriter
                         throw ValidationException::withMessages(['file' => 'Reopen review using Validate document before replacing the attachment. Save the replacement before verifying it in a separate action.']);
                     }
                     $file = $request->file('file');
+                    $data['file_sha256'] = hash_file('sha256', $file->getRealPath());
+                    $duplicate = Document::where('client_id', $data['client_id'] ?? $record->client_id)
+                        ->where(fn ($q) => $q->where('file_sha256', $data['file_sha256'])->orWhereNull('file_sha256'))
+                        ->where('document_type', $data['document_type'])
+                        ->whereDate('received_date', $data['received_date'])
+                        ->when($record, fn ($q) => $q->where('id', '!=', $record->id))
+                        ->lazy(100)->contains(function ($existing) use ($data) {
+                            if ($existing->file_sha256 === $data['file_sha256']) {
+                                return true;
+                            }
+
+                            // Check retained legacy files without rewriting/backfilling them.
+                            return $existing->file_path && Storage::disk('local')->exists($existing->file_path)
+                                && hash_file('sha256', Storage::disk('local')->path($existing->file_path)) === $data['file_sha256'];
+                        });
+                    if ($duplicate) {
+                        throw ValidationException::withMessages(['file' => 'This file has already been submitted for this client, document type and received date.']);
+                    }
                     $path = $file->store('documents', 'local');
                     $data['file_path'] = $path;
                     $data['original_file_name'] = $file->getClientOriginalName();
@@ -197,6 +223,7 @@ class RecordWriter
                 $oldLabel = $old !== '' ? User::find($old)?->name ?? 'Unknown' : 'Unassigned';
                 $newLabel = $after->assignee?->name ?? 'Unassigned';
                 $changes[] = 'assigned_to "'.$oldLabel.'" → "'.$newLabel.'"';
+
                 continue;
             }
             $changes[] = $field.' "'.($old === '' ? '—' : $old).'" → "'.($new === '' ? '—' : $new).'"';
@@ -236,8 +263,12 @@ class RecordWriter
             $data['submission_deadline_is_manual'] = $isOverride;
         } elseif ($record && (bool) $record->submission_deadline_is_manual && $record->getRawOriginal('submission_deadline') !== null) {
             // Preserve a prior manual override when the filing deadline changes.
+            if ($record->submission_deadline->gt($filing)) {
+                throw ValidationException::withMessages(['submission_deadline' => 'The retained internal target is after the filing deadline. Supply a valid target and override reason.']);
+            }
             $data['submission_deadline'] = $record->getRawOriginal('submission_deadline');
             $data['submission_deadline_is_manual'] = true;
+            $data['submission_deadline_override_reason'] = $record->submission_deadline_override_reason;
         } else {
             $data['submission_deadline'] = $auto->toDateString();
             $data['submission_deadline_is_manual'] = false;

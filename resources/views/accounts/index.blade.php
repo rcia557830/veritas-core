@@ -1,6 +1,7 @@
 @extends('layouts.app')
 @section('title','Chart of Accounts')
 @section('content')
+<a class="btn btn-outline-secondary mb-3" href="{{ route('accounting-periods.index', $client ? ['client_id'=>$client->id] : []) }}">Accounting periods</a>
 <div class="toolbar"><p class="toolbar-copy">Independent accounts for each client. Select a client to view their chart.</p>
 @if($client)<div class="actions">@can('create',[\App\Models\Account::class,$client])<a class="btn btn-primary" href="{{ route('accounts.create',['client_id'=>$client->id]) }}">Create account</a>@endcan
 @can('initialize',[\App\Models\Account::class,$client])<a class="btn btn-outline-secondary" href="{{ route('accounts.initialization',['client_id'=>$client->id]) }}">Initialize from template</a>@endcan</div>@endif</div>

@@ -49,7 +49,7 @@ abstract class ModuleController extends Controller
     protected function form(Request $request, $record)
     {
         $clients = Access::query(Client::class)->orderBy('business_name')->limit(500)->get();
-        $users = User::where('status', 'Active')->orderBy('name')->get();
+        $users = User::where('status', 'Active')->whereHas('role', fn ($q) => $q->whereIn('slug', ['owner', 'office-manager', 'bookkeeper']))->orderBy('name')->get();
 
         $context = $this->context();
         if ($this->module === 'compliance' && $request->user()->hasRole('bookkeeper')) {
