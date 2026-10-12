@@ -5,7 +5,7 @@ Laravel 12 / PHP 8.2+ / MySQL application converted from the existing VERITAS CO
 
 ## Current updates
 
-V2 Phase 1 preparation is documented in the [current audit and verification report](docs/PHASE-1-AUDIT.md). The [Phase 2 handoff](docs/PHASE-2-PREPARATION.md) records the agreed four roles, separate Super Admin, invitations and minimum 12-character new passwords. These Phase 2 permissions and authentication changes are not active yet.
+V2 Phase 1 preparation is documented in the [current audit and verification report](docs/PHASE-1-AUDIT.md). The [Phase 2 handoff](docs/PHASE-2-PREPARATION.md) records the agreed four roles, separate Super Admin, invitations and minimum 12-character new passwords. Phase 2 (four-role RBAC with a separate Super Admin, secure employee invitations, 12-character passwords, password reset and session security) is implemented and verified on `feature/veritas-v2`; see [Phase 2 implementation](docs/PHASE-2-IMPLEMENTATION.md). It is not yet deployed.
 
 The three-role RBAC upgrade and usability improvements are implemented. See [role matrix and upgrade instructions](docs/RBAC.md), [complete RBAC code](docs/RBAC-CODE.md), and [file-by-file UI changes with full code](docs/UI-CHANGES.md).
 

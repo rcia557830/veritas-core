@@ -77,7 +77,13 @@ The command emails an expiring invitation and prints no token/password. It refus
 
 ## Verification
 
-Final results are recorded below after the sequential verification runs. Do not run the SQLite and MySQL suites concurrently: existing accounting tests share Laravel's fake attachment directory.
+Sequential results recorded 2026-10-12 (Asia/Manila) on `feature/veritas-v2` (HEAD `9db68fa`). The SQLite and MySQL suites were run one at a time — never concurrently — because existing accounting tests share Laravel's fake attachment directory.
+
+- **SQLite** (`php artisan test`): 331 passed, 2,314 assertions, 17 skipped, 0 failures. The 17 skips are the MySQL-only concurrency suites.
+- **MySQL** (disposable runner `tests/verify-accounting.ps1`): Voucher filter 22 tests / 235 assertions; full regression 348 tests, 2,436 assertions, 1 skipped, 0 failures. The single skip is the in-memory-SQLite backup case.
+- **Phase 2 suites** (MySQL): EmployeeSecurityTest 22, RbacTest 14, InvitationConcurrencyTest 3, WorkspaceTest 13, UsabilityTest 5, DevelopmentSeederTest 3, AuditSecurityTest 3 — all 0 failures.
+- **Chrome browser** (`tests/Browser/employee-security.mjs`): PASS — Owner denied technical routes; Super Admin invitation UI (no password field); email-link acceptance; login; self-service password change; forgot/reset; invitation replay rejection; mobile user management; Super Admin denied business routes; no JavaScript exceptions. Screenshots captured for every security view.
+- **Formatting**: Laravel Pint PASS on all 47 Phase 2-changed PHP files. 27 pre-existing style issues remain in unrelated Phase 1 files (line endings and a few rules) and are intentionally left untouched.
 
 ## Remaining operational limits and Phase 3 handoff
 
