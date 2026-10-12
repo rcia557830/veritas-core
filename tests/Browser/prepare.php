@@ -2,6 +2,7 @@
 
 use App\Models\Client;
 use App\Models\Document;
+use App\Models\Role;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Contracts\Console\Kernel;
@@ -26,6 +27,10 @@ foreach (Client::all() as $client) {
     $client->update(['business_name' => 'SYNTHETIC BROWSER CLIENT '.$client->id]);
 }
 Setting::first()->update(['firm_name' => 'SYNTHETIC BROWSER DEMO']);
+if (in_array('--security', $argv, true)) {
+    User::create(['name' => 'SYNTHETIC Technical Admin', 'email' => 'technical@example.test', 'password' => 'Synthetic-admin-123',
+        'role_id' => Role::where('slug', 'super-admin')->value('id'), 'status' => 'Active']);
+}
 if (in_array('--journal', $argv, true)) {
     $fixtures = new class
     {

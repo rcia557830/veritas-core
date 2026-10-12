@@ -11,11 +11,13 @@ use App\Models\LedgerEntry;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Support\SuperAdminFixtures;
 use Tests\TestCase;
 
 class UsabilityTest extends TestCase
 {
     use RefreshDatabase;
+    use SuperAdminFixtures;
 
     private User $owner;
 
@@ -69,7 +71,7 @@ class UsabilityTest extends TestCase
         for ($i = 1; $i <= 12; $i++) {
             User::create(['name' => 'Paged User '.$i, 'email' => 'paged'.$i.'@example.com', 'password' => 'password123', 'role_id' => $this->owner->role_id, 'status' => 'Active']);
         }
-        $this->get('/admin/users?search=Paged&status=Active&per_page=10&page=2')->assertOk()->assertViewHas('users', fn ($r) => $r->total() === 12 && $r->count() === 2 && str_contains($r->previousPageUrl(), 'search=Paged'));
+        $this->actingAs($this->superAdmin())->get('/admin/users?search=Paged&status=Active&per_page=10&page=2')->assertOk()->assertViewHas('users', fn ($r) => $r->total() === 12 && $r->count() === 2 && str_contains($r->previousPageUrl(), 'search=Paged'));
     }
 
     public function test_billing_totals_ignore_table_search_filters_sort_and_page(): void
@@ -102,7 +104,7 @@ class UsabilityTest extends TestCase
     {
         Setting::first()->update(['page_size' => 15]);
         $this->get('/clients')->assertViewHas('records', fn ($r) => $r->perPage() === 10);
-        $this->put('/workspace', ['firm_name' => 'RBCIA', 'currency' => 'PHP', 'page_size' => 10])->assertRedirect();
-        $this->assertDatabaseHas('settings',['page_size' => 10]);
+        $this->actingAs($this->superAdmin())->put('/workspace', ['firm_name' => 'RBCIA', 'currency' => 'PHP', 'page_size' => 10])->assertRedirect();
+        $this->assertDatabaseHas('settings', ['page_size' => 10]);
     }
 }

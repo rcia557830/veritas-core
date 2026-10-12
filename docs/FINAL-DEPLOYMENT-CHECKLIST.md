@@ -12,6 +12,14 @@
 
 ## Host and Laravel configuration
 
+V2 Phase 1 review of the demo branch adds these requirements; no deployment configuration was activated:
+
+- [ ] Verify ZIP support in both CLI and web PHP for file backups, and PDO MySQL for the application. PDO SQLite is needed for the default test suite.
+- [ ] If packaging a container, exclude secrets, `.env` files, database exports, uploaded documents, backups and local dependencies from its build context; recreate writable storage directories inside the image.
+- [ ] Preserve APP_KEY across restarts, verify database TLS with the provider's trusted CA, and use explicit trusted proxy addresses appropriate to the hosting boundary.
+- [ ] Require installed journal/voucher protection triggers and sufficient migration privileges. Do not adopt `DEMO_SKIP_ACCOUNTING_TRIGGERS` or edit applied accounting migrations.
+- [ ] Use durable private storage and working mail/scheduler services. A passing `/up` response alone does not verify these, database readiness or usable accounts. Do not enable startup migrations or automatic deployment as part of preparation.
+
 - [ ] Provision supported PHP/Laravel runtime, required extensions, Composer dependencies, web server and MySQL; size CPU, memory, disk and private backup volume for expected clients/attachments.
 - [ ] Serve only `public/`; deny web access to `.env`, Git, `storage/app/private`, logs, database dumps and ZIP archives.
 - [ ] Populate `.env` from sanitized `.env.production.example`; use `APP_ENV=production`, `APP_DEBUG=false`, correct `APP_URL`, `APP_TIMEZONE=Asia/Manila`, a generated secret `APP_KEY`, working mail, cache and queue settings.

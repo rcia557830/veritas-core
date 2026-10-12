@@ -6,6 +6,7 @@ use App\Services\Backup\BackupException;
 use App\Services\Backup\BackupStore;
 use App\Services\Backup\FileBackup;
 use App\Services\Backup\RestoreVerification;
+use Illuminate\Filesystem\Filesystem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PDO;
 use Tests\TestCase;
@@ -17,12 +18,33 @@ class BackupTest extends TestCase
     /** @var list<string> */
     private array $tempFiles = [];
 
+    private string $isolatedStorage;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // BackupStore uses storage_path(), independently of the source disk.
+        // Isolate both so retention can never prune application backups.
+        $this->isolatedStorage = sys_get_temp_dir().'/veritas-backup-test-'.bin2hex(random_bytes(16));
+        mkdir($this->isolatedStorage.'/app/private', 0700, true);
+        mkdir($this->isolatedStorage.'/app/public', 0700, true);
+        $this->app->useStoragePath($this->isolatedStorage);
+        config([
+            'filesystems.disks.local.root' => storage_path('app/private'),
+            'filesystems.disks.public.root' => storage_path('app/public'),
+        ]);
+    }
+
     protected function tearDown(): void
     {
         foreach ($this->tempFiles as $file) {
             @unlink($file);
         }
         parent::tearDown();
+        if (isset($this->isolatedStorage)) {
+            (new Filesystem)->deleteDirectory($this->isolatedStorage);
+        }
     }
 
     private function tempPath(string $label): string
@@ -83,12 +105,13 @@ class BackupTest extends TestCase
     public function test_backup_artifacts_are_stored_outside_the_public_web_root(): void
     {
         $this->assertSame(storage_path('app/private/backups'), BackupStore::basePath());
+        $this->assertSame(str_replace('\\', '/', $this->isolatedStorage).'/app/private/backups', str_replace('\\', '/', BackupStore::basePath()));
         $this->assertFalse(str_starts_with(BackupStore::basePath(), public_path()));
     }
 
     public function test_file_backup_produces_a_nonempty_archive_and_manifest(): void
     {
-        $root = sys_get_temp_dir().'/veritas-backup-root-'.uniqid();
+        $root = storage_path('app/private');
         mkdir($root.'/documents', 0700, true);
         file_put_contents($root.'/documents/evidence.pdf', 'SYNTHETIC FILE BACKUP');
         config(['filesystems.disks.local.root' => $root]);

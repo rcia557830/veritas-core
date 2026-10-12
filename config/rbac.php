@@ -13,10 +13,26 @@ return [
         'knowledge.view', 'knowledge.create', 'knowledge.update', 'knowledge.publish', 'knowledge.archive',
         'report.view', 'report.generate', 'report.export', 'report.print',
         'user.view', 'user.create', 'user.update', 'user.role', 'user.activate', 'user.deactivate', 'user.reset-password',
-        'workspace.manage', 'audit.view',
+        'workspace.manage', 'audit.view', 'security.view', 'user.revoke-sessions',
     ],
-    'roles' => ['owner' => 'Owner', 'bookkeeper' => 'Bookkeeper', 'office-manager' => 'Office Manager'],
+    'roles' => ['owner' => 'Owner', 'bookkeeper' => 'Bookkeeper', 'office-manager' => 'Office Manager', 'super-admin' => 'Super Admin'],
     'grants' => [
+        'super-admin' => [
+            'user.view', 'user.create', 'user.update', 'user.role', 'user.activate', 'user.deactivate', 'user.reset-password', 'user.revoke-sessions',
+            'workspace.manage', 'security.view',
+        ],
+        'owner' => [
+            'account.view', 'account.create', 'account.update', 'account.deactivate', 'account.initialize', 'account-template.manage',
+            'client.view', 'client.create', 'client.update', 'client.assign', 'client.activate', 'client.archive', 'client.restore',
+            'document.view', 'document.upload', 'document.update', 'document.validate', 'document.approve', 'document.reject', 'document.download', 'document.archive',
+            'bookkeeping.view', 'bookkeeping.create', 'bookkeeping.update', 'bookkeeping.submit', 'bookkeeping.review', 'bookkeeping.approve', 'bookkeeping.post', 'bookkeeping.delete',
+            'compliance.view', 'compliance.create', 'compliance.update', 'compliance.assign', 'compliance.file', 'compliance.archive', 'compliance.follow-up',
+            'requirement.view', 'requirement.create', 'requirement.update', 'requirement.activate', 'requirement.link', 'requirement.follow-up', 'requirement.archive',
+            'notice.view', 'notice.create', 'notice.update', 'notice.publish', 'notice.archive',
+            'billing.view', 'billing.create', 'billing.update', 'billing.issue', 'billing.payment', 'billing.cancel',
+            'knowledge.view', 'knowledge.create', 'knowledge.update', 'knowledge.publish', 'knowledge.archive',
+            'report.view', 'report.generate', 'report.export', 'report.print', 'audit.view',
+        ],
         'bookkeeper' => [
             'account.view',
             'client.view', 'client.create', 'client.update',

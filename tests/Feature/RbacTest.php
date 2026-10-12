@@ -12,11 +12,14 @@ use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
+use Tests\Support\SuperAdminFixtures;
 use Tests\TestCase;
 
 class RbacTest extends TestCase
 {
     use RefreshDatabase, \Tests\Support\JournalFixtures;
+    use SuperAdminFixtures;
 
     private User $owner;
 
@@ -45,7 +48,7 @@ class RbacTest extends TestCase
 
     public function test_database_permissions_and_helpers_are_not_role_name_only_checks(): void
     {
-        $this->assertDatabaseCount('roles', 3);
+        $this->assertDatabaseCount('roles', 4);
         $this->assertTrue($this->owner->hasRole('owner'));
         $this->assertTrue($this->manager->hasAnyRole(['owner', 'office-manager']));
         $this->assertTrue($this->bookkeeper->hasAnyPermission(['user.create', 'billing.payment']));
@@ -57,7 +60,7 @@ class RbacTest extends TestCase
         $this->actingAs($this->bookkeeper)->post('/billing/'.$invoice->id.'/payments', [])->assertForbidden();
     }
 
-    public function test_only_owner_can_reach_admin_routes_or_change_accounts(): void
+    public function test_business_staff_cannot_reach_admin_routes_or_change_accounts(): void
     {
         foreach ([$this->bookkeeper, $this->manager] as $user) {
             $this->actingAs($user);
@@ -72,22 +75,25 @@ class RbacTest extends TestCase
         $this->assertTrue($this->owner->fresh()->hasRole('owner'));
     }
 
-    public function test_owner_creates_all_roles_and_cannot_demote_or_deactivate_self(): void
+    public function test_super_admin_invites_all_roles_and_cannot_demote_or_deactivate_self(): void
     {
-        $this->actingAs($this->owner);
+        Mail::fake();
+        $admin = $this->superAdmin();
+        $this->actingAs($admin);
         foreach (Role::all() as $role) {
-            $this->post('/admin/users', ['name' => 'New '.$role->name, 'email' => $role->slug.'@example.com', 'role_id' => $role->id, 'status' => 'Active', 'password' => 'password12345', 'password_confirmation' => 'password12345'])->assertRedirect('/admin/users');
+            $this->post('/admin/users', ['name' => 'New '.$role->name, 'email' => $role->slug.'@example.com', 'role_id' => $role->id])->assertRedirect('/admin/users');
+            $this->assertDatabaseHas('users', ['email' => $role->slug.'@example.com', 'status' => 'Pending Invitation']);
         }
-        $this->put('/admin/users/'.$this->owner->id, $this->accountData($this->owner, ['status' => 'Inactive']))->assertForbidden();
-        $this->put('/admin/users/'.$this->owner->id, $this->accountData($this->owner, ['role_id' => $this->bookkeeper->role_id]))->assertForbidden();
-        $this->assertTrue($this->owner->fresh()->hasRole('owner'));
+        $this->put('/admin/users/'.$admin->id, $this->accountData($admin, ['status' => 'Inactive']))->assertForbidden();
+        $this->put('/admin/users/'.$admin->id, $this->accountData($admin, ['role_id' => $this->bookkeeper->role_id]))->assertForbidden();
+        $this->assertTrue($admin->fresh()->hasRole('super-admin'));
         $this->assertDatabaseHas('audit_logs', ['action' => 'user.created']);
         $this->assertDatabaseHas('audit_logs', ['action' => 'role.changed']);
     }
 
-    public function test_owner_role_and_account_changes_are_audited(): void
+    public function test_super_admin_role_and_account_changes_are_audited(): void
     {
-        $this->actingAs($this->owner)->put('/admin/users/'.$this->bookkeeper->id, $this->accountData($this->bookkeeper, ['role_id' => $this->manager->role_id, 'status' => 'Inactive']))->assertRedirect();
+        $this->actingAs($this->superAdmin())->put('/admin/users/'.$this->bookkeeper->id, $this->accountData($this->bookkeeper, ['role_id' => $this->manager->role_id, 'status' => 'Inactive']))->assertRedirect();
         $this->assertDatabaseHas('audit_logs', ['action' => 'account.deactivated', 'record_id' => $this->bookkeeper->id]);
         $this->assertFalse($this->bookkeeper->fresh()->hasPermission('client.view'));
         $this->actingAs($this->bookkeeper->fresh())->get('/dashboard')->assertRedirect('/login');

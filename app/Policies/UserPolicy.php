@@ -8,7 +8,7 @@ class UserPolicy
 {
     private function allows(User $user, string $permission): bool
     {
-        return $user->hasRole('owner') && $user->hasPermission('user.'.$permission);
+        return $user->hasRole('super-admin') && $user->hasPermission('user.'.$permission);
     }
 
     public function viewAny(User $user): bool
@@ -44,5 +44,10 @@ class UserPolicy
     public function resetPassword(User $user, User $record): bool
     {
         return $this->allows($user, 'reset-password');
+    }
+
+    public function revokeSessions(User $user, User $record): bool
+    {
+        return $this->allows($user, 'revoke-sessions');
     }
 }

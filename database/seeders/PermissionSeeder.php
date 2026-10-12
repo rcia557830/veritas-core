@@ -17,7 +17,7 @@ class PermissionSeeder extends Seeder
                 Permission::firstOrCreate(['name' => $name]);
             }
             foreach (config('rbac.roles') as $slug => $name) {
-                $grants = $slug === 'owner' ? config('rbac.permissions') : config('rbac.grants.'.$slug, []);
+                $grants = config('rbac.grants.'.$slug, []);
                 $role = Role::where('slug', $slug)->firstOrFail();
                 // Posting grants are provisional for development. An existing
                 // business installation requires an explicit permission rollout.

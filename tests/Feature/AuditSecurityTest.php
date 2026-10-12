@@ -4,13 +4,15 @@ namespace Tests\Feature;
 
 use App\Models\AuditLog;
 use App\Models\Role;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
+use Tests\Support\SuperAdminFixtures;
 use Tests\TestCase;
 
 class AuditSecurityTest extends TestCase
 {
     use RefreshDatabase;
+    use SuperAdminFixtures;
 
     protected function setUp(): void
     {
@@ -20,16 +22,14 @@ class AuditSecurityTest extends TestCase
 
     public function test_user_creation_is_audited_with_attribution_and_without_the_password(): void
     {
-        $owner = User::where('email', 'owner@veritascore.local')->firstOrFail();
+        $owner = $this->superAdmin();
+        Mail::fake();
         $role = Role::where('slug', 'bookkeeper')->firstOrFail();
 
         $this->actingAs($owner)->post('/admin/users', [
             'name' => 'Audit Subject',
             'email' => 'audit.subject@veritascore.local',
             'role_id' => $role->id,
-            'status' => 'Active',
-            'password' => 'S3cret-password',
-            'password_confirmation' => 'S3cret-password',
         ])->assertRedirect('/admin/users');
 
         $this->assertDatabaseHas('audit_logs', [
@@ -43,16 +43,14 @@ class AuditSecurityTest extends TestCase
 
     public function test_audit_records_carry_a_timestamp_and_responsible_user(): void
     {
-        $owner = User::where('email', 'owner@veritascore.local')->firstOrFail();
+        $owner = $this->superAdmin();
+        Mail::fake();
         $role = Role::where('slug', 'bookkeeper')->firstOrFail();
 
         $this->actingAs($owner)->post('/admin/users', [
             'name' => 'Timestamp Subject',
             'email' => 'timestamp.subject@veritascore.local',
             'role_id' => $role->id,
-            'status' => 'Active',
-            'password' => 'S3cret-password',
-            'password_confirmation' => 'S3cret-password',
         ])->assertRedirect('/admin/users');
 
         $log = AuditLog::where('action', 'user.created')->latest('id')->firstOrFail();
@@ -63,7 +61,8 @@ class AuditSecurityTest extends TestCase
 
     public function test_audit_logs_have_no_edit_or_delete_routes(): void
     {
-        $owner = User::where('email', 'owner@veritascore.local')->firstOrFail();
+        $owner = $this->superAdmin();
+        Mail::fake();
         $this->actingAs($owner);
 
         // The audit index is a read-only GET route; mutation methods are rejected.

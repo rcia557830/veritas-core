@@ -2,7 +2,8 @@ param(
     [string]$MySqlBin = 'C:/laragon/bin/mysql/mysql-8.4.3-winx64/bin',
     [string]$Browser = 'C:/Program Files/Google/Chrome/Application/chrome.exe',
     [switch]$SkipBrowser,
-    [switch]$BrowserOnly
+    [switch]$BrowserOnly,
+    [switch]$SecurityBrowser
 )
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
@@ -62,12 +63,17 @@ log-error=$($artifacts.Replace('\','/'))/mysql.log
         Run-Checked 'php' @('vendor/bin/phpunit', '-c', $testConfig, '--log-junit', "$artifacts/regression.xml")
     }
     if (! $SkipBrowser) {
-        $prepared = & php tests/Browser/prepare.php --journal --vouchers
+        $prepareArgs = @('tests/Browser/prepare.php', '--journal', '--vouchers')
+        if ($SecurityBrowser) { $prepareArgs += '--security' }
+        $prepared = & php @prepareArgs
         $prepared | Write-Output
         if ($LASTEXITCODE -ne 0 -or "$prepared" -notmatch 'Disposable browser fixtures prepared\.') { throw 'Browser fixture preparation failed.' }
         $listener.Start(); $webPort = $listener.LocalEndpoint.Port; $listener.Stop()
-        $web = Start-Process 'php' -ArgumentList @('-S', "127.0.0.1:$webPort", '-t', 'public', 'tests/Browser/server.php') -WindowStyle Hidden -PassThru -RedirectStandardOutput "$artifacts/web.log" -RedirectStandardError "$artifacts/web-error.log"
-        Run-Checked 'node' @('tests/Browser/chart-of-accounts.mjs', "http://127.0.0.1:$webPort", $Browser, "$artifacts/browser", 'tests/Browser/onboarding.mjs')
+        # Launch the executable directly: php.bat launchers can leave orphaned web servers.
+        $phpBinary = (& php -r 'echo PHP_BINARY;').Trim()
+        $web = Start-Process $phpBinary -ArgumentList @('-S', "127.0.0.1:$webPort", '-t', 'public', 'tests/Browser/server.php') -WindowStyle Hidden -PassThru -RedirectStandardOutput "$artifacts/web.log" -RedirectStandardError "$artifacts/web-error.log"
+        $workflow = if ($SecurityBrowser) { 'tests/Browser/employee-security.mjs' } else { 'tests/Browser/onboarding.mjs' }
+        Run-Checked 'node' @('tests/Browser/chart-of-accounts.mjs', "http://127.0.0.1:$webPort", $Browser, "$artifacts/browser", $workflow)
     }
 } finally {
     if ($web -and ! $web.HasExited) { Stop-Process -Id $web.Id }
