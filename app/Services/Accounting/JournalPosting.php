@@ -36,13 +36,14 @@ final class JournalPosting
             Gate::authorize('post', $entry);
             Access::client($entry->client_id);
             self::validate($entry);
+            $before = Audit::snapshot($entry);
             // The sole application bypass of the model's posting-metadata guard.
             // Client -> entry lock order is shared with account/period writers.
             $changed = LedgerEntry::whereKey($entry->id)->where('status', 'Reviewed')->whereNull('posted_at')->whereNull('posted_by')
                 ->update(['status' => 'Posted', 'posted_by' => auth()->id(), 'posted_at' => now(), 'updated_at' => now()]);
             abort_unless($changed === 1, 409, 'This journal has already been posted or changed.');
             $entry->refresh();
-            Audit::record('post', 'ledger', $entry, 'Journal posted; reviewed by #'.$entry->reviewed_by.'; review SHA-256: '.$entry->review_digest.'.');
+            Audit::record('post', 'ledger', $entry, 'Journal posted; reviewed by #'.$entry->reviewed_by.'; review SHA-256: '.$entry->review_digest.'.', $before);
 
             return $entry;
         });

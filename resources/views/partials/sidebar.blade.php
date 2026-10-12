@@ -15,10 +15,11 @@
 @can('notice.view')<a class="nav-item {{ request()->routeIs('notices.*')?'active':'' }}" href="{{ route('notices.index') }}"><i class="bi bi-megaphone" aria-hidden="true"></i>Notices</a>@endcan
 @can('financialReports',\App\Models\LedgerEntry::class)<a class="nav-item {{ request()->routeIs('financial-reports.*')?'active':'' }}" href="{{ route('financial-reports.index') }}" @if(request()->routeIs('financial-reports.*')) aria-current="page" @endif><i class="bi bi-file-earmark-spreadsheet" aria-hidden="true"></i>Financial Reports</a>@endcan
 @can('report.view')<a class="nav-item {{ request()->routeIs('reports.*')?'active':'' }}" href="{{ route('reports.index') }}"><i class="bi bi-bar-chart" aria-hidden="true"></i>Reports</a>@endcan
+@can('generalLedger',\App\Models\LedgerEntry::class)<a class="nav-item {{ request()->routeIs('financial-audit.*','admin.audit.*')?'active':'' }}" href="{{ route('financial-audit.index') }}"><i class="bi bi-clock-history" aria-hidden="true"></i>Financial Audit Trail</a>@endcan
 @if(auth()->user()->hasAnyRole(['owner','super-admin']))<div class="nav-divider"></div>
 @can('workspace.manage')<a class="nav-item {{ request()->routeIs('workspace.*')?'active':'' }}" href="{{ route('workspace.edit') }}"><i class="bi bi-sliders2" aria-hidden="true"></i>Workspace</a>@endcan
 @can('viewAny',\App\Models\User::class)<a class="nav-item {{ request()->routeIs('admin.users.*')?'active':'' }}" href="{{ route('admin.users.index') }}"><i class="bi bi-person-gear" aria-hidden="true"></i>User Management</a>@endcan
-@can('audit.view')<a class="nav-item {{ request()->routeIs('admin.audit.*')?'active':'' }}" href="{{ route('admin.audit.index') }}"><i class="bi bi-clock-history" aria-hidden="true"></i>Audit Logs</a>@endcan
 @can('security.view')<a class="nav-item" href="{{ route('admin.security.index') }}"><i class="bi bi-shield-lock" aria-hidden="true"></i>Security Logs</a>@endcan
 @endif
+@can('security.view')<a class="nav-item" href="{{ route('admin.activity.index') }}">System Activity Logs</a>@endcan
 </nav></aside>

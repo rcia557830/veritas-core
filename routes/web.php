@@ -9,6 +9,7 @@ use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ComplianceController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\FinancialAuditController;
 use App\Http\Controllers\FinancialReportController;
 use App\Http\Controllers\FollowUpController;
 use App\Http\Controllers\GeneralLedgerController;
@@ -46,7 +47,10 @@ Route::middleware(['auth', 'active', 'role:owner,bookkeeper,office-manager'])->g
     Route::post('/clients/{client}/accounting-years', [AccountingPeriodController::class, 'storeYear'])->name('accounting-periods.year');
     Route::post('/clients/{client}/accounting-periods', [AccountingPeriodController::class, 'storePeriod'])->name('accounting-periods.period');
     Route::post('/accounting-periods/{period}/close', [AccountingPeriodController::class, 'close'])->name('accounting-periods.close');
-    Route::get('/admin/audit-logs', [AuditLogController::class, 'index'])->middleware(['role:owner', 'permission:audit.view'])->name('admin.audit.index');
+    Route::get('/financial-audit', [FinancialAuditController::class, 'index'])->name('financial-audit.index');
+    Route::get('/financial-audit/export', [FinancialAuditController::class, 'export'])->name('financial-audit.export');
+    Route::get('/financial-audit/{journal}', [FinancialAuditController::class, 'show'])->whereNumber('journal')->name('financial-audit.show');
+    Route::get('/admin/audit-logs', [FinancialAuditController::class, 'index'])->middleware(['role:owner', 'permission:audit.view'])->name('admin.audit.index');
     Route::get('/vouchers/{voucher}/print', [VoucherController::class, 'print'])->name('vouchers.print');
     Route::resource('vouchers', VoucherController::class)->except('destroy');
     Route::get('/financial-reports', [FinancialReportController::class, 'index'])->name('financial-reports.index');
@@ -131,6 +135,7 @@ Route::middleware(['auth', 'active', 'role:owner,bookkeeper,office-manager,super
         Route::post('/admin/users/{user}/reset-password', [UserController::class, 'reset'])->middleware('throttle:5,1')->name('admin.users.reset');
         Route::post('/admin/users/{user}/resend-invitation', [UserController::class, 'resend'])->middleware('throttle:5,1')->name('admin.users.resend');
         Route::post('/admin/users/{user}/revoke-sessions', [UserController::class, 'revoke'])->middleware('throttle:10,1')->name('admin.users.revoke');
+        Route::get('/admin/activity-logs', [AuditLogController::class, 'index'])->middleware('permission:security.view')->name('admin.activity.index');
         Route::get('/admin/security-logs', [SecurityLogController::class, 'index'])->middleware('permission:security.view')->name('admin.security.index');
     });
 });

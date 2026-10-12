@@ -24,6 +24,7 @@ final class JournalWriter
 
         return AccountingTransaction::forClient($client->id, function () use ($data, $record, $client, $voucherContext) {
             $entry = $record ? LedgerEntry::whereKey($record->id)->lockForUpdate()->firstOrFail() : new LedgerEntry(['client_id' => $client->id, 'created_by' => auth()->id(), 'status' => 'Draft']);
+            $before = $entry->exists ? Audit::snapshot($entry) : null;
             if ($entry->exists && $entry->voucher()->exists() && ! $voucherContext) {
                 throw ValidationException::withMessages(['voucher' => 'Use the voucher editor to keep voucher details and accounting lines consistent.']);
             }
@@ -79,7 +80,7 @@ final class JournalWriter
                 $id ? $oldLines[$id]->update($line) : $entry->items()->create($line);
             }
             JournalEvidence::sync($entry, $data['document_ids'] ?? [], $data['refresh_document_ids'] ?? []);
-            Audit::record($record ? 'updated' : 'created', 'ledger', $entry, 'Structured journal saved; status: '.$entry->status.'. Lines: '.json_encode($lines));
+            Audit::record($record ? 'updated' : 'created', 'ledger', $entry, 'Structured journal saved; status: '.$entry->status.'. Lines: '.json_encode($lines), $before);
 
             return $entry;
         });
@@ -91,6 +92,7 @@ final class JournalWriter
 
         return AccountingTransaction::forClient($record->client_id, function () use ($record, $action, $notes) {
             $entry = LedgerEntry::whereKey($record->id)->lockForUpdate()->firstOrFail();
+            $before = Audit::snapshot($entry);
             Gate::authorize(match ($action) {
                 'submit' => 'submit', 'review' => 'approve', default => 'review'
             }, $entry);
@@ -108,7 +110,7 @@ final class JournalWriter
             }
             $entry->review_digest = $action === 'review' ? JournalReview::digest($entry) : null;
             $entry->save();
-            Audit::record($action, 'ledger', $entry, 'Journal status changed to '.$entry->status.'. '.($notes ?? ''));
+            Audit::record($action, 'ledger', $entry, 'Journal status changed to '.$entry->status.'. '.($notes ?? ''), $before);
 
             return $entry;
         });

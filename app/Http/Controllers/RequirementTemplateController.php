@@ -42,8 +42,10 @@ class RequirementTemplateController extends Controller
     public function store(Request $request)
     {
         Gate::authorize('create', DocumentRequirementTemplate::class);
-        $template = DocumentRequirementTemplate::create($request->validate($this->rules()));
-        Audit::record('created', 'requirements', null, 'Document requirement template created: '.$template->name.'.');
+        DB::transaction(function () use ($request) {
+            $template = DocumentRequirementTemplate::create($request->validate($this->rules()));
+            Audit::record('created', 'requirements', null, 'Document requirement template created: '.$template->name.'.');
+        });
 
         return redirect()->route('requirements.templates.index')->with('success', 'Template created.');
     }
@@ -51,8 +53,10 @@ class RequirementTemplateController extends Controller
     public function update(Request $request, DocumentRequirementTemplate $template)
     {
         Gate::authorize('update', $template);
-        $template->update($request->validate($this->rules()));
-        Audit::record('updated', 'requirements', null, 'Document requirement template updated: '.$template->name.'.');
+        DB::transaction(function () use ($request, $template) {
+            $template->update($request->validate($this->rules()));
+            Audit::record('updated', 'requirements', null, 'Document requirement template updated: '.$template->name.'.');
+        });
 
         return redirect()->route('requirements.templates.index')->with('success', 'Template updated.');
     }
@@ -60,8 +64,10 @@ class RequirementTemplateController extends Controller
     public function destroy(DocumentRequirementTemplate $template)
     {
         Gate::authorize('delete', $template);
-        Audit::record('archived', 'requirements', null, 'Document requirement template archived: '.$template->name.'.');
-        $template->delete();
+        DB::transaction(function () use ($template) {
+            Audit::record('archived', 'requirements', null, 'Document requirement template archived: '.$template->name.'.');
+            $template->delete();
+        });
 
         return redirect()->route('requirements.templates.index')->with('success', 'Template archived.');
     }
