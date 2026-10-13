@@ -84,3 +84,38 @@ h1 { font-size: 28px; font-weight: 600; }
 .ledger-balances dd { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 
 .financial-report-heading{text-align:center;border-bottom:3px solid var(--gold,#c9a55f);padding-bottom:16px;margin-bottom:24px}.financial-report .table{min-width:760px}.financial-report .table td{overflow-wrap:anywhere}.financial-report .detail-grid dd{font-variant-numeric:tabular-nums;overflow-wrap:anywhere}.report-warning{padding:16px;border:1px solid #957126;border-radius:8px;background:#fff8e8;color:#59420e}.report-reconciliation{font-weight:600}
+
+/* Phase 5: shared navigation and a compact, neutral workspace. */
+.nav-group { margin-bottom: 6px; }
+.nav-group > summary { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 6px; cursor: pointer; color: #e5ebf3; font-weight: 600; font-size: 14px; list-style: none; }
+.nav-group > summary::-webkit-details-marker { display: none; }
+.nav-group > summary::after { content: '+'; margin-left: auto; }
+.nav-group[open] > summary::after { content: '\2212'; }
+.nav-group > summary:hover { background: var(--ink-800); }
+.nav-children { padding: 0 0 4px 20px; border-left: 1px solid var(--dark-line); margin-left: 18px; }
+.nav-children .nav-item { padding: 9px 12px; }
+.workflow-tabs { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid var(--line); padding-bottom: 10px; margin-bottom: 24px; }
+.workflow-tabs a { text-decoration: none; padding: 9px 12px; border-radius: 6px; color: var(--ink-700); font-size: 13px; }
+.workflow-tabs a[aria-current] { background: var(--ink-950); color: white; font-weight: 600; }
+.workflow-tabs a:hover { text-decoration: underline; }
+.overview-heading { display: flex; justify-content: space-between; align-items: start; gap: 16px; margin-bottom: 24px; }
+.overview-heading h2 { font-size: 24px; margin-bottom: 8px; }
+.overview-heading p, .overview-heading time { color: var(--ink-600); font-size: 14px; }
+.overview-heading time { white-space: nowrap; }
+.overview-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.overview-card { text-decoration: none; display: flex; flex-direction: column; padding: 22px; gap: 10px; color: var(--ink-950); min-width: 0; }
+.overview-card:hover { text-decoration: none; border-color: var(--ink-600); color: var(--ink-950); }
+.overview-card .stat-value { font-size: clamp(24px, 2.4vw, 34px); overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.overview-card .stat-note { margin: 0; }
+.card-action { text-decoration: underline; font-size: 12px; font-weight: 700; margin-top: auto; padding-top: 8px; color: var(--ink-700); }
+.task-list { list-style: none; margin: 12px 0; padding: 0; }
+.task-list li + li { border-top: 1px solid var(--line); }
+.task-list a { display: flex; justify-content: space-between; gap: 16px; padding: 14px 0; color: var(--ink-700); }
+.permission-list { padding-top: 12px; overflow-wrap: anywhere; }
+.form-section { border: 0; padding: 0; margin: 8px 0 20px; }
+.form-section legend { font-size: 16px; font-weight: 700; border-bottom: 1px solid var(--line); padding-bottom: 10px; margin-bottom: 16px; }
+.table-responsive:focus-visible, summary:focus-visible, a:focus-visible, button:focus-visible { outline: 3px solid #6489b8; outline-offset: 3px; }
+.table th[aria-sort] .sort-button { color: var(--ink-950); font-weight: 700; }
+@media (max-width: 1199px) { .overview-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 575px) { .overview-cards { grid-template-columns: 1fr; } .overview-heading { flex-direction: column; } .workflow-tabs { gap: 2px; } .workflow-tabs a { text-decoration: none; padding: 8px; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }

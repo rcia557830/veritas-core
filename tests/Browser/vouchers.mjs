@@ -91,5 +91,24 @@ export async function runJournal(helpers) {
   await shot('voucher-accounts-ledger-mobile');
   await go(`/general-ledger?client_id=${client}&account_id=${cashAccount}&start_date=2026-04-01&end_date=2026-04-30`);
   for (const { type } of vouchers) await hasText(`${type}-000001`);
+  await go(`/financial-audit?client_id=${client}&status=Posted&from=2026-04-01&to=2026-04-30`);
+  await hasText('Financial Audit Trail');
+  for (const { type } of vouchers) await hasText(`${type}-000001`);
+  assert.ok((await evaluate(`document.querySelector('[data-group="posted"]').textContent`)).includes('1,800.00'));
+  assert.ok((await evaluate(`document.querySelector('[data-group="unposted"]').textContent`)).includes('0.00'));
+  await until(() => evaluate('document.documentElement.scrollWidth <= 390'), 'financial audit fits mobile');
+  assert.equal(await evaluate(`getComputedStyle(document.querySelector('[aria-label="Financial journal lines"]')).overflowX`), 'auto');
+  assert.ok(await evaluate(`(() => { const table = document.querySelector('[aria-label="Financial journal lines"]'); table.scrollLeft = table.scrollWidth; return table.scrollLeft > 0; })()`), 'All financial columns must be reachable by horizontal scrolling');
+  await shot('financial-audit-mobile-scrolled');
+  await evaluate(`document.querySelector('[aria-label="Financial journal lines"]').scrollLeft = 0`);
+  await shot('financial-audit-mobile');
+  await click('a[href*="/financial-audit/"]:not([href*="export"])'); await hasText('Supporting documents');
+  await hasText('Posted - read-only');
+  await shot('financial-audit-detail-mobile');
+  await cdp('Emulation.setDeviceMetricsOverride', { width: 1440, height: 1000, deviceScaleFactor: 1, mobile: false });
+  await go(`/financial-audit?client_id=${client}&q=CV-000001&status=Posted`); await hasText('CV-000001');
+  assert.ok(!(await text()).includes('CR-000001'));
+  await shot('financial-audit-filtered-desktop');
+  console.log('PASS: Financial audit posted voucher reconciliation, reference filtering, financial details, and desktop/mobile rendering.');
   console.log('PASS: Four voucher types created on mobile, receipt edited, evidence retained, independent review/posting, fixed references, immutable posted UI, type/client/status filtering, four print layouts with notes, desktop/mobile forms and details, General Ledger and all four financial reports.');
 }

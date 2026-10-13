@@ -1,8 +1,9 @@
 @extends('layouts.app')
-@section('title',$config['title'])
+@section('title', $module==='documents' && request('queue')==='validation' ? 'Document Validation' : ($module==='knowledge' ? 'Knowledge Base' : $config['title']))
 @section('content')
+@if($module==='knowledge' && in_array(request('q'),['template','guideline']))<p class="form-text">Showing articles matching {{ request('q') }} in their title, content, category or tags. Use search and category filters to refine the results.</p>@endif
 @if(isset($billingSummary))@include('billing.summary')@endif
-<div class="toolbar"><p class="toolbar-copy">{{ $records->total() }} records · {{ $config['title'] === 'Ledger Review' ? 'Review entries before posting in your general ledger system' : 'Your team’s work, in one place' }}</p>@can('create',$config['model'])<a data-modal class="btn btn-primary" href="{{ route($module.'.create') }}"><i class="bi bi-plus-lg" aria-hidden="true"></i>New {{ $config['singular'] }}</a>@endcan</div>
+<div class="toolbar"><p class="toolbar-copy">{{ $records->total() }} records · {{ $config['title'] === 'Ledger Review' ? 'Review entries before posting in your general ledger system' : 'Your team’s work, in one place' }}</p>@can('create',$config['model'])<a data-modal class="btn btn-primary" href="{{ route($module.'.create') }}"><i class="bi bi-plus-lg" aria-hidden="true"></i>Add {{ $config['singular'] }}</a>@endcan</div>
 @include('records.filters')
 @if(in_array($module,['compliance','knowledge']))
 <div class="row g-3">
@@ -21,7 +22,7 @@
 <p class="article-preview">{{ $record->content }}</p>
 <div class="actions">@foreach($record->tags??[] as $tag)<span class="tag">#{{ $tag }}</span>@endforeach</div>
 @endif
-<div class="actions"><a class="btn btn-sm btn-outline-secondary" href="{{ route($module.'.show',$record) }}">View details</a>@can('update',$record)<a data-modal class="btn btn-sm btn-outline-secondary" href="{{ route($module.'.edit',$record) }}">{{ $module==='compliance' && auth()->user()->hasPermission('compliance.file')?'Update / mark filed':'Edit' }}</a>@endcan</div>
+<div class="actions"><a class="btn btn-sm btn-outline-secondary" href="{{ route($module.'.show',$record) }}">View details</a>@can('update',$record)<a data-modal class="btn btn-sm btn-outline-secondary" href="{{ route($module.'.edit',$record) }}">Edit</a>@endcan</div>
 </article>
 </div>
 @empty

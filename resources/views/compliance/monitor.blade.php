@@ -1,9 +1,8 @@
 @extends('layouts.app')
-@section('title','Compliance Monitoring')
+@section('title',request('follow_up')==='open'?'Compliance Follow-Ups':'Compliance Monitoring')
 @section('content')
 <div class="toolbar">
   <p class="toolbar-copy">{{ $summary['pending'] }} open requirements across accessible clients</p>
-  <div class="actions"><a class="btn btn-outline-secondary" href="{{ route('compliance.index') }}">All compliance records</a></div>
 </div>
 
 <div class="row g-3 mb-4">
@@ -29,14 +28,14 @@
     <option value="filing_overdue" @selected(request('deadline')==='filing_overdue')>Filing overdue</option>
     <option value="filing_approaching" @selected(request('deadline')==='filing_approaching')>Filing approaching</option>
   </select></label>
-  <button class="btn btn-primary">Apply</button><a class="btn btn-outline-secondary" href="{{ route('compliance.monitoring') }}">Clear</a>
+  <label>Follow-ups<select name="follow_up" class="form-select"><option value="">All records</option><option value="open" @selected(request('follow_up')==='open')>Open or in progress</option></select></label><x-per-page/><button class="btn btn-primary">Apply</button><a class="btn btn-outline-secondary" href="{{ route('compliance.monitoring') }}">Clear</a>
 </form>
 
 <div class="panel table-panel">
   <div class="table-responsive"><table class="table table-hover"><caption class="visually-hidden">Compliance monitoring</caption><thead><tr><th>Requirement</th><th>Client</th><th>Agency</th><th>Period</th><th>Submission due</th><th>Filing due</th><th>Status</th><th>Urgency</th></tr></thead><tbody>
   @forelse($records as $record)
     <tr>
-      <td><a class="text-button" href="{{ route('compliance.show',$record) }}">{{ $record->requirement }}</a></td>
+      <td><a class="text-button" href="{{ request('follow_up')==='open' ? route('compliance.checklist',$record->client) : route('compliance.show',$record) }}">{{ $record->requirement }}</a></td>
       <td><a href="{{ route('clients.show',$record->client) }}">{{ $record->client->business_name }}</a></td>
       <td>{{ $record->agency }}</td>
       <td>{{ $record->reporting_period ?? '—' }}</td>

@@ -53,6 +53,7 @@ final class VoucherWriter
             }
             $new = ! $voucher;
             $voucher = $voucher ? Voucher::findOrFail($voucher->id) : new Voucher;
+            $before = $new ? null : Audit::snapshot($voucher->journal);
             $sequence = $new ? Money::addCents((int) Voucher::where('client_id', $client->id)->where('type', $data['type'])->max('sequence'), 1) : $voucher->sequence;
             $reference = $new ? $data['type'].'-'.str_pad((string) $sequence, 6, '0', STR_PAD_LEFT) : $voucher->reference;
             $entry = JournalWriter::save(array_replace($data, ['reference_number' => $reference]), $new ? null : $voucher->journal, voucherContext: true);
@@ -70,7 +71,7 @@ final class VoucherWriter
             self::validateMetadata($voucher, $entry);
             JournalEligibility::validate($entry);
             $voucher->save();
-            Audit::record($new ? 'voucher.created' : 'voucher.updated', 'ledger', $entry, 'Voucher '.$reference.' ('.$data['type'].') saved. '.json_encode($voucher->only(['party', 'cash_account_id', 'amount', 'check_number', 'check_date'])));
+            Audit::record($new ? 'voucher.created' : 'voucher.updated', 'ledger', $entry, 'Voucher '.$reference.' ('.$data['type'].') saved. '.json_encode($voucher->only(['party', 'cash_account_id', 'amount', 'check_number', 'check_date'])), $before);
 
             return $voucher->fresh();
         });

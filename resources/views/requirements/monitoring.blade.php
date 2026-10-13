@@ -1,9 +1,8 @@
 @extends('layouts.app')
-@section('title','Missing Documents')
+@section('title',request('follow_up')==='open'?'Document Follow-Ups':'Missing Documents')
 @section('content')
 <div class="toolbar">
   <p class="toolbar-copy">{{ $summary['total'] }} active requirements across accessible clients</p>
-  <div class="actions"><a class="btn btn-outline-secondary" href="{{ route('requirements.index') }}">All requirements</a></div>
 </div>
 
 <div class="row g-3 mb-4">
@@ -29,7 +28,7 @@
     <option value="today" @selected(request('due')==='today')>Due today</option>
     <option value="soon" @selected(request('due')==='soon')>Due within 10 days</option>
   </select></label>
-  <button class="btn btn-primary">Apply</button><a class="btn btn-outline-secondary" href="{{ route('requirements.monitoring') }}">Clear</a>
+  <label>Follow-ups<select name="follow_up" class="form-select"><option value="">All records</option><option value="open" @selected(request('follow_up')==='open')>Open or in progress</option></select></label><x-per-page/><button class="btn btn-primary">Apply</button><a class="btn btn-outline-secondary" href="{{ route('requirements.monitoring') }}">Clear</a>
 </form>
 
 <div class="panel table-panel">

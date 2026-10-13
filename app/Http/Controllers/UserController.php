@@ -19,6 +19,13 @@ use Illuminate\Validation\ValidationException;
 
 class UserController extends Controller
 {
+    public function roles()
+    {
+        Gate::authorize('viewAny', User::class);
+
+        return view('admin.roles', ['roles' => Role::with(['permissions' => fn ($q) => $q->orderBy('name')])->orderBy('name')->get()]);
+    }
+
     public function index(Request $request)
     {
         Gate::authorize('viewAny', User::class);

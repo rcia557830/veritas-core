@@ -1,8 +1,9 @@
 <!doctype html><html lang="en"><head>@include('layouts.head')</head>
 <body data-search-url="{{ route('search') }}" data-notifications-url="{{ route('notifications.index') }}" data-read-all-url="{{ route('notifications.all') }}">
 <a class="skip-link" href="#viewRoot">Skip to content</a>
+@php($navigation = \App\Support\Navigation::groups())
 <div class="app-shell">@include('partials.sidebar')<button id="sidebarOverlay" class="sidebar-overlay" aria-label="Close navigation" hidden></button>
-<main class="main-area" id="mainArea">@include('partials.topbar')<div class="content-wrap"><div id="viewRoot" tabindex="-1">@include('partials.alerts')@yield('content')</div></div>
+<main class="main-area" id="mainArea">@include('partials.topbar')<div class="content-wrap"><div id="viewRoot" tabindex="-1">@include('partials.alerts')@include('partials.workflow-tabs')@yield('content')</div></div>
 <footer class="workspace-footer"><span>VERITAS CORE</span><span>{{ $firm?->firm_name ?? 'RBCIA Accounting Firm' }}</span></footer></main></div>
 <div class="modal fade" id="formModal" tabindex="-1" aria-labelledby="formModalTitle"><div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h2 id="formModalTitle" class="modal-title">VERITAS CORE</h2><button class="btn-close" data-bs-dismiss="modal" aria-label="Close form"></button></div><div class="modal-body" id="formModalBody"></div></div></div></div>
 <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmTitle"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h2 id="confirmTitle" class="modal-title">Confirm action</h2><button class="btn-close" data-bs-dismiss="modal" aria-label="Close confirmation"></button></div><div class="modal-body" id="confirmText"></div><div class="modal-footer"><button class="btn btn-outline-secondary" data-bs-dismiss="modal">Keep record</button><button class="btn btn-outline-danger" id="confirmAccept">Continue</button></div></div></div></div>

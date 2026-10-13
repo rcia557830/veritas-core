@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { verifyRoleDashboards } from './role-dashboards.mjs';
 
 // Runs only after guarded MySQL preparation with --security. No real mailbox.
 export async function runJournal({ cdp, evaluate, fill, click, go, loaded, hasText, shot, until, text }) {
+  await verifyRoleDashboards({ cdp, evaluate, fill, click, go, loaded, hasText, shot, until });
   const formSubmit = async (selector, expected) => {
     await evaluate(`document.querySelector(${JSON.stringify(selector)}).requestSubmit()`);
     await hasText(expected);
@@ -25,6 +27,9 @@ export async function runJournal({ cdp, evaluate, fill, click, go, loaded, hasTe
   await go('/admin/users', 'body'); await hasText('403'); // Owner separation
   await go('/dashboard'); await logout();
   await login('technical@example.test', 'Synthetic-admin-123', 'Technical administration');
+  assert.equal(await evaluate('document.querySelectorAll(".overview-card").length'), 4, 'Technical overview has four cards');
+  assert.equal(await evaluate('document.querySelectorAll("#mainNav > details").length'), 2, 'Technical navigation contains only Dashboard and Administration');
+  await go('/admin/roles'); await hasText('Roles and Permissions'); await shot('phase5-roles-desktop');
   await go('/admin/users/create', '[name=role_id]');
   assert.equal(await evaluate('!!document.querySelector("[name=password]")'), false);
   await fill('[name=name]', 'SYNTHETIC Invited Employee'); await fill('[name=email]', 'invited-browser@example.test');

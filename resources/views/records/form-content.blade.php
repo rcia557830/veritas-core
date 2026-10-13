@@ -1,8 +1,16 @@
-<h2 class="section-title mb-4">{{ $record->exists?'Edit':'New' }} {{ $config['singular'] }}</h2>
+<h2 class="section-title mb-4">{{ $record->exists?'Edit':'Add' }} {{ $config['singular'] }}</h2>
 <form action="{{ $record->exists?route($module.'.update',$record):route($module.'.store') }}" method="post" enctype="multipart/form-data">@csrf @if($record->exists)@method('PUT')@endif
 <p class="form-text">Fields marked * are required.</p><div class="row">
 @if(!in_array($module,['clients','knowledge']) && !($module==='compliance' && auth()->user()->hasRole('bookkeeper')))<div class="col-md-6"><x-field name="client_id" label="Client" type="select" :required="true" :value="$record->client_id??request('client_id')" :options="[''=>'Choose a client']+$clients->pluck('business_name','id')->all()"/></div>@endif
+@php($fieldGroups = match($module) {
+    'clients' => ['business_name'=>'Business details','contact_person'=>'Contact details','registration_status'=>'Registration and status','notes'=>'Additional information'],
+    'documents' => ['title'=>'Document details','received_date'=>'Dates and notes'],
+    'compliance' => ['agency'=>'Requirement details','due_date'=>'Deadlines and filing','notes'=>'Additional information'],
+    'knowledge' => ['title'=>'Article details','content'=>'Article content'],
+    default => []
+})
 @foreach($config['fields'] as $name=>$field)
+@if(isset($fieldGroups[$name]))<div class="col-12"><h3 class="section-title mt-3 mb-3">{{ $fieldGroups[$name] }}</h3></div>@endif
 
 @php($value=$record->$name)
 @php($value=$value instanceof \DateTimeInterface?$value->format('Y-m-d'):(is_array($value)?implode(', ',$value):($value??($field[1]==='date' && ($field[2]??false)?today()->toDateString():($field[1]==='number'?'0':'')))))

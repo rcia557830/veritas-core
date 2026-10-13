@@ -7,6 +7,7 @@ use App\Models\Client;
 use App\Models\DocumentRequirement;
 use App\Services\Access;
 use App\Services\DocumentCompleteness;
+use App\Services\Records;
 use App\Support\Modules;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -34,6 +35,7 @@ class MissingDocumentsController extends Controller
     {
         Gate::authorize('viewAny', DocumentRequirement::class);
         $request->validate([
+            'follow_up' => 'nullable|in:open',
             'q' => 'nullable|string|max:150',
             'accounting_period_id' => 'nullable|integer|min:1',
             'type' => 'nullable|string|max:255',
@@ -44,6 +46,10 @@ class MissingDocumentsController extends Controller
         $query = Access::query(DocumentRequirement::class)
             ->with(['client', 'accountingPeriod', 'documents'])
             ->where('is_active', true);
+
+        if ($request->query('follow_up') === 'open') {
+            $query->whereHas('followUps', fn ($q) => $q->whereIn('status', ['Open', 'In Progress']));
+        }
 
         if ($search = trim((string) $request->query('q'))) {
             $query->whereHas('client', fn ($c) => $c
@@ -77,8 +83,8 @@ class MissingDocumentsController extends Controller
             $requirements = $requirements->filter(fn ($r) => $r->due_date && $r->due_date->between(today(), today()->addDays(10)))->values();
         }
 
-        $page = max(1, (int) $request->query('page', 1));
-        $perPage = 15;
+        $perPage = Records::pageSize($request);
+        $page = $request->integer('page', 1);
         $records = new LengthAwarePaginator(
             $requirements->forPage($page, $perPage),
             $requirements->count(),

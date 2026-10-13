@@ -3,7 +3,6 @@
 @section('content')
 <div class="toolbar">
   <p class="toolbar-copy">{{ $summary['total'] }} accessible clients · onboarding readiness across the workspace</p>
-  <div class="actions"><a class="btn btn-outline-secondary" href="{{ route('clients.index') }}">All clients</a></div>
 </div>
 
 <div class="row g-3 mb-4">
