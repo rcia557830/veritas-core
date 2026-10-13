@@ -10,6 +10,7 @@ use App\Models\KnowledgeArticle;
 use App\Models\LedgerEntry;
 use App\Models\Setting;
 use App\Models\User;
+use App\Support\DemoDatabase;
 use Illuminate\Database\Seeder;
 
 class SampleDataSeeder extends Seeder
@@ -18,6 +19,9 @@ class SampleDataSeeder extends Seeder
     {
         if (! app()->environment(['local', 'testing'])) {
             throw new \RuntimeException('Development seed accounts are disabled outside local/testing environments.');
+        }
+        if (! app()->environment('testing')) {
+            DemoDatabase::check();
         }
         $admin = User::where('email', 'owner@veritascore.local')->firstOrFail();
         $staff = User::where('email', 'bookkeeper@veritascore.local')->firstOrFail();

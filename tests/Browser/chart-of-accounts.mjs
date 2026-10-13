@@ -55,6 +55,11 @@ try {
   const shot = async name => { const result = await cdp('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true }); await writeFile(path.join(artifacts, name + '.png'), Buffer.from(result.data, 'base64')); };
   await cdp('Page.enable'); await cdp('Runtime.enable');
   await cdp('Emulation.setDeviceMetricsOverride', { width: 1440, height: 1000, deviceScaleFactor: 1, mobile: false });
+  if (process.argv[5]?.endsWith('/demo-data.mjs')) {
+    const workflow = await import(pathToFileURL(path.resolve(process.argv[5])).href);
+    await workflow.runJournal({ cdp, evaluate, fill, click, go, loaded, hasText, submit, shot, text, until });
+    assert.deepEqual(errors, [], 'No browser JavaScript errors');
+  } else {
   await go('/login', '[name=email]');
   await fill('[name=email]', 'owner@veritascore.local'); await fill('[name=password]', 'password123');
   await submit('form', 'SYNTHETIC BROWSER DEMO');
@@ -96,10 +101,11 @@ try {
   assert.equal(await evaluate('document.documentElement.scrollWidth <= innerWidth'), true, 'Mobile page should not overflow horizontally');
   if (process.argv[5]) {
     const workflow = await import(pathToFileURL(path.resolve(process.argv[5])).href);
-    await workflow.runJournal({ cdp, evaluate, fill, click, go, loaded, hasText, submit, shot, text, until });
+    await (workflow.runJournal ?? workflow.verifyRoleDashboards)({ cdp, evaluate, fill, click, go, loaded, hasText, submit, shot, text, until });
   }
   assert.deepEqual(errors, [], 'No browser JavaScript errors');
   console.log('PASS: Owner login, client selection, account create/edit/deactivate, confirmation dialogs, filtering, duplicate validation, template/item creation, initialization, version cloning, desktop and mobile rendering; no JavaScript exceptions.');
+  }
 } finally {
   socket?.close();
   if (!socket && browserLog) console.error(browserLog);

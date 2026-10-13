@@ -11,6 +11,6 @@ class DatabaseSeeder extends Seeder
         if (! app()->environment(['local', 'testing'])) {
             throw new \RuntimeException('Development seed accounts are disabled outside local/testing environments.');
         }
-        $this->call([StaffSeeder::class, SampleDataSeeder::class]);
+        $this->call(app()->environment('testing') ? [StaffSeeder::class, SampleDataSeeder::class] : [DemoDataSeeder::class]);
     }
 }

@@ -130,7 +130,13 @@ export async function runJournal(helpers) {
       await click('[data-nav-group=documents] summary');
       await until(() => evaluate('document.querySelector("[data-nav-group=documents]").open'), 'Mobile documents submenu expands');
       await shot('phase5-navigation-mobile');
+      // Restore Chrome page focus after capture before sending a real keyboard event.
+      await cdp('Page.bringToFront');
+      await cdp('Emulation.setFocusEmulationEnabled', { enabled: true });
+      await evaluate('document.querySelector("#sidebarClose").focus()');
+      assert.equal(await evaluate('document.hasFocus()'), true, 'Chrome page has keyboard focus');
       await cdp('Input.dispatchKeyEvent', {type:'keyDown', key:'Escape', code:'Escape', windowsVirtualKeyCode:27});
+      await cdp('Input.dispatchKeyEvent', {type:'keyUp', key:'Escape', code:'Escape', windowsVirtualKeyCode:27});
       await until(() => evaluate('document.querySelector("#sidebarToggle").getAttribute("aria-expanded") === "false"'), 'Escape closes navigation');
       assert.equal(await evaluate('document.activeElement.id'), 'sidebarToggle', 'Focus returns to navigation toggle');
     }

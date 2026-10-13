@@ -3,7 +3,9 @@ param(
     [string]$Browser = 'C:/Program Files/Google/Chrome/Application/chrome.exe',
     [switch]$SkipBrowser,
     [switch]$BrowserOnly,
-    [switch]$SecurityBrowser
+    [switch]$SecurityBrowser,
+    [switch]$RoleBrowser,
+    [switch]$DemoBrowser
 )
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
@@ -64,7 +66,8 @@ log-error=$($artifacts.Replace('\','/'))/mysql.log
     }
     if (! $SkipBrowser) {
         $prepareArgs = @('tests/Browser/prepare.php', '--journal', '--vouchers')
-        if ($SecurityBrowser) { $prepareArgs += '--security' }
+        if ($SecurityBrowser -or $RoleBrowser) { $prepareArgs += '--security' }
+        if ($DemoBrowser) { $prepareArgs = @('tests/Browser/prepare-demo.php') }
         $prepared = & php @prepareArgs
         $prepared | Write-Output
         if ($LASTEXITCODE -ne 0 -or "$prepared" -notmatch 'Disposable browser fixtures prepared\.') { throw 'Browser fixture preparation failed.' }
@@ -73,8 +76,11 @@ log-error=$($artifacts.Replace('\','/'))/mysql.log
         $phpBinary = (& php -r 'echo PHP_BINARY;').Trim()
         $web = Start-Process $phpBinary -ArgumentList @('-S', "127.0.0.1:$webPort", '-t', 'public', 'tests/Browser/server.php') -WindowStyle Hidden -PassThru -RedirectStandardOutput "$artifacts/web.log" -RedirectStandardError "$artifacts/web-error.log"
         $workflow = if ($SecurityBrowser) { 'tests/Browser/employee-security.mjs' } else { 'tests/Browser/onboarding.mjs' }
+        if ($RoleBrowser) { $workflow = 'tests/Browser/role-dashboards.mjs' }
+        if ($DemoBrowser) { $workflow = 'tests/Browser/demo-data.mjs' }
         Run-Checked 'node' @('tests/Browser/chart-of-accounts.mjs', "http://127.0.0.1:$webPort", $Browser, "$artifacts/browser", $workflow)
-        if (! $SecurityBrowser) { Run-Checked 'php' @('tests/Browser/verify-workflows.php') }
+        if ($DemoBrowser) { Run-Checked 'php' @('tests/Browser/verify-demo.php') }
+        if (! $SecurityBrowser -and ! $RoleBrowser -and ! $DemoBrowser) { Run-Checked 'php' @('tests/Browser/verify-workflows.php') }
     }
 } finally {
     if ($web -and ! $web.HasExited) { Stop-Process -Id $web.Id }
