@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { verifyRoleDashboards } from './role-dashboards.mjs';
 
 // Runs only after guarded MySQL preparation with --security. No real mailbox.
 export async function runJournal({ cdp, evaluate, fill, click, go, loaded, hasText, shot, until, text }) {
+  await verifyRoleDashboards({ cdp, evaluate, fill, click, go, loaded, hasText, shot, until });
   const formSubmit = async (selector, expected) => {
     await evaluate(`document.querySelector(${JSON.stringify(selector)}).requestSubmit()`);
     await hasText(expected);

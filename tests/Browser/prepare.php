@@ -106,4 +106,8 @@ if (in_array('--vouchers', $argv, true)) {
     $fixtures->seedVoucherClient();
 }
 
+if (in_array('--security', $argv, true)) {
+    require __DIR__.'/role-dashboard-fixtures.php';
+}
+
 echo "Disposable browser fixtures prepared.\n";

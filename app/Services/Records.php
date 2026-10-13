@@ -6,6 +6,7 @@ use App\Models\Setting;
 use App\Support\Modules;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class Records
 {
@@ -13,6 +14,7 @@ class Records
     {
         $request->validate([
             'queue' => 'nullable|in:attention,validation,outstanding',
+            'work' => 'nullable|in:mine,reviewable,postable',
             'q' => 'nullable|string|max:150', 'search' => 'nullable|string|max:150', 'status' => 'nullable|string|max:60',
             'client_id' => 'nullable|integer|min:1', 'type' => 'nullable|string|max:255',
             'from' => 'nullable|date_format:Y-m-d', 'to' => 'nullable|date_format:Y-m-d',
@@ -58,6 +60,15 @@ class Records
         if ($client = $request->integer('client_id')) {
             if (! in_array($module, ['clients', 'knowledge'])) {
                 $query->where('client_id', $client);
+            }
+        }
+        if ($module === 'ledger' && $request->filled('work')) {
+            if ($request->query('work') === 'mine') {
+                $query->where('created_by', auth()->id());
+            } else {
+                $posting = $request->query('work') === 'postable';
+                Gate::authorize($posting ? 'bookkeeping.post' : 'bookkeeping.review');
+                $query->where('created_by', '!=', auth()->id())->where('status', $posting ? 'Reviewed' : 'For Review');
             }
         }
         if ($module === 'documents' && in_array($request->query('queue'), ['attention', 'validation'])) {

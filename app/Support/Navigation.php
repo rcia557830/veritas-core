@@ -40,6 +40,8 @@ final class Navigation
             ]],
             'accounting' => ['label' => 'Accounting', 'icon' => 'journal-text', 'links' => [
                 $link('General Journal', 'ledger.index', $can(LedgerEntry::class), [], 'ledger.*'),
+                $link('My Journals', 'ledger.index', $can(LedgerEntry::class) && Gate::allows('create', LedgerEntry::class), ['work' => 'mine']),
+                $link('Journal Review Queue', 'ledger.index', $can(LedgerEntry::class) && Gate::allows('bookkeeping.review'), ['work' => 'reviewable']),
                 $link('Accounting Vouchers', 'vouchers.index', $can(LedgerEntry::class), [], 'vouchers.*'),
                 $link('General Ledger', 'general-ledger.index', $business && Gate::allows('generalLedger', LedgerEntry::class), [], 'general-ledger.*'),
                 $link('Chart of Accounts', 'accounts.index', $can(Account::class), [], 'accounts.*'),
