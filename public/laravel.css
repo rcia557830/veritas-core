@@ -47,7 +47,7 @@ h1 { font-size: 28px; font-weight: 600; }
 .table tbody td, .table tfoot th { font-size: 15px; padding: 12px 14px; vertical-align: middle; }
 .table .subtext, .timeline .subtext { font-size: 13px; }
 .table .numeric { text-align: right; font-weight: 600; white-space: nowrap; }
-.badge-status { font-size: 12px; font-weight: 600; padding: 5px 9px; }
+.badge-status { box-sizing: border-box; display: inline-flex; flex: 0 0 180px; width: 180px; min-width: 180px; height: 32px; align-items: center; justify-content: center; text-align: center; font-size: 12px; font-weight: 600; line-height: 13px; padding: 1px 6px; white-space: normal; overflow-wrap: anywhere; vertical-align: middle; }
 .stat-label { font-size: 14px; font-weight: 600; color: var(--ink-700); }
 .stat-value { font-size: clamp(28px, 2.6vw, 36px); font-weight: 700; }
 .stat-note { font-size: 13px; color: var(--ink-500); }
@@ -119,3 +119,12 @@ h1 { font-size: 28px; font-weight: 600; }
 @media (max-width: 1199px) { .overview-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 575px) { .overview-cards { grid-template-columns: 1fr; } .overview-heading { flex-direction: column; } .workflow-tabs { gap: 2px; } .workflow-tabs a { text-decoration: none; padding: 8px; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }
+
+/* Notices use the shared workspace controls and a readable detail measure. */
+.notices-workspace .table { min-width: 680px; width: 100%; }
+.notices-workspace .table td:first-child { width: 42%; overflow-wrap: anywhere; }
+.notices-workspace .table td:nth-child(2) { overflow-wrap: anywhere; }
+.notices-workspace .btn { min-height: 42px; }
+.notices-workspace .section-title { overflow-wrap: anywhere; }
+.notices-workspace .prose { max-width: 75ch; line-height: 1.75; }
+.notices-workspace textarea { min-height: 240px; }

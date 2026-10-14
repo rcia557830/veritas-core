@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\Records;
+use App\Support\Display;
 use App\Support\Modules;
 use Illuminate\Http\Request;
 
@@ -15,7 +16,7 @@ class SearchController extends Controller
         foreach (Modules::all() as $module => $config) {
             foreach (Records::query($module, $request)->limit(6)->get() as $record) {
                 $results[] = [
-                    'title' => $record->{$config['label']}, 'type' => $config['title'], 'client' => $record->client?->business_name,
+                    'title' => Display::value($record, $config['label']), 'type' => $config['title'], 'client' => $record->client?->business_name,
                     'status' => $record->display_status ?? $record->status, 'url' => route($module.'.show', $record), 'icon' => $config['icon']];
             }
         }

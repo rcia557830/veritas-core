@@ -1,4 +1,4 @@
-param([string]$BaseUrl = 'http://127.0.0.1:8080')
+param([string]$BaseUrl = 'http://127.0.0.1:8000')
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 Push-Location $root

@@ -1,5 +1,7 @@
 # Local demo population — 14 October 2026
 
+Current user-selected address: **http://127.0.0.1:8000**. The existing Artisan server was restarted against the populated isolated database, and `.env` now sets `APP_URL` to port 8000. Start it with `php artisan serve --host=127.0.0.1 --port=8000 --no-reload` when it is not already running. The port-8080 references below describe the earlier Apache verification.
+
 The Apache application at `http://127.0.0.1:8080` serves this checkout through the Laragon junction. Its local, ignored `.env` now selects `database/veritas_demo.sqlite` with demo seeding enabled. The original `veritas_core_db` was inspected read-only (6 journals, 0 vouchers, 2 articles); no demo records were inserted there. Work remains on `feature/veritas-v2`.
 
 Before supplementation, the SQLite demo was backed up with `VACUUM INTO`; the backup passed SQLite integrity and record-count checks. The original `.env` is retained privately in `storage/app/private/backups/env-before-demo-population.txt`. The database snapshot is `storage/app/private/backups/demo-before-population-20261014-142927.sqlite`. Neither file belongs in source control. Restoring the original environment configuration selects the business database again; do not seed that database.
@@ -29,5 +31,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tests/verify-demo-population
 The browser runner uses the existing Windows-encrypted demo credential vault and an isolated headless Chrome profile. It does not print passwords. Private screenshots are stored under `storage/app/private/population-browser-*`.
 
 Voucher navigation is `/vouchers`, resolved from Laravel routes. This existing screen supports client, type and status filters, but has no free-text search control. Journal and knowledge search remain unchanged. Templates and guidelines each fit on one page at the current page size; lists with more results expose functioning pagination.
+
+## Follow-up: intermittent empty/error pages
+
+A fresh browser check reproduced HTTP 500 on the Templates URL despite the records being present. The server log recorded `MissingAppKeyException`; the existing key was present in `.env`. The local Apache server uses threaded `mod_php`, and Laravel's default process-environment adapter can race between requests on that runtime. The dotenv maintainers document this limitation: <https://github.com/vlucas/phpdotenv#putenv-and-getenv>.
+
+`public/index.php` now disables the putenv adapter only for threaded Apache, keeping environment loading in request-local arrays. CLI/demo launchers retain process-environment overrides. No application key was regenerated and no accounts or database records were reset. The existing browser regression now also checks overlapping authenticated page requests.
 
 No production deployment, push, schema change, new module, permission relaxation or search-engine modification was performed.

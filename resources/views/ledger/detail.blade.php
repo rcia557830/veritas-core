@@ -11,7 +11,7 @@
 @php
 $visibleEvidence=$record->evidence()->orderBy('id')->get()->filter(fn($e)=>$e->document && \Illuminate\Support\Facades\Gate::allows('view',$e->document));
 @endphp
-@forelse($visibleEvidence as $evidence)<div class="border-bottom py-3"><strong>{{ $evidence->document_number }} · {{ $evidence->title }}</strong><p class="subtext">{{ $evidence->detached_at?'Historical association':'Current association' }} · attached {{ $evidence->created_at->format('M j, Y H:i') }}@if($evidence->file_path !== $evidence->document->file_path) · Original attachment retained; the source document has a replacement.@endif</p>
+@forelse($visibleEvidence as $evidence)<div class="border-bottom py-3"><strong>{{ $evidence->document_number }} · {{ \App\Support\DemoLabels::display($evidence->title) }}</strong><p class="subtext">{{ $evidence->detached_at?'Historical association':'Current association' }} · attached {{ $evidence->created_at->format('M j, Y H:i') }}@if($evidence->file_path !== $evidence->document->file_path) · Original attachment retained; the source document has a replacement.@endif</p>
 @if($evidence->file_path)@can('download',$evidence->document)<a class="btn btn-sm btn-outline-secondary" href="{{ route('ledger.evidence',[$record,$evidence]) }}">Download retained {{ $evidence->original_file_name }}</a>@endcan @else<p class="subtext">Document metadata only; no attachment was present when associated.</p>@endif</div>@empty<p class="subtext">No supporting documents are associated or accessible. Evidence is optional.</p>@endforelse
 
 @if($record->status === 'Posted')

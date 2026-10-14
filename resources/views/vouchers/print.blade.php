@@ -2,7 +2,7 @@
 <div class="print-actions"><button onclick="window.print()">Print voucher</button> <a href="{{ route('vouchers.show',$voucher) }}">Back to voucher</a></div>
 <h1>VERITAS CORE · Accounting Voucher</h1>
 @include('vouchers.metadata')
-<p><strong>{{ $record->description }}</strong></p>@if($record->notes)<p style="white-space:pre-wrap;overflow-wrap:anywhere">{{ $record->notes }}</p>@endif<p>Accounting period: {{ $record->accountingPeriod->label }}</p>
+<p><strong>{{ \App\Support\DemoLabels::display($record->description) }}</strong></p>@if($record->notes)<p style="white-space:pre-wrap;overflow-wrap:anywhere">{{ $record->notes }}</p>@endif<p>Accounting period: {{ $record->accountingPeriod->label }}</p>
 @include('ledger.lines')
 <p>Prepared by {{ $record->creator?->name }}. Reviewed by {{ $record->reviewer?->name ?? 'Not reviewed' }}. Posted by {{ $record->poster?->name ?? 'Not posted' }} {{ $record->posted_at?->format('Y-m-d H:i') }}.</p>
 <h3>Supporting evidence</h3>

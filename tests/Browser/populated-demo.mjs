@@ -63,6 +63,16 @@ export async function runJournal({ cdp, evaluate, fill, click, go, loaded, hasTe
         await shot('populated-my-journals');
         await go('/knowledge?q=template');
         await shot('populated-templates');
+        // Exercise the actual web runtime: CLI tests cannot reproduce threaded
+        // Apache losing dotenv values during overlapping requests.
+        for (let batch = 0; batch < 4; batch++) {
+          const responses = await Promise.all(destinations.map(request));
+          for (const response of responses) {
+            assert.equal(response.status, 200, 'Concurrent page request');
+            assert.ok(!response.url.endsWith('/login'), 'Concurrent request retained authentication');
+            assert.match(response.body, /pagination-summary/, 'Concurrent request rendered records');
+          }
+        }
       }
       assert.equal((await request('/financial-reports?client_id=1')).status, 200);
     } else {

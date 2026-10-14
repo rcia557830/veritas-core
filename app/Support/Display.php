@@ -2,6 +2,8 @@
 
 namespace App\Support;
 
+use App\Models\LedgerEntry;
+
 class Display
 {
     public static function value($record, string $key): string
@@ -17,6 +19,10 @@ class Display
         }
         if (in_array($key, ['tax', 'total_amount', 'balance', 'amount_paid'])) {
             return Money::format($value ?? 0);
+        }
+
+        if ($key === 'description' && $record instanceof LedgerEntry) {
+            $value = DemoLabels::display($value);
         }
 
         return (string) ($value ?? '—');

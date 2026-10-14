@@ -39,6 +39,8 @@ class DemoDataSeeder extends Seeder
         DemoDatabase::check();
         if (Setting::where('firm_name', 'VERITAS FICTIONAL PHASE 6 DEMO')->exists()) {
             $this->call(DemoKnowledgeSeeder::class);
+            $this->call(DemoNoticeSeeder::class);
+            $this->call(DemoLabelCleanupSeeder::class);
 
             return;
         }
@@ -55,7 +57,7 @@ class DemoDataSeeder extends Seeder
                     if (mb_strlen($password) < 12 || strlen($password) > 72) {
                         throw new \RuntimeException('Demo passwords must contain at least 12 characters and at most 72 bytes.');
                     }
-                    $users[$role] = User::create(['email' => $role.'@demo.example.test', 'name' => 'Demo '.Str::headline($role),
+                    $users[$role] = User::create(['email' => $role.'@demo.example.test', 'name' => Str::headline($role),
                         'password' => $password, 'role_id' => Role::where('slug', $role)->sole()->id, 'status' => 'Active']);
                 }
                 $owner = $users['owner'];
@@ -71,10 +73,10 @@ class DemoDataSeeder extends Seeder
                     $number = $index + 1;
                     $type = ['Sole Proprietorship', 'Corporation', 'Cooperative', 'Partnership', 'Professional'][$index % 5];
                     $preparer = $number % 6 === 0 ? $manager : $bookkeeper;
-                    $client = Client::create(['client_code' => sprintf('DEMO-%03d', $number), 'business_name' => $name.' (Fictional)',
-                        'business_type' => $type, 'contact_person' => 'Fictional Contact '.sprintf('%02d', $number),
+                    $client = Client::create(['client_code' => sprintf('DEMO-%03d', $number), 'business_name' => $name,
+                        'business_type' => $type, 'contact_person' => 'Client Contact '.sprintf('%02d', $number),
                         'email' => 'client'.$number.'@example.test', 'phone' => '+63 900 000 '.sprintf('%04d', $number), 'tin' => sprintf('000-000-%03d', $number),
-                        'address' => 'Unit '.$number.', Fictional Demo Street, Davao City, Philippines',
+                        'address' => 'Unit '.$number.', Training Workspace Street, Davao City, Philippines',
                         'registration_status' => $index % 5 === 0 ? 'On file' : 'Pending', 'business_license_status' => $index % 5 === 0 ? 'On file' : 'Pending',
                         'status' => 'Active', 'created_by' => $owner->id, 'assigned_to' => $preparer->id,
                         'notes' => 'Entirely fictional demonstration business. No real registration or contact details.']);
@@ -95,6 +97,8 @@ class DemoDataSeeder extends Seeder
             $previous ? auth()->setUser($previous) : auth()->forgetUser();
         }
         $this->call(DemoKnowledgeSeeder::class);
+        $this->call(DemoNoticeSeeder::class);
+        $this->call(DemoLabelCleanupSeeder::class);
     }
 
     private function documents(Client $client, int $index, User $preparer, User $manager): Document
@@ -102,7 +106,7 @@ class DemoDataSeeder extends Seeder
         $types = ['Certificate of Registration', 'BIR Document', 'Business Permit', 'Receipt', 'Invoice', 'Bank Statement', 'Supporting Document'];
         $evidence = null;
         foreach ($types as $offset => $type) {
-            $requirement = DocumentRequirement::create(['client_id' => $client->id, 'name' => 'Fictional '.$type, 'type' => $type,
+            $requirement = DocumentRequirement::create(['client_id' => $client->id, 'name' => $type, 'type' => $type,
                 'scope' => $offset < 3 ? 'onboarding' : 'periodic', 'is_required' => true, 'is_active' => true,
                 'due_date' => today()->addDays(5), 'created_by' => $manager->id]);
             // Missing is a computed requirement state, never an invented document status.
@@ -119,7 +123,7 @@ class DemoDataSeeder extends Seeder
                 Storage::disk('local')->put($path, Pdf::loadHTML($html)->output());
             }
             $document = Document::create(['client_id' => $client->id, 'document_number' => $client->client_code.'-DOC-'.$offset,
-                'title' => 'Fictional '.$type, 'document_type' => $type, 'status' => $status, 'received_date' => today(),
+                'title' => $type, 'document_type' => $type, 'status' => $status, 'received_date' => today(),
                 'due_date' => today()->addDays(5), 'uploaded_by' => $preparer->id, 'file_path' => $path,
                 'original_file_name' => basename($path), 'mime_type' => 'application/pdf', 'file_sha256' => hash('sha256', Storage::disk('local')->get($path))]);
             $requirement->documents()->attach($document, ['linked_by' => $manager->id]);
@@ -138,8 +142,8 @@ class DemoDataSeeder extends Seeder
 
     private function accounting(Client $client, User $preparer, User $reviewer, Document $evidence): void
     {
-        $year = AccountingYear::create(['client_id' => $client->id, 'label' => 'Demo '.today()->year, 'starts_on' => today()->startOfYear()->toDateString(), 'ends_on' => today()->endOfYear()->toDateString()]);
-        $period = AccountingPeriod::create(['client_id' => $client->id, 'accounting_year_id' => $year->id, 'label' => 'Demo current year', 'starts_on' => $year->starts_on, 'ends_on' => $year->ends_on]);
+        $year = AccountingYear::create(['client_id' => $client->id, 'label' => (string) today()->year, 'starts_on' => today()->startOfYear()->toDateString(), 'ends_on' => today()->endOfYear()->toDateString()]);
+        $period = AccountingPeriod::create(['client_id' => $client->id, 'accounting_year_id' => $year->id, 'label' => 'Current year', 'starts_on' => $year->starts_on, 'ends_on' => $year->ends_on]);
         $accounts = [];
         foreach ([['100', 'Cash', 'Asset'], ['110', 'Accounts Receivable', 'Asset'], ['120', 'Office Supplies', 'Asset'], ['150', 'Equipment', 'Asset'],
             ['200', 'Accounts Payable', 'Liability'], ['300', 'Capital', 'Equity'], ['400', 'Service Revenue', 'Revenue'], ['500', 'Rent Expense', 'Expense'], ['510', 'Utilities Expense', 'Expense']] as [$code, $name, $classification]) {
@@ -163,11 +167,11 @@ class DemoDataSeeder extends Seeder
             auth()->setUser($preparer);
             $data = ['client_id' => $client->id, 'type' => $type, 'creation_token' => (string) Str::uuid(),
                 'transaction_date' => today()->toDateString(), 'accounting_period_id' => $period->id,
-                'description' => 'Fictional: '.$description, 'document_ids' => [$evidence->id], 'items' => [
+                'description' => $description, 'document_ids' => [$evidence->id], 'items' => [
                     ['account_id' => $accounts[$debit], 'debit' => $amount, 'credit' => '0.00'],
                     ['account_id' => $accounts[$credit], 'debit' => '0.00', 'credit' => $amount]]];
             if ($type !== 'JV') {
-                $data += ['party' => 'Fictional '.($type === 'CR' ? 'client payer' : 'supplier payee'), 'cash_account_id' => $accounts['100'], 'amount' => $amount];
+                $data += ['party' => ($type === 'CR' ? 'client payer' : 'supplier payee'), 'cash_account_id' => $accounts['100'], 'amount' => $amount];
             }
             if ($type === 'CV') {
                 $data += ['check_number' => $client->client_code.'-CHECK-001', 'check_date' => today()->toDateString()];
