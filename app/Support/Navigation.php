@@ -46,7 +46,6 @@ final class Navigation
                 $link('General Ledger', 'general-ledger.index', $business && Gate::allows('generalLedger', LedgerEntry::class), [], 'general-ledger.*'),
                 $link('Chart of Accounts', 'accounts.index', $can(Account::class), [], 'accounts.*'),
                 $link('Billing and Payments', 'billing.index', $can(Invoice::class), [], 'billing.*'),
-                $link('Financial Reports', 'financial-reports.index', $business && Gate::allows('financialReports', LedgerEntry::class), [], 'financial-reports.*'),
                 $link('Financial Audit Trail', 'financial-audit.index', $business && Gate::allows('generalLedger', LedgerEntry::class), [], ['financial-audit.*', 'admin.audit.*']),
                 $link('Accounting Settings', 'accounting-periods.index', $can(Account::class), [], ['accounting-periods.*', 'account-templates.*']),
                 $link('Record Reports', 'reports.index', $business && Gate::allows('report.view') && Gate::allows('report.generate'), [], 'reports.*'),
