@@ -38,6 +38,8 @@ class DemoDataSeeder extends Seeder
     {
         DemoDatabase::check();
         if (Setting::where('firm_name', 'VERITAS FICTIONAL PHASE 6 DEMO')->exists()) {
+            $this->call(DemoKnowledgeSeeder::class);
+
             return;
         }
         if (Client::withTrashed()->exists() || User::exists() || Setting::exists()) {
@@ -92,6 +94,7 @@ class DemoDataSeeder extends Seeder
         } finally {
             $previous ? auth()->setUser($previous) : auth()->forgetUser();
         }
+        $this->call(DemoKnowledgeSeeder::class);
     }
 
     private function documents(Client $client, int $index, User $preparer, User $manager): Document

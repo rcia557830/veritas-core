@@ -50,7 +50,7 @@ For a longer security demonstration, Super Admin invites a new `@example.test` e
 
 ## Expected initial dataset
 
-30 clients (six per business type), four user accounts, 210 requirements, 204 PDF documents, six document follow-ups, 270 ledger accounts, 30 accounting years/periods, 360 vouchers/journals, 720 journal lines, 360 retained evidence links, 30 invoices/60 items/22 payments, 120 compliance records/24 compliance follow-ups, and eight published knowledge articles.
+30 clients (six per business type), four user accounts, 210 requirements, 204 PDF documents, six document follow-ups, 270 ledger accounts, 30 accounting years/periods, 360 vouchers/journals, 720 journal lines, 360 retained evidence links, 30 invoices/60 items/22 payments, 120 compliance records/24 compliance follow-ups, and 36 published knowledge articles. The October 14 supplement preserves the original eight articles and adds missing procedures, general articles, templates and guidelines. See [local population verification](DEMO-POPULATION-VERIFICATION.md) for the port-8080 configuration and current verification details.
 
 240 journals are Posted; 30 each are Draft, For Review, Reviewed and Needs Correction. Every client has all four voucher types. Bookkeeper cannot access the five manager-assigned clients (codes divisible by six). The initial total firm billing balance is PHP 133,500. Repeat seeding preserves demonstration edits; it does not refresh dates or rewind workflows.
 
