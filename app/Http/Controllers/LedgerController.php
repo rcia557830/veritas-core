@@ -82,6 +82,6 @@ class LedgerController extends ModuleController
         JournalEvidence::verify($evidence);
         Audit::record('evidence.download', 'ledger', $record, 'Retained evidence #'.$evidence->id.' downloaded.');
 
-        return Storage::disk('local')->download($evidence->file_path, $evidence->original_file_name, ['X-Content-Type-Options' => 'nosniff']);
+        return Storage::disk(config('filesystems.documents'))->download($evidence->file_path, $evidence->original_file_name, ['X-Content-Type-Options' => 'nosniff', 'Cache-Control' => 'private, no-store']);
     }
 }

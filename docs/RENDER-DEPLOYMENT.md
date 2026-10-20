@@ -1,6 +1,11 @@
+> **Current plan: SELECTIVE DEPLOYMENT, FREE SERVICES ONLY — 21 October 2026.** Follow [the selective deployment review](SELECTIVE-RENDER-DEPLOYMENT-REVIEW.md). Import no bulk demo records or generated PDFs. Earlier full-dataset transfer instructions below are historical and must not be executed. No hosted database modification, import, service creation or redeployment is authorized. Historical local rehearsal evidence is retained below.
 # Render / Clever Cloud preparation — 15 October 2026 (Asia/Manila)
 
 Status: local conversion verified; cloud unchanged. Docker image build and live deployment are not yet verified. Do not create a Render service, import into Clever Cloud, push deployment changes, or run remote migrations without approval.
+
+Update, 21 October 2026: see [current Docker/WSL diagnosis and repeated migration rehearsal](DOCKER-WSL-DIAGNOSIS-20261021.md). WSL is now installed and both Windows features are enabled; the historical installation diagnosis below is superseded.
+
+The repeated local conversion passed, and the complete isolated MySQL suite now passes: 390 tests, 5,789 assertions, one SQLite-only skip. The earlier full-suite follow-up gap described below is closed. The final audit confirms that SQLite and all 204 attachments remain unchanged.
 
 ## Verified source
 
@@ -57,6 +62,8 @@ The corrected Notices test also passed separately on SQLite: one test, 177 asser
 
 ## Docker prerequisite
 
+Historical findings from 15 October follow. Use the linked 21 October diagnosis above for the current state; do not repeat installation solely on the basis of this older section.
+
 Docker Desktop 4.95.0 installed successfully at `C:\Program Files\Docker\Docker`; CLI 29.8.2 responds. The Linux engine is unavailable because WSL is missing. The WSL package installer returned `0x80073d28` (administrator privileges required). This is a Windows installer failure, not an automatic approval-review rejection.
 
 In a Windows **Administrator PowerShell**, complete:
@@ -75,11 +82,11 @@ docker build --pull -t veritas-core:render-review .
 
 The build must succeed and the container must be smoke-tested against a disposable MySQL database before cloud approval. Do not point a local smoke test at Clever Cloud. See [Docker's Windows prerequisites](https://docs.docker.com/desktop/setup/install/windows-install/).
 
-## Prepared deployment design
+## Superseded deployment design (historical)
 
 `Dockerfile` packages PHP 8.4 / Apache, production Composer dependencies, MySQL client tooling, queue worker and scheduler. Only `public/` is served. `.dockerignore` uses a source allowlist excluding `.env`, SQLite, attachments, logs, SQL exports and local dependencies. `docker/entrypoint.sh` requires an application key and database endpoint, initializes writable runtime directories and caches configuration/views. It never seeds, imports or migrates.
 
-`render.yaml` is a review-only blueprint for one paid web service with a 10 GB persistent disk at `/var/www/html/storage`. Both private attachments and public logos persist. Queue and scheduler run in the same container because disk contents are not shared between Render services. Auto-deployment is disabled. Creating the blueprint still triggers an initial deployment and incurs charges; it requires approval. Render disks are available for paid services and only preserve files under their mount path; see [Render persistent disks](https://render.com/docs/disks) and [Docker builds](https://render.com/docs/docker).
+The former Starter/10 GB disk design is withdrawn. The current blueprint targets `veritas-core-college-demo` with `plan: free`, no disk, synchronous queues and external private storage. See the current procedure linked above.
 
 The application now honors `TRUSTED_PROXIES`; the blueprint trusts the Render edge so HTTPS URLs and cookies work behind its proxy. Do not use `*` when directly exposing this image on an untrusted network. Worker timeout is 60 seconds, below the database queue retry interval of 90 seconds. `/up` is a process health endpoint, not proof that database access, attachments or SMTP work.
 
@@ -88,7 +95,7 @@ The application now honors `TRUSTED_PROXIES`; the blueprint trusts the Render ed
 1. Complete Docker engine setup, build the image and test HTTP login, each role's access, private downloads, PDF generation, upload persistence across restart, worker and scheduler locally. Existing passwords are never printed or reset; owner-assisted login can verify them after infrastructure tests.
 2. Confirm the intended Clever Cloud add-on, server version, capacity, endpoint, TLS/CA requirements and grants. Map its MySQL host/port/database/user/password to Render's `DB_*` secrets. `MYSQL_ATTR_SSL_CA` is supported by the app when a verified CA file is supplied; never silently disable certificate verification. The local Oracle MySQL result is not a claim that the managed Percona instance has been tested. See [Clever Cloud MySQL](https://www.clever.cloud/developers/doc/deploy/databases/mysql/).
 3. Before proposing an import, inspect the remote schema read-only and take a restorable backup. Confirm trigger privileges and shared-host restrictions, including dump DEFINER clauses; prepare a target-specific reviewed import and rollback procedure. Do not import over existing tables or disable accounting guards to bypass a hosting limitation. The raw local dump is not yet a reviewed Clever Cloud import.
-4. Fill Render secrets: existing `APP_KEY`, final HTTPS `APP_URL`, database values, verified SMTP settings and sender. Confirm the paid plan/disk size and region. No credentials are committed here. Do not generate a replacement application key.
+4. Fill Render secrets: existing `APP_KEY`, final HTTPS `APP_URL`, database values, verified SMTP settings and sender. Keep the existing Free service and no disk; resolve the storage approval boundary described in the current procedure. No credentials are committed here. Do not generate a replacement application key.
 5. Present the exact service, cost choice, destination database, reviewed artifact checksums, import commands and rollback plan for approval **before** remote writes or deployment.
 6. After approval: freeze local writes, repeat snapshot/conversion, back up any target, load the approved database and private/public storage, verify all rows/hashes/triggers on the destination, and perform role-based acceptance tests before opening access. Preserve the four password hashes. Explicitly decide whether to invalidate copied sessions and runtime cache for cutover; this rehearsal preserves all rows.
 7. Retain encrypted off-host database and attachment backups plus the application key and test a restore. Disk snapshots alone are not a database-and-attachments backup. Rollback must stop production writes, restore a consistent approved database/files pair and retain any post-cutover records for reconciliation.

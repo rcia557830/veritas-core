@@ -1,16 +1,14 @@
-# Review-only blueprint. Creating this service triggers deployment; approval required.
+# Review-only settings for the existing service; do not create a second service.
+# Do not apply or redeploy until the selective deployment review is approved.
 services:
   - type: web
-    name: veritas-core-v2
+    name: veritas-core-college-demo
+    branch: feature/veritas-v2
     runtime: docker
-    plan: starter
+    plan: free
     numInstances: 1
     autoDeployTrigger: off
     healthCheckPath: /up
-    disk:
-      name: veritas-storage
-      mountPath: /var/www/html/storage
-      sizeGB: 10
     envVars:
       - key: APP_ENV
         value: production
@@ -45,7 +43,23 @@ services:
       - key: CACHE_STORE
         value: database
       - key: QUEUE_CONNECTION
-        value: database
+        value: sync
+      - key: DOCUMENTS_DISK
+        value: local
+      - key: LOGOS_DISK
+        value: local
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_DEFAULT_REGION
+        value: auto
+      - key: AWS_BUCKET
+        sync: false
+      - key: AWS_ENDPOINT
+        sync: false
+      - key: AWS_USE_PATH_STYLE_ENDPOINT
+        value: "true"
       - key: LOG_CHANNEL
         value: stderr
       - key: VERITAS_DEMO_DATA

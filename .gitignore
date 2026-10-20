@@ -23,6 +23,7 @@ yarn-error.log
 /.zed
 
 # Local credentials, data exports and Laragon placeholder
+/.deployment/
 .env.*
 !.env.example
 !.env.production.example

@@ -1,5 +1,5 @@
 <aside class="sidebar" id="sidebar" aria-label="Workspace navigation">
-<a class="brand" href="{{ route('dashboard') }}">@if($firm?->logo_path)<img class="brand-mark" style="object-fit:contain" src="{{ asset('storage/'.$firm->logo_path) }}" alt="Firm logo">@else<span class="brand-mark" aria-hidden="true">V</span>@endif<span><span class="brand-name">VERITAS CORE</span><span class="brand-caption">{{ $firm?->firm_name ?? 'RBCIA Accounting Firm' }}</span></span></a>
+<a class="brand" href="{{ route('dashboard') }}">@if($firm?->logo_path)<img class="brand-mark" style="object-fit:contain" src="{{ route('workspace.logo') }}" alt="Firm logo">@else<span class="brand-mark" aria-hidden="true">V</span>@endif<span><span class="brand-name">VERITAS CORE</span><span class="brand-caption">{{ $firm?->firm_name ?? 'RBCIA Accounting Firm' }}</span></span></a>
 <button class="icon-button sidebar-close" id="sidebarClose" aria-label="Close navigation"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
 <div class="nav-label">YOUR WORKSPACE</div>
 <nav id="mainNav" aria-label="Primary navigation">

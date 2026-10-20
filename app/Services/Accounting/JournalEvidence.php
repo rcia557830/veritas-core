@@ -19,7 +19,7 @@ final class JournalEvidence
             return null;
         }
         try {
-            $stream = Storage::disk('local')->readStream($path);
+            $stream = Storage::disk(config('filesystems.documents'))->readStream($path);
         } catch (UnableToReadFile $error) {
             throw ValidationException::withMessages(['document_ids' => 'A supporting attachment is missing or unreadable.']);
         }
