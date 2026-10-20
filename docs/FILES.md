@@ -1,6 +1,6 @@
 # Source file locations
 
-Paths are relative to `C:\laragon\www\veritas-core`. Runtime data, private backups, dependencies and `.env` are excluded from the source archive. See `UI-CHANGES.md` and `RBAC-CODE.md` for complete copyable changed files.
+Paths are relative to `C:\laragon\www\veritas-core`. Runtime data, private backups, dependencies and `.env` are excluded from the source archive. See `docs/archive/UI-CHANGES.md` and `docs/archive/RBAC-CODE.md` for historical copyable changed files.
 
 - `.editorconfig`
 - `.env.example`
@@ -95,9 +95,9 @@ Paths are relative to `C:\laragon\www\veritas-core`. Runtime data, private backu
 - `docs/ACCEPTANCE.md`
 - `docs/ERD.md`
 - `docs/FILES.md`
-- `docs/RBAC-CODE.md`
 - `docs/RBAC.md`
-- `docs/UI-CHANGES.md`
+- `docs/archive/RBAC-CODE.md`
+- `docs/archive/UI-CHANGES.md`
 - `docs/laragon/veritas-core.conf`
 - `package.json`
 - `phpunit.mysql.xml`
@@ -156,7 +156,6 @@ Paths are relative to `C:\laragon\www\veritas-core`. Runtime data, private backu
 - `resources/views/records/table.blade.php`
 - `resources/views/reports/index.blade.php`
 - `resources/views/settings/edit.blade.php`
-- `resources/views/welcome.blade.php`
 - `routes/console.php`
 - `routes/web.php`
 - `storage/app/.gitignore`
@@ -174,5 +173,4 @@ Paths are relative to `C:\laragon\www\veritas-core`. Runtime data, private backu
 - `tests/Feature/UsabilityTest.php`
 - `tests/Feature/WorkspaceTest.php`
 - `tests/TestCase.php`
-- `tests/Unit/ExampleTest.php`
 - `vite.config.js`
