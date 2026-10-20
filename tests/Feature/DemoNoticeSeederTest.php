@@ -60,18 +60,19 @@ class DemoNoticeSeederTest extends TestCase
             $this->post('/notices/'.$notice->id.'/archive')->assertRedirect();
             $this->assertSame('Archived', $notice->fresh()->status);
         }
+        $noticeId = Notice::orderBy('id')->firstOrFail()->id;
         foreach (['bookkeeper', 'super-admin'] as $role) {
             $this->actingAs(User::where('email', $role.'@demo.example.test')->sole());
-            foreach (['/notices', '/notices/create', '/notices/1', '/notices/1/edit'] as $url) {
+            foreach (['/notices', '/notices/create', '/notices/'.$noticeId, '/notices/'.$noticeId.'/edit'] as $url) {
                 $this->get($url)->assertForbidden();
             }
             $this->post('/notices', [])->assertForbidden();
-            $this->put('/notices/1', [])->assertForbidden();
-            $this->post('/notices/1/publish')->assertForbidden();
-            $this->post('/notices/1/archive')->assertForbidden();
+            $this->put('/notices/'.$noticeId, [])->assertForbidden();
+            $this->post('/notices/'.$noticeId.'/publish')->assertForbidden();
+            $this->post('/notices/'.$noticeId.'/archive')->assertForbidden();
         }
         Notice::first()->update(['title' => 'Staff revised title', 'body' => 'Staff revised body', 'status' => 'Archived']);
-        Notice::findOrFail(2)->delete();
+        Notice::orderBy('id')->skip(1)->firstOrFail()->delete();
         $tables = ['notices', 'audit_logs', 'clients', 'ledger_entries', 'ledger_items', 'vouchers', 'compliance_records', 'knowledge_articles', 'documents', 'users'];
         $snapshot = fn () => collect($tables)->mapWithKeys(fn ($table) => [$table => DB::table($table)->orderBy('id')->get()->toJson()])->all();
         $before = $snapshot();

@@ -5,7 +5,8 @@ param(
     [switch]$BrowserOnly,
     [switch]$SecurityBrowser,
     [switch]$RoleBrowser,
-    [switch]$DemoBrowser
+    [switch]$DemoBrowser,
+    [string]$Filter = ''
 )
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
@@ -23,7 +24,9 @@ $variables = @{ APP_ENV='testing'; DB_CONNECTION='mysql'; DB_HOST='127.0.0.1'; D
 $previous = @{}
 $server = $null
 $web = $null
+$phpBinary = (& php -r 'echo PHP_BINARY;').Trim()
 function Run-Checked([string]$program, [string[]]$arguments) {
+    if ($program -eq 'php') { $program = $phpBinary }
     & $program @arguments
     if ($LASTEXITCODE -ne 0) { throw "$program failed with exit code $LASTEXITCODE" }
 }
@@ -61,8 +64,12 @@ log-error=$($artifacts.Replace('\','/'))/mysql.log
     $testConfig = Join-Path $root 'phpunit.disposable.xml'
     $xml | Set-Content -LiteralPath $testConfig
     if (! $BrowserOnly) {
-        Run-Checked 'php' @('vendor/bin/phpunit', '-c', $testConfig, '--filter', 'Voucher', '--stop-on-error', '--log-junit', "$artifacts/vouchers.xml")
-        Run-Checked 'php' @('vendor/bin/phpunit', '-c', $testConfig, '--log-junit', "$artifacts/regression.xml")
+        if ($Filter) {
+            Run-Checked 'php' @('vendor/bin/phpunit', '-c', $testConfig, '--filter', $Filter, '--log-junit', "$artifacts/filtered.xml")
+        } else {
+            Run-Checked 'php' @('vendor/bin/phpunit', '-c', $testConfig, '--filter', 'Voucher', '--stop-on-error', '--log-junit', "$artifacts/vouchers.xml")
+            Run-Checked 'php' @('vendor/bin/phpunit', '-c', $testConfig, '--log-junit', "$artifacts/regression.xml")
+        }
     }
     if (! $SkipBrowser) {
         $prepareArgs = @('tests/Browser/prepare.php', '--journal', '--vouchers')

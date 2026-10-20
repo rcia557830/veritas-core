@@ -205,6 +205,8 @@ Verified on PHP 8.3.30 and MySQL 8.4.3: **34 tests, 456 assertions**, passing wi
 
 ## Troubleshooting and deployment
 
+Render/Clever Cloud preparation, transfer integrity results, the disposable SQLite-to-MySQL rehearsal and outstanding approval requirements are documented in [Render deployment preparation](docs/RENDER-DEPLOYMENT.md). The Docker and Render files are prepared for review; they have not been deployed.
+
 - Connection refused: start MySQL in Laragon, check host/port/password and run `php artisan config:clear`.
 - 419: refresh the form and sign in again. CSRF protection is enabled.
 - 403: confirm the active role and client assignment. Bookkeeper cannot use owner URLs.
