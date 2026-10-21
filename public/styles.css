@@ -186,6 +186,9 @@ kbd, .key-button { font: 10px var(--font-body); background: var(--surface); bord
 .deadline-tone-warning { --deadline-color: #EAB308; --deadline-bg: #FEF9C3; --deadline-text: #854D0E; }
 .deadline-tone-danger { --deadline-color: #DC2626; --deadline-bg: #FEE2E2; --deadline-text: #991B1B; }
 .badge-status[class*="deadline-tone-"], .stat-icon[class*="deadline-tone-"] { color: var(--deadline-text); background: var(--deadline-bg); border-color: var(--deadline-color); }
+.compliance-workflow.deadline-tone-success { border-color: #86EFAC; }
+.compliance-workflow.deadline-tone-warning { border-color: #FDE047; }
+.compliance-workflow.deadline-tone-danger { border-color: #FCA5A5; }
 .compliance-warnings { display: flex; flex-wrap: wrap; gap: 8px 12px; margin-block: 4px; }
 .compliance-warning { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; }
 .compliance-warning-label { font-size: 11px; color: var(--ink-500); }

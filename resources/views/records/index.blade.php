@@ -10,7 +10,7 @@
 @forelse($records as $record)
 <div class="col-md-6 col-xl-4">
 <article class="panel {{ $module==='compliance' ? 'deadline-card deadline-tone-'.\App\Services\DeadlineCalculator::tone($record) : 'article-card' }}">
-<div class="toolbar mb-0"><span class="tag">{{ $record->agency??$record->category }}</span><x-badge :status="$record->display_status??$record->status"/></div>
+<div class="toolbar mb-0"><span class="tag">{{ $record->agency??$record->category }}</span><x-badge :status="$record->display_status??$record->status" :compliance="$module==='compliance'"/></div>
 <h2><a class="text-button" href="{{ route($module.'.show',$record) }}">{{ $record->{$config['label']} }}</a></h2>
 @if($module==='compliance')
 <p class="subtext">{{ $record->client->business_name }}</p>

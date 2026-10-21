@@ -9,9 +9,10 @@ import { createServer } from 'node:http';
 const styles = await readFile(new URL('../../public/styles.css', import.meta.url), 'utf8');
 const integration = await readFile(new URL('../../public/laravel.css', import.meta.url), 'utf8');
 const labels = [['On Schedule', 'success'], ['Completed', 'success'], ['Submission Due Soon', 'warning'], ['Submission Due Today', 'warning'], ['Submission Overdue', 'danger'], ['Filing Due Soon', 'warning'], ['Filing Due Today', 'warning'], ['Filing Overdue', 'danger']];
+const workflows = [['Pending', 'warning'], ['In Preparation', 'warning'], ['In Progress', 'warning'], ['Completed', 'success'], ['Filed', 'success'], ['Verified', 'success'], ['Overdue', 'danger'], ['Pending', 'warning']];
 const html = `<style>${styles}
 ${integration}
-body{margin:0;padding:16px}.test-grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr))}</style><div class="test-grid">${labels.map(([label, tone]) => `<article class="panel deadline-card deadline-tone-${tone}"><div class="toolbar"><span class="tag">BIR</span><span class="badge-status tone-warning">Pending</span></div><h2>Compliance requirement</h2><span class="compliance-warnings"><span class="compliance-warning"><span class="compliance-warning-label">${label.startsWith('Filing') ? 'Filing' : 'Submission'}</span><span class="badge-status deadline-tone-${tone}">${label}</span></span></span></article>`).join('')}</div>`;
+body{margin:0;padding:16px}.test-grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr))}</style><div class="test-grid">${labels.map(([label, tone], index) => `<article class="panel deadline-card deadline-tone-${tone}"><div class="toolbar"><span class="tag">BIR</span><span class="badge-status compliance-workflow deadline-tone-${workflows[index][1]}">${workflows[index][0]}</span></div><h2>Compliance requirement</h2><span class="compliance-warnings"><span class="compliance-warning"><span class="compliance-warning-label">${label.startsWith('Filing') ? 'Filing' : 'Submission'}</span><span class="badge-status deadline-tone-${tone}">${label}</span></span></span></article>`).join('')}</div>`;
 const server = createServer((req, res) => { res.setHeader('Content-Type', 'text/html'); res.end(html); });
 await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
 const profile = await mkdtemp(join(tmpdir(), 'veritas-compliance-css-'));
@@ -41,7 +42,7 @@ try {
   }
   for (const width of [1440, 768, 390, 320]) {
     await cdp('Emulation.setDeviceMetricsOverride', { width, height: 1000, deviceScaleFactor: 1, mobile: false });
-    const result = await cdp('Runtime.evaluate', { returnByValue: true, expression: `({overflow:document.documentElement.scrollWidth>innerWidth, badges:[...document.querySelectorAll('.compliance-warnings .badge-status')].map(el=>{const r=el.getBoundingClientRect(),s=getComputedStyle(el),range=document.createRange();range.selectNodeContents(el);return {label:el.textContent,width:r.width,height:r.height,clipped:range.getBoundingClientRect().width>r.width-16,color:s.color,bg:s.backgroundColor};}), workflow:[...document.querySelectorAll('.tone-warning')].map(el=>el.getBoundingClientRect().width)})` });
+    const result = await cdp('Runtime.evaluate', { returnByValue: true, expression: `({overflow:document.documentElement.scrollWidth>innerWidth, badges:[...document.querySelectorAll('.compliance-warnings .badge-status')].map(el=>{const r=el.getBoundingClientRect(),s=getComputedStyle(el),range=document.createRange();range.selectNodeContents(el);return {label:el.textContent,width:r.width,height:r.height,clipped:range.getBoundingClientRect().width>r.width-16,color:s.color,bg:s.backgroundColor};}), workflow:[...document.querySelectorAll('.compliance-workflow')].map(el=>{const r=el.getBoundingClientRect(),s=getComputedStyle(el);return {width:r.width,height:r.height,color:s.color,bg:s.backgroundColor,border:s.borderTopColor};})})` });
     const measured = result.result.value;
     assert.equal(measured.overflow, false, `${width}px: page overflow`);
     assert.equal(measured.badges.length, labels.length);
@@ -50,8 +51,14 @@ try {
       const colors = { success: ['rgb(22, 101, 52)', 'rgb(220, 252, 231)'], warning: ['rgb(133, 77, 14)', 'rgb(254, 249, 195)'], danger: ['rgb(153, 27, 27)', 'rgb(254, 226, 226)'] };
       assert.deepEqual([badge.color, badge.bg], colors[labels[index][1]]);
     });
-    assert.ok(measured.workflow.every(value => value === 180), 'Workflow badges retain existing width');
-    console.log(`PASS ${width}px: all eight labels, exact colors, compact badges, no clipping or page overflow`);
+    assert.equal(measured.workflow.length, workflows.length);
+    measured.workflow.forEach((badge, index) => {
+      assert.equal(badge.width, 180, 'Workflow badges retain existing width');
+      assert.equal(badge.height, 32, 'Workflow badges retain existing height');
+      const colors = { success: ['rgb(22, 101, 52)', 'rgb(220, 252, 231)', 'rgb(134, 239, 172)'], warning: ['rgb(133, 77, 14)', 'rgb(254, 249, 195)', 'rgb(253, 224, 71)'], danger: ['rgb(153, 27, 27)', 'rgb(254, 226, 226)', 'rgb(252, 165, 165)'] };
+      assert.deepEqual([badge.color, badge.bg, badge.border], colors[workflows[index][1]], `${width}px: ${workflows[index][0]} workflow colors`);
+    });
+    console.log(`PASS ${width}px: all eight warning labels, workflow colors and dimensions, compact warning badges, no clipping or page overflow`);
   }
   await cdp('Browser.close');
 } finally {

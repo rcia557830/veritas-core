@@ -41,7 +41,7 @@
       <td>{{ $record->reporting_period ?? '—' }}</td>
       <td>{{ $record->submission_deadline?->format('M j, Y') ?? '—' }}</td>
       <td>{{ $record->due_date->format('M j, Y') }}</td>
-      <td><x-badge :status="$record->status"/></td>
+      <td><x-badge :status="$record->status" :compliance="true"/></td>
       <td><x-compliance-warnings :record="$record"/></td>
     </tr>
   @empty
