@@ -8,7 +8,7 @@
 <div class="dashboard-columns">
 @if($experience === 'owner') @can('viewAny',\App\Models\ComplianceRecord::class)
 <div class="dashboard-main"><section class="panel table-panel"><div class="panel-heading"><div><h2 class="section-title">Upcoming and overdue filings</h2><p class="section-description">Nearest unresolved deadlines</p></div><a href="{{ route('compliance.monitoring') }}">View all</a></div><div class="table-responsive" tabindex="0" aria-label="Unresolved filings"><table class="table"><thead><tr><th>Requirement</th><th>Client</th><th>Filing due</th><th>Status</th></tr></thead><tbody>
-@forelse($deadlines as $item)<tr><td><a href="{{ route('compliance.show',$item) }}">{{ $item->requirement }}</a></td><td>{{ $item->client->business_name }}</td><td>{{ $item->due_date->format('M j, Y') }}</td><td><x-badge :status="$item->urgency"/></td></tr>
+@forelse($deadlines as $item)<tr><td><a href="{{ route('compliance.show',$item) }}">{{ $item->requirement }}</a></td><td>{{ $item->client->business_name }}</td><td>{{ $item->due_date->format('M j, Y') }}</td><td><x-compliance-warnings :record="$item"/></td></tr>
 @empty<tr><td colspan="4"><div class="empty-state"><h3>No open deadlines</h3><p>Your filing queue is clear.</p></div></td></tr>@endforelse
 </tbody></table></div></section></div>@endcan @endif
 

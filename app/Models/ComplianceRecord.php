@@ -51,7 +51,7 @@ class ComplianceRecord extends Model
     public function getSubmissionDeadlineAttribute($value): ?Carbon
     {
         if ($value !== null && $value !== '') {
-            return Carbon::parse($value, 'Asia/Manila')->startOfDay();
+            return Carbon::parse($value, config('app.timezone'))->startOfDay();
         }
         if (! $this->due_date) {
             return null;

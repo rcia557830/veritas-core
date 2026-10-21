@@ -215,7 +215,18 @@
     heading.append(read); $('notificationPanel').append(heading);
     data.items.forEach(item => {
       const button = node('button', '', 'notification-item' + (item.read ? '' : ' is-unread'));
-      const text = node('span', ''); text.append(node('strong', item.title), node('small', item.client || 'Workspace')); button.append(text);
+      const text = node('span', ''); text.append(node('strong', item.title), node('small', item.client || 'Workspace'));
+      if (item.warnings && Object.keys(item.warnings).length) {
+        const warnings = node('span', '', 'compliance-warnings');
+        Object.entries(item.warnings).forEach(([action, warning]) => {
+          const group = node('span', '', 'compliance-warning');
+          group.append(node('span', action === 'submission' ? 'Submission' : 'Filing', 'compliance-warning-label'));
+          if (['success', 'warning', 'danger'].includes(warning.tone)) group.append(node('span', warning.label, 'badge-status deadline-tone-' + warning.tone));
+          warnings.append(group);
+        });
+        text.append(warnings);
+      }
+      button.append(text);
       button.addEventListener('click', async () => {
         try { await api(`${document.body.dataset.notificationsUrl}/${encodeURIComponent(item.id)}/read`, 'POST'); location.assign(item.url); }
         catch (error) { toast(error.message); }

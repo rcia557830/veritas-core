@@ -8,16 +8,15 @@
 @if(in_array($module,['compliance','knowledge']))
 <div class="row g-3">
 @forelse($records as $record)
-@php($urgency = $module==='compliance' ? $record->urgency : null)
 <div class="col-md-6 col-xl-4">
-<article class="panel {{ $module==='compliance'?'deadline-card '.(in_array($urgency,['Filing Overdue','Submission Overdue'])?'urgent':(in_array($urgency,['Filing Deadline Approaching','Submission Deadline Approaching'])?'soon':'')):'article-card' }}">
+<article class="panel {{ $module==='compliance' ? 'deadline-card deadline-tone-'.\App\Services\DeadlineCalculator::tone($record) : 'article-card' }}">
 <div class="toolbar mb-0"><span class="tag">{{ $record->agency??$record->category }}</span><x-badge :status="$record->display_status??$record->status"/></div>
 <h2><a class="text-button" href="{{ route($module.'.show',$record) }}">{{ $record->{$config['label']} }}</a></h2>
 @if($module==='compliance')
 <p class="subtext">{{ $record->client->business_name }}</p>
 <p class="deadline-date">Filing due {{ $record->due_date->format('M j, Y') }}</p>
 <p class="deadline-date">Submission due {{ $record->submission_deadline?->format('M j, Y') ?? '—' }}</p>
-<p class="section-description"><x-badge :status="$record->urgency"/></p>
+<p class="section-description"><x-compliance-warnings :record="$record"/></p>
 @else
 <p class="article-preview">{{ $record->content }}</p>
 <div class="actions">@foreach($record->tags??[] as $tag)<span class="tag">#{{ $tag }}</span>@endforeach</div>

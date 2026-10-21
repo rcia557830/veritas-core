@@ -7,12 +7,12 @@
 
 <div class="row g-3 mb-4">
   <x-stat label="Pending requirements" :value="$summary['pending']" icon="calendar2-check"/>
-  <x-stat label="Submission overdue" :value="$summary['submission_overdue']" icon="exclamation-circle" :tone="$summary['submission_overdue']?'danger':'success'"/>
-  <x-stat label="Submission approaching" :value="$summary['submission_approaching']" icon="hourglass-split" tone="warning"/>
-  <x-stat label="Filing overdue" :value="$summary['filing_overdue']" icon="calendar2-x" :tone="$summary['filing_overdue']?'danger':'success'"/>
-  <x-stat label="Filing approaching" :value="$summary['filing_approaching']" icon="calendar2-week" tone="warning"/>
-  <x-stat label="Filed" :value="$summary['filed']" icon="check2-circle" tone="success"/>
-  <x-stat label="Completed" :value="$summary['completed']" icon="check2-all" tone="success"/>
+  <x-stat label="Submission overdue" :value="$summary['submission_overdue']" icon="exclamation-circle" :tone="$summary['submission_overdue']?'deadline-danger':'deadline-success'"/>
+  <x-stat label="Submission approaching" :value="$summary['submission_approaching']" icon="hourglass-split" tone="deadline-warning"/>
+  <x-stat label="Filing overdue" :value="$summary['filing_overdue']" icon="calendar2-x" :tone="$summary['filing_overdue']?'deadline-danger':'deadline-success'"/>
+  <x-stat label="Filing approaching" :value="$summary['filing_approaching']" icon="calendar2-week" tone="deadline-warning"/>
+  <x-stat label="Filed" :value="$summary['filed']" icon="check2-circle" tone="deadline-success"/>
+  <x-stat label="Completed" :value="$summary['completed']" icon="check2-all" tone="deadline-success"/>
 </div>
 
 <form method="get" class="filters" aria-label="Filter compliance monitoring">
@@ -42,7 +42,7 @@
       <td>{{ $record->submission_deadline?->format('M j, Y') ?? '—' }}</td>
       <td>{{ $record->due_date->format('M j, Y') }}</td>
       <td><x-badge :status="$record->status"/></td>
-      <td><x-badge :status="$record->urgency"/></td>
+      <td><x-compliance-warnings :record="$record"/></td>
     </tr>
   @empty
     <tr><td colspan="8"><div class="empty-state"><div class="empty-icon"><i class="bi bi-calendar2-check" aria-hidden="true"></i></div><h2>Nothing to monitor</h2><p>No compliance requirements match these filters.</p><a class="btn btn-outline-secondary" href="{{ route('compliance.monitoring') }}">Clear filters</a></div></td></tr>

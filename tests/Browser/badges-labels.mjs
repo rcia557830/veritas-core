@@ -13,11 +13,16 @@ export async function runJournal({ cdp, evaluate, fill, click, go, loaded, hasTe
     await cdp('Emulation.setDeviceMetricsOverride', { width, height:1000, deviceScaleFactor:1, mobile:false });
     for (const page of pages) {
       await go(page);
-      const badges = await evaluate(`[...document.querySelectorAll('.badge-status')].map(el=>{const r=el.getBoundingClientRect(); const range=document.createRange();range.selectNodeContents(el);const text=range.getBoundingClientRect();return {label:el.textContent.trim(),width:r.width,height:r.height,scroll:el.scrollHeight,client:el.clientHeight,textWidth:text.width,overflow:el.scrollHeight>el.clientHeight || text.width>r.width-12,align:getComputedStyle(el).justifyContent};})`);
+      const badges = await evaluate(`[...document.querySelectorAll('.badge-status')].map(el=>{const r=el.getBoundingClientRect(); const range=document.createRange();range.selectNodeContents(el);const text=range.getBoundingClientRect();return {deadline:!!el.closest('.compliance-warnings'),label:el.textContent.trim(),width:r.width,height:r.height,scroll:el.scrollHeight,client:el.clientHeight,textWidth:text.width,overflow:el.scrollHeight>el.clientHeight || text.width>r.width-12,align:getComputedStyle(el).justifyContent};})`);
       assert.ok(badges.length, page);
       for (const badge of badges) {
-        assert.equal(badge.width, 180, `${page} ${badge.label}`);
-        assert.equal(badge.height, 32, `${page} ${badge.label}`);
+        if (badge.deadline) {
+          assert.ok(badge.width < 180, `${page} ${badge.label}: compact deadline badge`);
+          assert.ok(badge.height < 32, `${page} ${badge.label}: single-line deadline badge`);
+        } else {
+          assert.equal(badge.width, 180, `${page} ${badge.label}`);
+          assert.equal(badge.height, 32, `${page} ${badge.label}`);
+        }
         assert.equal(badge.overflow, false, `${page} ${JSON.stringify(badge)} clipped`);
         assert.equal(badge.align, 'center');
       }
@@ -26,7 +31,7 @@ export async function runJournal({ cdp, evaluate, fill, click, go, loaded, hasTe
       assert.doesNotMatch(labels, /\b(?:Fictional|Dummy|Sample)\b|\bDemo\s+(?:Owner|Office|Notice|Contact)/i, `${page}: labels`);
       if (['/notices','/clients/onboarding','/compliance','/vouchers'].includes(page)) await shot(`badges-${page.replaceAll('/','-')}-${width}`);
     }
-    console.log(`PASS ${width}px: uniform 180x32 badges on ${pages.length} module pages; no clipped labels or page overflow`);
+    console.log(`PASS ${width}px: uniform workflow badges and compact deadline badges on ${pages.length} module pages; no clipped labels or page overflow`);
   }
   for (const page of ['/clients/1','/documents/1','/ledger/1','/vouchers/3','/billing/1','/knowledge/1','/notices/1']) {
     await go(page);

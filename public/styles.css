@@ -180,10 +180,16 @@ kbd, .key-button { font: 10px var(--font-body); background: var(--surface); bord
 .timeline i { color: var(--ink-500); margin-top: var(--space-1); }
 .timeline .timeline-content { flex: 1; min-width: 0; font-size: 12px; }
 .timeline .subtext { font-size: 10px; }
-.deadline-card { display: flex; flex-direction: column; padding: var(--space-6); border-top: 3px solid var(--info); }
-.deadline-card.urgent { border-top-color: var(--danger); }
-.deadline-card.soon { border-top-color: var(--warning); }
-.deadline-card.filed { border-top-color: var(--success); }
+.deadline-card { display: flex; flex-direction: column; padding: var(--space-6); border-top: 3px solid var(--deadline-color); }
+/* Compliance deadline severity is separate from general workflow status tones. */
+.deadline-tone-success { --deadline-color: #16A34A; --deadline-bg: #DCFCE7; --deadline-text: #166534; }
+.deadline-tone-warning { --deadline-color: #EAB308; --deadline-bg: #FEF9C3; --deadline-text: #854D0E; }
+.deadline-tone-danger { --deadline-color: #DC2626; --deadline-bg: #FEE2E2; --deadline-text: #991B1B; }
+.badge-status[class*="deadline-tone-"], .stat-icon[class*="deadline-tone-"] { color: var(--deadline-text); background: var(--deadline-bg); border-color: var(--deadline-color); }
+.compliance-warnings { display: flex; flex-wrap: wrap; gap: 8px 12px; margin-block: 4px; }
+.compliance-warning { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.compliance-warning-label { font-size: 11px; color: var(--ink-500); }
+.compliance-warnings .badge-status { flex: 0 0 auto; width: auto; min-width: 0; height: auto; padding: 4px 8px; font-size: 11px; font-weight: 600; line-height: 1.4; white-space: nowrap; overflow-wrap: normal; }
 .deadline-card h2, .article-card h2 { font-size: 15px; margin: var(--space-4) 0 var(--space-2); }
 .deadline-card .actions { margin-top: auto; padding-top: var(--space-5); }
 .deadline-date { font-size: 12px; margin: var(--space-4) 0; }

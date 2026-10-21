@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\DeadlineCalculator;
 use App\Services\Notify;
 use App\Support\Modules;
 use Illuminate\Http\Request;
@@ -29,7 +30,7 @@ class NotificationController extends Controller
             if (! $notification->read_at) {
                 $unread++;
             }
-            $items[] = ['id' => $notification->id, 'title' => $data['title'], 'client' => $data['client'], 'url' => route($module.'.show', $record), 'read' => (bool) $notification->read_at];
+            $items[] = ['id' => $notification->id, 'title' => $data['title'], 'client' => $data['client'], 'url' => route($module.'.show', $record), 'read' => (bool) $notification->read_at, 'warnings' => ($data['event'] ?? null) === 'compliance.deadline' ? DeadlineCalculator::warnings($record) : []];
         }
 
         return response()->json(compact('items', 'unread'));

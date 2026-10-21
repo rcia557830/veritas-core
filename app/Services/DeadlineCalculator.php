@@ -14,15 +14,19 @@ use Illuminate\Support\Carbon;
  */
 class DeadlineCalculator
 {
-    public const ON_TRACK = 'On Track';
+    public const ON_TRACK = 'On Schedule';
 
-    public const SUBMISSION_APPROACHING = 'Submission Deadline Approaching';
+    public const SUBMISSION_APPROACHING = 'Submission Due Soon';
 
     public const SUBMISSION_OVERDUE = 'Submission Overdue';
 
-    public const FILING_APPROACHING = 'Filing Deadline Approaching';
+    public const FILING_APPROACHING = 'Filing Due Soon';
 
     public const FILING_OVERDUE = 'Filing Overdue';
+
+    public const SUBMISSION_TODAY = 'Submission Due Today';
+
+    public const FILING_TODAY = 'Filing Due Today';
 
     public const TERMINAL = ['Filed', 'Completed'];
 
@@ -48,7 +52,7 @@ class DeadlineCalculator
 
     public static function today(?Carbon $today = null): Carbon
     {
-        return ($today ?? Carbon::today('Asia/Manila'))->copy()->startOfDay();
+        return ($today ?? Carbon::now(config('app.timezone')))->copy()->setTimezone(config('app.timezone'))->startOfDay();
     }
 
     /**
@@ -72,44 +76,22 @@ class DeadlineCalculator
 
     public static function isFilingOverdue(ComplianceRecord $record, ?Carbon $today = null): bool
     {
-        if (self::isTerminal($record)) {
-            return false;
-        }
-        $filing = $record->due_date?->copy()->startOfDay();
-
-        return $filing && $filing->lt(self::today($today));
+        return self::warnings($record, $today)['filing']['tone'] === 'danger';
     }
 
     public static function isSubmissionOverdue(ComplianceRecord $record, ?Carbon $today = null): bool
     {
-        if (self::isTerminal($record)) {
-            return false;
-        }
-        $submission = $record->submission_deadline;
-
-        return $submission && $submission->lt(self::today($today));
+        return self::warnings($record, $today)['submission']['tone'] === 'danger';
     }
 
     public static function isFilingApproaching(ComplianceRecord $record, ?Carbon $today = null): bool
     {
-        if (self::isTerminal($record)) {
-            return false;
-        }
-        $filing = $record->due_date?->copy()->startOfDay();
-        $today = self::today($today);
-
-        return $filing && $filing->gte($today) && $filing->lte($today->copy()->addDays(self::filingApproachDays()));
+        return self::warnings($record, $today)['filing']['tone'] === 'warning';
     }
 
     public static function isSubmissionApproaching(ComplianceRecord $record, ?Carbon $today = null): bool
     {
-        if (self::isTerminal($record)) {
-            return false;
-        }
-        $submission = $record->submission_deadline;
-        $today = self::today($today);
-
-        return $submission && $submission->gte($today) && $submission->lte($today->copy()->addDays(self::submissionApproachDays()));
+        return self::warnings($record, $today)['submission']['tone'] === 'warning';
     }
 
     /**
@@ -131,13 +113,53 @@ class DeadlineCalculator
             return self::SUBMISSION_OVERDUE;
         }
         if (self::isFilingApproaching($record, $today)) {
-            return self::FILING_APPROACHING;
+            return $record->due_date->toDateString() === self::today($today)->toDateString() ? self::FILING_TODAY : self::FILING_APPROACHING;
         }
         if (self::isSubmissionApproaching($record, $today)) {
-            return self::SUBMISSION_APPROACHING;
+            return $record->submission_deadline->toDateString() === self::today($today)->toDateString() ? self::SUBMISSION_TODAY : self::SUBMISSION_APPROACHING;
         }
 
         return self::ON_TRACK;
+    }
+
+    /** Ready for Filing is the existing workflow signal that submission is complete. */
+    public static function submissionComplete(ComplianceRecord $record): bool
+    {
+        return self::isTerminal($record) || $record->status === 'Ready for Filing';
+    }
+
+    /** Independent presentation states; these never change the workflow status. */
+    public static function warnings(ComplianceRecord $record, ?Carbon $today = null): array
+    {
+        $today = self::today($today);
+        $warnings = [];
+        foreach (['submission' => 'Submission', 'filing' => 'Filing'] as $action => $label) {
+            $complete = $action === 'submission' ? self::submissionComplete($record) : self::isTerminal($record);
+            $deadline = $action === 'submission' ? $record->submission_deadline : $record->due_date;
+            $window = $action === 'submission' ? self::submissionApproachDays() : self::filingApproachDays();
+            $date = $deadline?->toDateString();
+            $text = $complete ? 'Completed' : self::ON_TRACK;
+            $tone = 'success';
+            if (! $complete && $date !== null) {
+                if ($date < $today->toDateString()) {
+                    $text = $label.' Overdue';
+                    $tone = 'danger';
+                } elseif ($date <= $today->copy()->addDays($window)->toDateString()) {
+                    $text = $label.($date === $today->toDateString() ? ' Due Today' : ' Due Soon');
+                    $tone = 'warning';
+                }
+            }
+            $warnings[$action] = ['label' => $text, 'tone' => $tone];
+        }
+
+        return $warnings;
+    }
+
+    public static function tone(ComplianceRecord $record): string
+    {
+        $tones = array_column(self::warnings($record), 'tone');
+
+        return in_array('danger', $tones, true) ? 'danger' : (in_array('warning', $tones, true) ? 'warning' : 'success');
     }
 
     /**
@@ -146,8 +168,8 @@ class DeadlineCalculator
     public static function needsAlert(ComplianceRecord $record, ?Carbon $today = null): bool
     {
         return in_array(self::urgency($record, $today), [
-            self::SUBMISSION_APPROACHING, self::SUBMISSION_OVERDUE,
-            self::FILING_APPROACHING, self::FILING_OVERDUE,
+            self::SUBMISSION_APPROACHING, self::SUBMISSION_TODAY, self::SUBMISSION_OVERDUE,
+            self::FILING_APPROACHING, self::FILING_TODAY, self::FILING_OVERDUE,
         ], true);
     }
 }

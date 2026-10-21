@@ -63,6 +63,7 @@ class DeadlineCalculatorTest extends TestCase
     {
         $this->assertSame('2025-12-26', DeadlineCalculator::submissionDeadline(Carbon::parse('2026-01-05', 'Asia/Manila'), 'calendar')->toDateString());
     }
+
     public function test_business_basis_skips_weekends(): void
     {
         $filing = Carbon::parse('2026-10-15', 'Asia/Manila'); // Thursday
@@ -143,5 +144,63 @@ class DeadlineCalculatorTest extends TestCase
         $record = $this->record('2026-10-15');
         $this->assertSame('2026-10-05', $record->submission_deadline->toDateString());
         $this->assertTrue($record->submission_deadline_is_provisional);
+    }
+
+    public function test_independent_warning_labels_and_colors_at_window_boundaries(): void
+    {
+        config(['compliance.filing_approach_days' => 3, 'compliance.submission_approach_days' => 3]);
+        foreach ([
+            ['2026-10-14', 'On Schedule', 'On Schedule', 'success'],
+            ['2026-10-13', 'Submission Due Soon', 'Filing Due Soon', 'warning'],
+            ['2026-10-10', 'Submission Due Today', 'Filing Due Today', 'warning'],
+            ['2026-10-09', 'Submission Overdue', 'Filing Overdue', 'danger'],
+        ] as [$date, $submission, $filing, $tone]) {
+            $warnings = DeadlineCalculator::warnings($this->record($date, 'Pending', $date), $this->today);
+            $this->assertSame(['label' => $submission, 'tone' => $tone], $warnings['submission']);
+            $this->assertSame(['label' => $filing, 'tone' => $tone], $warnings['filing']);
+        }
+    }
+
+    public function test_submission_completion_does_not_complete_pending_filing(): void
+    {
+        $record = $this->record('2026-10-10', 'Ready for Filing', '2026-10-01');
+        $warnings = DeadlineCalculator::warnings($record, $this->today);
+        $this->assertSame(['label' => 'Completed', 'tone' => 'success'], $warnings['submission']);
+        $this->assertSame(['label' => 'Filing Due Today', 'tone' => 'warning'], $warnings['filing']);
+        $this->assertSame(DeadlineCalculator::FILING_TODAY, DeadlineCalculator::urgency($record, $this->today));
+        $this->assertTrue(DeadlineCalculator::needsAlert($record, $this->today));
+        $this->assertFalse(DeadlineCalculator::isSubmissionOverdue($record, $this->today));
+        $record->due_date = '2026-10-09';
+        $this->assertTrue(DeadlineCalculator::isFilingOverdue($record, $this->today));
+        $this->assertSame('Ready for Filing', $record->status);
+    }
+
+    public function test_terminal_warnings_are_green_without_changing_status(): void
+    {
+        foreach (['Filed', 'Completed'] as $status) {
+            $record = $this->record('2026-10-01', $status);
+            foreach (DeadlineCalculator::warnings($record, $this->today) as $warning) {
+                $this->assertSame(['label' => 'Completed', 'tone' => 'success'], $warning);
+            }
+            $this->assertSame($status, $record->status);
+        }
+    }
+
+    public function test_warning_uses_configured_timezone_calendar_date(): void
+    {
+        config(['app.timezone' => 'America/Los_Angeles']);
+        $instant = Carbon::parse('2026-10-11 01:00:00', 'UTC');
+        $record = $this->record('2026-10-10', 'Pending', '2026-10-10');
+        $this->assertSame('Filing Due Today', DeadlineCalculator::warnings($record, $instant)['filing']['label']);
+        $this->assertFalse(DeadlineCalculator::isFilingOverdue($record, $instant));
+        $this->assertSame('2026-10-11', $instant->toDateString());
+    }
+
+    public function test_different_submission_and_filing_windows_are_independent(): void
+    {
+        config(['compliance.submission_approach_days' => 2, 'compliance.filing_approach_days' => 5]);
+        $warnings = DeadlineCalculator::warnings($this->record('2026-10-14', 'Pending', '2026-10-13'), $this->today);
+        $this->assertSame('On Schedule', $warnings['submission']['label']);
+        $this->assertSame('Filing Due Soon', $warnings['filing']['label']);
     }
 }
