@@ -17,6 +17,7 @@ class Records
             'work' => 'nullable|in:mine,reviewable,postable',
             'q' => 'nullable|string|max:150', 'search' => 'nullable|string|max:150', 'status' => 'nullable|string|max:60',
             'client_id' => 'nullable|integer|min:1', 'type' => 'nullable|string|max:255',
+            'category' => 'nullable|string|max:100', 'content_type' => 'nullable|string|in:article,procedure,template,guideline',
             'from' => 'nullable|date_format:Y-m-d', 'to' => 'nullable|date_format:Y-m-d',
             'sort' => 'nullable|string|max:60', 'direction' => 'nullable|in:asc,desc',
         ]);
@@ -100,10 +101,41 @@ class Records
                 $query->whereDate($config['date'], $operator, $date);
             }
         }
-        $typeColumn = ['clients' => 'business_type', 'documents' => 'document_type', 'compliance' => 'agency', 'knowledge' => 'category'][$module] ?? null;
-        if ($typeColumn && $request->filled('type')) {
-            $query->where($typeColumn, (string) $request->query('type'));
+        if ($module === 'knowledge') {
+            if ($request->filled('content_type')) {
+                $contentType = (string) $request->query('content_type');
+                if (in_array($contentType, ['article', 'procedure', 'template', 'guideline'], true)) {
+                    $query->where('content_type', $contentType);
+                }
+            }
+            $category = $request->query('category') ?? $request->query('type');
+            if (! empty($category) && is_string($category)) {
+                $query->where('category', $category);
+            }
+        } else {
+            $typeColumn = ['clients' => 'business_type', 'documents' => 'document_type', 'compliance' => 'agency'][$module] ?? null;
+            if ($typeColumn && $request->filled('type')) {
+                $query->where($typeColumn, (string) $request->query('type'));
+            }
         }
+
+        if ($module === 'knowledge') {
+            $sortParam = (string) $request->query('sort', 'newest');
+            $directionParam = (string) $request->query('direction', 'desc');
+
+            match ($sortParam) {
+                'updated', 'updated_at' => $query->orderBy('updated_at', 'desc')->orderBy('id', 'desc'),
+                'oldest' => $query->orderBy('created_at', 'asc')->orderBy('id', 'asc'),
+                'title_asc' => $query->orderBy('title', 'asc')->orderBy('id', 'asc'),
+                'title_desc' => $query->orderBy('title', 'desc')->orderBy('id', 'desc'),
+                'title' => $query->orderBy('title', $directionParam === 'desc' ? 'desc' : 'asc')->orderBy('id', $directionParam === 'desc' ? 'desc' : 'asc'),
+                'created_at' => $query->orderBy('created_at', $directionParam === 'asc' ? 'asc' : 'desc')->orderBy('id', $directionParam === 'asc' ? 'asc' : 'desc'),
+                default => $query->orderBy('created_at', 'desc')->orderBy('id', 'desc'),
+            };
+
+            return $query;
+        }
+
         $allowed = array_unique(array_merge(['id', $config['date']], array_keys($config['fields'])));
         $sort = in_array($request->query('sort'), $allowed) ? $request->query('sort') : $config['date'];
 

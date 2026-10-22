@@ -65,6 +65,9 @@ class RecordWriter
         }
         if ($module === 'knowledge') {
             $data['tags'] = array_values(array_filter(array_map('trim', explode(',', $data['tags'] ?? ''))));
+            $data['content_type'] = in_array($data['content_type'] ?? '', ['article', 'procedure', 'template', 'guideline'], true)
+                ? $data['content_type']
+                : ($record?->content_type ?? 'article');
             if (! $record) {
                 $data['slug'] = Str::slug($data['title']).'-'.Str::lower(Str::random(8));
                 $data['author_id'] = $request->user()->id;
@@ -114,6 +117,11 @@ class RecordWriter
                     }
                     if ($record?->reference_number && empty($data['reference_number'])) {
                         $data['reference_number'] = $record->reference_number;
+                    }
+                }
+                if ($module === 'knowledge' && $record) {
+                    if (! $request->filled('content_type')) {
+                        $data['content_type'] = $record->content_type ?? 'article';
                     }
                 }
                 $oldPath = $record?->file_path;

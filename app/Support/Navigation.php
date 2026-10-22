@@ -55,10 +55,11 @@ final class Navigation
                 $link('Completed', 'compliance.index', $can(ComplianceRecord::class), ['view' => 'completed'], 'compliance.*'),
             ]],
             'knowledge' => ['label' => 'Knowledge Base', 'icon' => 'book', 'links' => [
-                $link('Articles', 'knowledge.index', $can(KnowledgeArticle::class), [], 'knowledge.*'),
-                $link('Procedures', 'knowledge.index', $can(KnowledgeArticle::class), ['type' => 'Internal Procedure']),
-                $link('Templates', 'knowledge.index', $can(KnowledgeArticle::class), ['q' => 'template']),
-                $link('Guidelines', 'knowledge.index', $can(KnowledgeArticle::class), ['q' => 'guideline']),
+                $link('All Content', 'knowledge.index', $can(KnowledgeArticle::class), [], 'knowledge.*'),
+                $link('Articles', 'knowledge.index', $can(KnowledgeArticle::class), ['content_type' => 'article']),
+                $link('Procedures', 'knowledge.index', $can(KnowledgeArticle::class), ['content_type' => 'procedure']),
+                $link('Templates', 'knowledge.index', $can(KnowledgeArticle::class), ['content_type' => 'template']),
+                $link('Guidelines', 'knowledge.index', $can(KnowledgeArticle::class), ['content_type' => 'guideline']),
             ]],
             'administration' => ['label' => 'Administration', 'icon' => 'shield-lock', 'links' => [
                 $link('User Management', 'admin.users.index', $admin && Gate::allows('viewAny', User::class), [], 'admin.users.*'),

@@ -1,4 +1,14 @@
-<h2 class="section-title mb-4">{{ $record->exists?'Edit':'Add' }} {{ $config['singular'] }}</h2>
+@php
+    $typeLabel = $module === 'knowledge'
+        ? match($record->content_type ?? request('content_type')) {
+            'procedure' => 'Procedure',
+            'template' => 'Template',
+            'guideline' => 'Guideline',
+            default => 'Article',
+        }
+        : ucfirst($config['singular']);
+@endphp
+<h2 class="section-title mb-4">{{ $record->exists ? 'Edit' : 'Add' }} {{ $typeLabel }}</h2>
 <form action="{{ $record->exists?route($module.'.update',$record):route($module.'.store') }}" method="post" enctype="multipart/form-data">@csrf @if($record->exists)@method('PUT')@endif
 <p class="form-text">Fields marked * are required.</p><div class="row">
 @if(!in_array($module,['clients','knowledge']) && !($module==='compliance' && auth()->user()->hasRole('bookkeeper')))<div class="col-md-6"><x-field name="client_id" label="Client" type="select" :required="true" :value="$record->client_id??request('client_id')" :options="[''=>'Choose a client']+$clients->pluck('business_name','id')->all()"/></div>@endif
@@ -6,15 +16,16 @@
     'clients' => ['business_name'=>'Business details','contact_person'=>'Contact details','registration_status'=>'Registration and status','notes'=>'Additional information'],
     'documents' => ['title'=>'Document details','received_date'=>'Dates and notes'],
     'compliance' => ['agency'=>'Requirement details','due_date'=>'Deadlines and filing','notes'=>'Additional information'],
-    'knowledge' => ['title'=>'Article details','content'=>'Article content'],
+    'knowledge' => ['content_type'=>'Classification and details','content'=>'Content'],
     default => []
 })
 @foreach($config['fields'] as $name=>$field)
 @if(isset($fieldGroups[$name]))<div class="col-12"><h3 class="section-title mt-3 mb-3">{{ $fieldGroups[$name] }}</h3></div>@endif
 
-@php($value=$record->$name)
+@php($value=$record->$name ?? ($module === 'knowledge' && $name === 'content_type' ? (request('content_type') ?: 'article') : null))
 @php($value=$value instanceof \DateTimeInterface?$value->format('Y-m-d'):(is_array($value)?implode(', ',$value):($value??($field[1]==='date' && ($field[2]??false)?today()->toDateString():($field[1]==='number'?'0':'')))))
-<div class="{{ $field[1]==='textarea'?'col-12':'col-md-6' }}"><x-field :name="$name" :label="$field[0]" :type="is_array($field[1])?'select':$field[1]" :options="is_array($field[1])?array_combine($field[1],$field[1]):[]" :required="$field[2]??false" :value="$value"/></div>
+@php($options = is_array($field[1]) ? ($name === 'content_type' ? ['article'=>'Article','procedure'=>'Procedure','template'=>'Template','guideline'=>'Guideline'] : array_combine($field[1],$field[1])) : [])
+<div class="{{ $field[1]==='textarea'?'col-12':'col-md-6' }}"><x-field :name="$name" :label="$field[0]" :type="is_array($field[1])?'select':$field[1]" :options="$options" :required="$field[2]??false" :value="$value"/></div>
 @endforeach
 @if($module==='compliance' && !auth()->user()->hasRole('bookkeeper'))@php($submissionValue = ($record->exists && !$record->submission_deadline_is_provisional) ? ($record->getRawOriginal('submission_deadline') ?? '') : '')<div class="col-md-6"><x-field name="submission_deadline" label="Internal submission deadline (optional)" type="date" :value="$submissionValue"/><p class="form-text">Leave blank to calculate automatically as the filing deadline minus {{ config('compliance.submission_lead_days', 10) }} {{ config('compliance.submission_lead_basis','calendar')==='calendar'?'calendar':'working' }} days.</p></div><div class="col-12"><x-field name="submission_deadline_override_reason" label="Override reason" type="textarea" :value="$record->submission_deadline_override_reason"/><p class="form-text">Required only when you enter a submission deadline that differs from the automatic calculation.</p></div>@endif
 
@@ -28,4 +39,22 @@
 </div>@endif
 </div>
 @if(in_array($module,['ledger','billing']))@include('records.lines')@endif
-<div class="actions mt-4"><a href="{{ $record->exists?route($module.'.show',$record):route($module.'.index') }}" class="btn btn-outline-secondary">Cancel</a><button class="btn btn-primary" type="submit">Save {{ $config['singular'] }}</button></div></form>
+<div class="actions mt-4"><a href="{{ $record->exists?route($module.'.show',$record):route($module.'.index') }}" class="btn btn-outline-secondary">Cancel</a><button class="btn btn-primary" type="submit">Save {{ $typeLabel }}</button></div></form>
+@if($module === 'knowledge')
+<script>
+(function() {
+    const select = document.getElementById('field_content_type');
+    if (!select) return;
+    const updateLabels = () => {
+        const map = { article: 'Article', procedure: 'Procedure', template: 'Template', guideline: 'Guideline' };
+        const label = map[select.value] || 'Article';
+        const heading = select.closest('form')?.parentElement?.querySelector('.section-title') || document.querySelector('.section-title');
+        const submit = select.closest('form')?.querySelector('button[type="submit"]');
+        const isEdit = {{ $record->exists ? 'true' : 'false' }};
+        if (heading) heading.textContent = (isEdit ? 'Edit ' : 'Add ') + label;
+        if (submit) submit.textContent = 'Save ' + label;
+    };
+    select.addEventListener('change', updateLabels);
+})();
+</script>
+@endif

@@ -1,5 +1,5 @@
 @foreach($navigation as $key => $group)
-@if($group['active'] && $key !== 'dashboard' && count($group['links']) > 1)
+@if($group['active'] && $key !== 'dashboard' && $key !== 'knowledge' && count($group['links']) > 1)
 <nav class="workflow-tabs" aria-label="{{ $group['label'] }} workflows">
     @foreach($group['links'] as $link)
     @if(!($key === 'accounting' && in_array($link['route'], ['billing.index','financial-audit.index','reports.index'])))
