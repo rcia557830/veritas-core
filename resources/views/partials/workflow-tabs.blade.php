@@ -3,7 +3,15 @@
 <nav class="workflow-tabs" aria-label="{{ $group['label'] }} workflows">
     @foreach($group['links'] as $link)
     @if(!($key === 'accounting' && in_array($link['route'], ['billing.index','financial-audit.index','reports.index'])))
-    <a href="{{ in_array($key,['documents','accounting','compliance']) && request('client_id') ? route($link['route'], $link['query'] + ['client_id'=>request('client_id')]) : $link['url'] }}" @if($link['active']) aria-current="page" @endif>{{ $link['label'] }}</a>
+    @php
+        $extraParams = [];
+        if ($key === 'compliance') {
+            $extraParams = array_filter(request()->only(['client_id', 'agency', 'reporting_period', 'q']));
+        } elseif (in_array($key, ['documents', 'accounting']) && request('client_id')) {
+            $extraParams = ['client_id' => request('client_id')];
+        }
+    @endphp
+    <a href="{{ !empty($extraParams) ? route($link['route'], $link['query'] + $extraParams) : $link['url'] }}" @if($link['active']) aria-current="page" @endif>{{ $link['label'] }}</a>
     @endif
     @endforeach
 </nav>

@@ -103,9 +103,11 @@ h1 { font-size: 28px; font-weight: 600; }
 .nav-children .nav-item { display: flex; align-items: center; padding: 8px 12px; font-size: 13.5px; font-weight: 500; color: #a8b8cc; border-radius: 5px; margin-bottom: 2px; text-decoration: none; transition: all .15s ease; }
 .nav-children .nav-item:hover { background: var(--ink-800); color: #ffffff; }
 .nav-children .nav-item.active { background: var(--ink-800); color: #ffffff; font-weight: 600; box-shadow: inset 2.5px 0 var(--brand); }
-.workflow-tabs { display: flex; flex-wrap: wrap; gap: 6px; border-bottom: 1px solid var(--line); padding-bottom: 12px; margin-bottom: 24px; }
-.workflow-tabs a { text-decoration: none; padding: 8px 14px; border-radius: 6px; color: var(--ink-700); font-size: 13.5px; font-weight: 500; border: 1px solid transparent; transition: all .15s ease; }
+.workflow-tabs { display: flex; flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; gap: 8px; border-bottom: 1px solid var(--line); padding-bottom: 12px; margin-bottom: 24px; }
+.workflow-tabs::-webkit-scrollbar { display: none; }
+.workflow-tabs a { flex-shrink: 0; white-space: nowrap; text-decoration: none; padding: 8px 16px; border-radius: 6px; color: var(--ink-700); font-size: 13.5px; font-weight: 500; border: 1px solid transparent; transition: all .15s ease; }
 .workflow-tabs a:hover { background: var(--surface); color: var(--ink-950); border-color: var(--line); text-decoration: none; }
+.workflow-tabs a:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
 .workflow-tabs a[aria-current] { background: var(--ink-950); color: #ffffff; font-weight: 600; border-color: var(--ink-950); box-shadow: 0 1px 3px rgba(16, 29, 48, 0.12); }
 .overview-heading { display: flex; justify-content: space-between; align-items: start; gap: 24px; margin: 4px 0 28px; }
 .overview-heading h2 { font-size: clamp(23px, 2vw, 30px); font-weight: 600; letter-spacing: -.035em; margin: 0 0 8px; }
@@ -196,3 +198,422 @@ h1 { font-size: 28px; font-weight: 600; }
 .mini-stat-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm); }
 .mini-stat-card strong { font-size: 18px; font-variant-numeric: tabular-nums; display: block; margin-top: 2px; }
 .workflow-status-tracker .badge { font-weight: 600; font-size: 12px; padding: 5px 9px; letter-spacing: .02em; }
+
+/* Phase 7: Compliance workspace refinements and document validation status badges */
+.compliance-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.compliance-header-content {
+  min-width: 0;
+  flex: 1;
+}
+.compliance-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+.compliance-title-wrap h2 {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--ink-950);
+  letter-spacing: -.02em;
+}
+.compliance-open-count {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-600);
+}
+.compliance-header .subtext {
+  font-size: 13.5px;
+  color: var(--ink-500);
+  margin: 0;
+  max-width: 72ch;
+  line-height: 1.5;
+}
+.compliance-header-actions {
+  flex-shrink: 0;
+}
+.compliance-tab-hint {
+  font-size: 12.5px;
+  color: var(--ink-500);
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+/* Compliance Filter Card */
+.compliance-filter-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-xs);
+}
+.compliance-filter-row-primary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: flex-end;
+}
+.compliance-filter-row-primary .filter-col-search {
+  flex: 1.6;
+  min-width: 240px;
+}
+.compliance-filter-row-primary .filter-col-select {
+  flex: 1;
+  min-width: 160px;
+}
+.compliance-filter-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.compliance-filter-row-actions .filter-more-toggle {
+  flex: 1;
+  min-width: 200px;
+}
+.compliance-filter-row-actions .filter-action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+.compliance-filter-card .form-label {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-700);
+  margin-bottom: 5px;
+}
+.compliance-filter-card .form-control,
+.compliance-filter-card .form-select {
+  height: 38px;
+  min-height: 38px;
+  font-size: 13.5px;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  border-color: var(--line);
+}
+.compliance-filter-details summary.filter-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-700);
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  transition: all .15s ease;
+  user-select: none;
+  list-style: none;
+}
+.compliance-filter-details summary.filter-toggle-btn::-webkit-details-marker {
+  display: none;
+}
+.compliance-filter-details summary.filter-toggle-btn:hover {
+  background: var(--card);
+  color: var(--ink-950);
+  border-color: var(--ink-500);
+}
+.compliance-filter-details .toggle-caret {
+  font-size: 11px;
+  transition: transform .2s ease;
+}
+.compliance-filter-details[open] summary .toggle-caret {
+  transform: rotate(180deg);
+}
+.compliance-advanced-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  padding: 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  margin-top: 10px;
+}
+.compliance-advanced-grid .filter-col {
+  min-width: 0;
+}
+.compliance-advanced-grid .per-page-control {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-700);
+  width: 100%;
+}
+.compliance-advanced-grid .per-page-control select {
+  margin-top: 5px;
+  width: 100%;
+}
+
+/* Compliance Table Styles */
+.compliance-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 13.5px;
+}
+.compliance-table thead th {
+  background: var(--surface);
+  color: var(--ink-700);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+.compliance-table tbody td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+  font-size: 13.5px;
+}
+.compliance-table tbody tr:hover {
+  background-color: #f8fafc;
+}
+.compliance-table .col-requirement {
+  min-width: 220px;
+  max-width: 320px;
+}
+.compliance-title-link {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-950);
+  text-decoration: none;
+  display: block;
+  line-height: 1.35;
+}
+.compliance-title-link:hover {
+  color: var(--brand-text);
+  text-decoration: underline;
+}
+.compliance-subtext {
+  font-size: 12px;
+  color: var(--ink-500);
+  margin-top: 3px;
+}
+.compliance-table .col-client {
+  min-width: 170px;
+  max-width: 240px;
+}
+.compliance-client-link {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--ink-900);
+  text-decoration: none;
+}
+.compliance-client-link:hover {
+  color: var(--info);
+  text-decoration: underline;
+}
+.compliance-table .col-submission-due,
+.compliance-table .col-filing-due {
+  min-width: 130px;
+  white-space: nowrap;
+}
+.compliance-date {
+  font-size: 13px;
+  color: var(--ink-800);
+  font-variant-numeric: tabular-nums;
+}
+.compliance-table .col-status-urgency {
+  min-width: 210px;
+}
+.compliance-status-urgency {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.workflow-status-wrap {
+  display: flex;
+  align-items: center;
+}
+.compliance-deadlines-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.compliance-action-link {
+  display: inline-flex;
+  align-items: center;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-700);
+  padding: 6px 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: all .15s ease;
+}
+.compliance-action-link:hover {
+  background: var(--card);
+  color: var(--ink-950);
+  border-color: var(--brand);
+  text-decoration: none;
+  box-shadow: var(--shadow-xs);
+}
+.compliance-action-link i {
+  transition: transform .15s ease;
+}
+.compliance-action-link:hover i {
+  transform: translateX(2px);
+}
+
+/* Compliance Workflow Status Badges */
+.compliance-workflow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  border-width: 1px;
+  border-style: solid;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  width: auto;
+  min-width: 0;
+  white-space: nowrap;
+}
+.compliance-workflow.compliance-workflow-pending {
+  background-color: #F1F5F9;
+  color: #475569;
+  border-color: #CBD5E1;
+}
+.compliance-workflow.compliance-workflow-in-preparation {
+  background-color: #DBEAFE;
+  color: #1D4ED8;
+  border-color: #93C5FD;
+}
+.compliance-workflow.compliance-workflow-awaiting-client-documents {
+  background-color: #FEF3C7;
+  color: #92400E;
+  border-color: #FCD34D;
+}
+.compliance-workflow.compliance-workflow-ready-for-filing {
+  background-color: #CCFBF1;
+  color: #0F766E;
+  border-color: #99F6E4;
+}
+.compliance-workflow.compliance-workflow-filed {
+  background-color: #DCFCE7;
+  color: #166534;
+  border-color: #86EFAC;
+}
+.compliance-workflow.compliance-workflow-completed {
+  background-color: #DCFCE7;
+  color: #166534;
+  border-color: #86EFAC;
+}
+
+/* Document Validation Status Badges */
+.document-status {
+  border-width: 1px;
+  border-style: solid;
+}
+.section-title .document-status {
+  width: auto;
+  min-width: 0;
+  height: auto;
+  padding: 2px 8px;
+  margin-left: 8px;
+  font-size: 11px;
+  vertical-align: middle;
+}
+.document-status.document-status-submitted {
+  background-color: #F1F5F9 !important;
+  color: #475569 !important;
+  border-color: #CBD5E1 !important;
+}
+.document-status.document-status-under-review {
+  background-color: #DBEAFE !important;
+  color: #1D4ED8 !important;
+  border-color: #93C5FD !important;
+}
+.document-status.document-status-reviewed {
+  background-color: #CCFBF1 !important;
+  color: #0F766E !important;
+  border-color: #99F6E4 !important;
+}
+.document-status.document-status-needs-clarification {
+  background-color: #FEF3C7 !important;
+  color: #92400E !important;
+  border-color: #FCD34D !important;
+}
+.document-status.document-status-approved {
+  background-color: #DCFCE7 !important;
+  color: #166534 !important;
+  border-color: #86EFAC !important;
+}
+.document-status.document-status-rejected {
+  background-color: #FEE2E2 !important;
+  color: #991B1B !important;
+  border-color: #FCA5A5 !important;
+}
+
+/* Responsive refinements for Compliance workspace */
+@media (max-width: 767.98px) {
+  .compliance-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .compliance-header-actions {
+    width: 100%;
+  }
+  .compliance-header-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  .compliance-filter-row-primary {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .compliance-filter-row-primary .filter-col-search,
+  .compliance-filter-row-primary .filter-col-select {
+    width: 100%;
+    min-width: 0;
+  }
+  .compliance-filter-row-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .compliance-filter-row-actions .filter-action-buttons {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  .compliance-filter-row-actions .filter-action-buttons .btn {
+    flex: 1;
+    text-align: center;
+  }
+  .compliance-advanced-grid {
+    grid-template-columns: 1fr;
+  }
+}

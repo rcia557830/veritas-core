@@ -1,6 +1,9 @@
 @can('validate',$record)
 <div class="panel panel-pad mt-4" id="validation">
-<h3 class="section-title mb-2">Validate document</h3>
+<div class="d-flex align-items-center justify-content-between mb-2">
+  <h3 class="section-title mb-0">Validate document</h3>
+  <x-badge :status="$record->status" :document="true"/>
+</div>
 @if(in_array($record->status,['Reviewed','Approved']))<p class="form-text">To replace the attachment, first save Under Review or Needs Clarification to reopen review. Verify the replacement after it has been uploaded.</p>@endif
 <form method="post" action="{{ route('documents.validate',$record) }}">@csrf
 <div class="row"><div class="col-md-6"><label class="form-label" for="validation_status">Validation decision</label><select class="form-select" name="status" id="validation_status" required>

@@ -165,8 +165,13 @@ class ComplianceDeadlineTest extends TestCase
         ]));
         $this->actingAs($this->owner);
         foreach (['/compliance', '/compliance/'.$record->id, '/compliance/monitoring', route('compliance.checklist', $this->client), '/dashboard'] as $url) {
-            $this->get($url)->assertOk()->assertSee('Submission Overdue')->assertSee('Filing Due Today')
-                ->assertSee('deadline-tone-danger')->assertSee('deadline-tone-warning');
+            $this->get($url)->assertOk()
+                ->assertSee('Submission')
+                ->assertSee('Overdue')
+                ->assertSee('Filing')
+                ->assertSee('Due Today')
+                ->assertSee('deadline-tone-danger')
+                ->assertSee('deadline-tone-warning');
         }
         $this->assertSame('Pending', $record->fresh()->status);
         $record->delete();

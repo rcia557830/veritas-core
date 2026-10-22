@@ -13,7 +13,7 @@
         @can('view', $requirement)<a class="d-block" href="{{ route('requirements.checklist',$record->client_id) }}#requirement-{{ $requirement->id }}">{{ $requirement->name }}</a>@endcan
         @empty<span class="subtext">Not linked to a requirement</span>@endforelse</td>
     <td>{{ $record->received_date?->format('M j, Y') }}</td>
-    <td><x-badge :status="$record->status"/></td>
+    <td><x-badge :status="$record->status" :document="true"/></td>
     <td>
         @if(in_array($record->status, ['Submitted','Under Review']))
             @can('validate',$record)<a class="btn btn-sm btn-outline-secondary" href="{{ route('documents.show',$record) }}#validation">Validate document</a>@else<span class="subtext">Awaiting validation</span>@endcan

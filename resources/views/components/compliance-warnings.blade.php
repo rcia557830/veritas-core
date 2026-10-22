@@ -1,6 +1,11 @@
 @props(['record'])
 <span class="compliance-warnings">
 @foreach(\App\Services\DeadlineCalculator::warnings($record) as $action => $warning)
-<span class="compliance-warning"><span class="compliance-warning-label">{{ ucfirst($action) }}</span><span class="badge-status deadline-tone-{{ $warning['tone'] }}">{{ $warning['label'] }}</span></span>
+@php
+    $actionLabel = ucfirst($action);
+    $fullLabel = $warning['label'];
+    $shortLabel = preg_replace('/^(Submission|Filing)\s+/', '', $fullLabel);
+@endphp
+<span class="compliance-warning" title="{{ $fullLabel }}"><span class="compliance-warning-label">{{ $actionLabel }}</span><span class="badge-status deadline-badge deadline-tone-{{ $warning['tone'] }}" aria-label="{{ $fullLabel }}">{{ $shortLabel }}</span></span>
 @endforeach
 </span>
