@@ -33,6 +33,22 @@ class RecordRequest extends FormRequest
         return $record ? route($this->module().'.edit', $record) : route($this->module().'.create');
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->module() === 'knowledge') {
+            if (! $this->has('content_type') || $this->input('content_type') === null || $this->input('content_type') === '') {
+                $record = $this->route('record');
+                $existingType = null;
+                if ($record instanceof \App\Models\KnowledgeArticle) {
+                    $existingType = $record->content_type;
+                } elseif (is_numeric($record) || is_string($record)) {
+                    $existingType = \App\Models\KnowledgeArticle::where('id', $record)->orWhere('slug', $record)->value('content_type');
+                }
+                $this->merge(['content_type' => $existingType ?: 'article']);
+            }
+        }
+    }
+
     public function rules(): array
     {
         $module = $this->module();

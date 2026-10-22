@@ -248,7 +248,7 @@ class DemoDataSeeder extends Seeder
             'Confidentiality policy' => 'Use only assigned client records. Keep passwords private and use invitations to provision staff. Do not share client attachments outside authorized channels. Report unexpected access and never put real client information in a demonstration.',
             'Billing and payment procedures' => 'Create an invoice with item quantities, unit prices and applicable tax. Record each receipt with a distinct reference. Check the remaining balance after partial payment. Do not accept overpayments or duplicate submissions. Firm billing is distinct from client accounting books.',
         ] as $title => $content) {
-            KnowledgeArticle::create(['slug' => 'demo-'.Str::slug($title), 'title' => $title, 'category' => 'Internal Procedure',
+            KnowledgeArticle::create(['slug' => 'demo-'.Str::slug($title), 'title' => $title, 'content_type' => 'procedure', 'category' => 'Internal Procedure',
                 'content' => $content, 'tags' => ['demo', 'procedure'], 'status' => 'Published', 'author_id' => $owner->id]);
         }
     }

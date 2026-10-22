@@ -1,17 +1,23 @@
 @extends('layouts.app')
 @section('title',$config['title'])
-@section('content')<div class="toolbar"><a href="{{ route($module.'.index') }}" class="btn btn-outline-secondary">← Back to {{ strtolower($config['title']) }}</a><div class="actions">@can('update',$record)<a data-modal class="btn btn-primary" href="{{ route($module.'.edit',$record) }}">Edit {{ $config['singular'] }}</a>@endcan
+@section('content')<div class="toolbar"><a href="{{ route($module.'.index') }}" class="btn btn-outline-secondary">← Back to {{ strtolower($config['title']) }}</a><div class="actions">@can('update',$record)<a data-modal class="btn btn-primary" href="{{ route($module.'.edit',$record) }}">Edit {{ $module === 'knowledge' ? ucfirst($record->content_type ?? 'article') : $config['singular'] }}</a>@endcan
 @can('delete',$record)<form method="post" action="{{ route($module.'.destroy',$record) }}" data-confirm="{{ $module==='ledger'?'Delete this draft transaction?':'Archive this record? It will leave the active list.' }}">@csrf @method('DELETE')<button class="btn btn-outline-danger">{{ $module==='ledger'?'Delete draft':'Archive' }}</button></form>@endcan</div></div>
 <section class="panel panel-pad">
 @if($module === 'knowledge')
     <article class="article-reader">
         <div class="toolbar mb-2">
-            <span class="tag"><i class="bi bi-book me-1" aria-hidden="true"></i>{{ $record->category }}</span>
+            <div class="d-flex flex-wrap gap-1 align-items-center">
+                <span class="tag"><i class="bi {{ match($record->content_type) { 'procedure' => 'bi-journal-text', 'template' => 'bi-file-earmark-text', 'guideline' => 'bi-compass', default => 'bi-file-text' } }} me-1" aria-hidden="true"></i>{{ ucfirst($record->content_type ?? 'article') }}</span>
+                <span class="tag"><i class="bi bi-tag me-1" aria-hidden="true"></i>{{ $record->category }}</span>
+            </div>
             <x-badge :status="$record->status"/>
         </div>
         <h2 class="modal-title mb-2">{{ $record->title }}</h2>
         <div class="subtext mb-3">
             <span>Created {{ $record->created_at?->format('F j, Y') }}</span>
+            @if($record->updated_at && $record->updated_at->gt($record->created_at))
+                <span> · Updated {{ $record->updated_at->format('F j, Y') }}</span>
+            @endif
             @if($record->author)
                 <span> · Author: <strong>{{ $record->author->name }}</strong></span>
             @endif

@@ -31,10 +31,18 @@ class DemoKnowledgeSeeder extends Seeder
                     if (KnowledgeArticle::withTrashed()->where('slug', $slug)->orWhereRaw('LOWER(title) = ?', [mb_strtolower($title)])->exists()) {
                         continue;
                     }
+                    $type = str_contains(strtolower($title), 'template') ? 'template' : (str_contains(strtolower($title), 'guideline') ? 'guideline' : ($category === 'Internal Procedure' ? 'procedure' : 'article'));
+                    $tags = ['demo', 'training'];
+                    if ($type === 'template') {
+                        $tags[] = 'template';
+                    }
+                    if ($type === 'guideline') {
+                        $tags[] = 'guideline';
+                    }
                     $article = KnowledgeArticle::create([
-                        'slug' => $slug, 'title' => $title, 'category' => $category,
+                        'slug' => $slug, 'title' => $title, 'content_type' => $type, 'category' => $category,
                         'content' => "PURPOSE\n$purpose\n\nWORKING INSTRUCTIONS\n$instructions\n\nCOMPLETION CHECK\n$check\n\nTraining material for the fictional demo. Apply the firm's approved policies to real work; verify official requirements separately.",
-                        'tags' => ['demo', 'training'], 'status' => 'Published', 'author_id' => $owner->id,
+                        'tags' => $tags, 'status' => 'Published', 'author_id' => $owner->id,
                     ]);
                     Audit::record('create', 'knowledge', $article, 'Published fictional demo training material.');
                 }

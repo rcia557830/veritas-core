@@ -59,8 +59,18 @@ abstract class ModuleController extends Controller
         if ($this->module === 'clients' && ! $request->user()->hasPermission('client.archive')) {
             unset($context['config']['fields']['status']);
         }
-        if ($this->module === 'knowledge' && ! $request->user()->hasPermission('knowledge.publish')) {
-            $context['config']['fields']['status'][1] = ['Draft'];
+        if ($this->module === 'knowledge') {
+            if (! $record->exists) {
+                $requestedType = $request->query('content_type');
+                if (in_array($requestedType, ['article', 'procedure', 'template', 'guideline'], true)) {
+                    $record->content_type = $requestedType;
+                } else {
+                    $record->content_type = 'article';
+                }
+            }
+            if (! $request->user()->hasPermission('knowledge.publish')) {
+                $context['config']['fields']['status'][1] = ['Draft'];
+            }
         }
         if ($this->module === 'documents') {
             $context['config']['fields']['status'][1] = array_values(array_filter($context['config']['fields']['status'][1], function ($status) use ($request, $record) {
@@ -81,8 +91,9 @@ abstract class ModuleController extends Controller
     public function store(RecordRequest $request, RecordWriter $writer)
     {
         $record = $writer->save($this->module, $request);
+        $label = $this->module === 'knowledge' ? ucfirst($record->content_type ?? 'article') : ucfirst(Modules::get($this->module)['singular']);
 
-        return redirect()->route($this->module.'.show', $record)->with('success', ucfirst(Modules::get($this->module)['singular']).' created successfully.');
+        return redirect()->route($this->module.'.show', $record)->with('success', $label.' created successfully.');
     }
 
     public function update(RecordRequest $request, $record, RecordWriter $writer)
