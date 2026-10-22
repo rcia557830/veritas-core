@@ -1,3 +1,19 @@
+<div class="workflow-status-tracker mb-3" aria-label="Journal entry workflow status">
+    <div class="d-flex align-items-center flex-wrap gap-2 py-2 px-3 bg-light rounded border">
+        <span class="text-uppercase small fw-bold text-muted me-1">Workflow:</span>
+        <span class="badge {{ $record->status === 'Draft' ? 'bg-primary' : 'bg-secondary' }}">1. Draft</span>
+        <i class="bi bi-chevron-right text-muted small" aria-hidden="true"></i>
+        <span class="badge {{ $record->status === 'For Review' ? 'bg-primary' : ($record->status === 'Needs Correction' ? 'bg-danger' : (in_array($record->status, ['Reviewed','Posted']) ? 'bg-success' : 'bg-secondary')) }}">
+            2. {{ $record->status === 'Needs Correction' ? 'Needs Correction' : 'For Review' }}
+        </span>
+        <i class="bi bi-chevron-right text-muted small" aria-hidden="true"></i>
+        <span class="badge {{ $record->status === 'Reviewed' ? 'bg-primary' : ($record->status === 'Posted' ? 'bg-success' : 'bg-secondary') }}">3. Reviewed</span>
+        <i class="bi bi-chevron-right text-muted small" aria-hidden="true"></i>
+        <span class="badge {{ $record->status === 'Posted' ? 'bg-success' : 'bg-secondary' }}">4. Posted</span>
+    </div>
+</div>
+
+@if($record->status==='Reviewed')<p class="system-alert">Reviewed journals are ready for authorized posting.</p>@endif
 @if(!isset($voucher) && $record->voucher)<p><a href="{{ route('vouchers.show',$record->voucher) }}">Open {{ $record->voucher->reference }} · {{ \App\Models\Voucher::TYPES[$record->voucher->type] }}</a></p>@endif
 @include('ledger.lines')
 <p class="system-alert mt-3">{{ $record->total_debit!=='0.00' && $record->total_debit===$record->total_credit?'This transaction is balanced.':'This transaction is unbalanced and cannot be submitted for review.' }}</p>

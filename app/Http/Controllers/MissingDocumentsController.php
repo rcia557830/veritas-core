@@ -37,6 +37,7 @@ class MissingDocumentsController extends Controller
         $request->validate([
             'follow_up' => 'nullable|in:open',
             'q' => 'nullable|string|max:150',
+            'client_id' => 'nullable|integer|min:1',
             'accounting_period_id' => 'nullable|integer|min:1',
             'type' => 'nullable|string|max:255',
             'state' => 'nullable|in:missing,awaiting,incomplete,clarification,verified',
@@ -44,8 +45,12 @@ class MissingDocumentsController extends Controller
         ]);
 
         $query = Access::query(DocumentRequirement::class)
-            ->with(['client', 'accountingPeriod', 'documents'])
+            ->with(['client', 'accountingPeriod', 'documents', 'followUps' => fn ($q) => $q->with('assignee')->latest('id')])
             ->where('is_active', true);
+
+        if ($clientId = $request->integer('client_id')) {
+            $query->where('client_id', $clientId);
+        }
 
         if ($request->query('follow_up') === 'open') {
             $query->whereHas('followUps', fn ($q) => $q->whereIn('status', ['Open', 'In Progress']));

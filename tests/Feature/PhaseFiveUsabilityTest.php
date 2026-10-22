@@ -10,6 +10,7 @@ use App\Models\Permission;
 use App\Models\User;
 use App\Services\Access;
 use App\Support\Money;
+use App\Support\Navigation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Support\SuperAdminFixtures;
 use Tests\TestCase;
@@ -31,13 +32,19 @@ class PhaseFiveUsabilityTest extends TestCase
             $html = new \DOMDocument;
             @$html->loadHTML($response->getContent());
             $xpath = new \DOMXPath($html);
-            $groups = $xpath->query('//*[@id="mainNav"]/details');
+            $groups = $xpath->query('//*[@id="mainNav"]/*[@data-nav-group]');
             $this->assertSame($user->hasRole('super-admin') ? 2 : 6, $groups->length);
             foreach ($groups as $group) {
-                $this->assertGreaterThan(0, $xpath->query('.//a', $group)->length);
+                $this->assertTrue($group->nodeName === 'a' || $xpath->query('.//a', $group)->length > 0);
             }
             foreach ($xpath->query('//*[@id="mainNav"]//a') as $link) {
                 $this->get($link->getAttribute('href'))->assertOk();
+            }
+            // Local workspace views remain reachable after removing sidebar submenus.
+            foreach (Navigation::groups() as $group) {
+                foreach ($group['links'] as $link) {
+                    $this->get($link['url'])->assertOk();
+                }
             }
             if ($user->hasRole('super-admin')) {
                 $response->assertDontSee('data-nav-group="accounting"', false)->assertDontSee('Active Clients');
@@ -121,7 +128,7 @@ class PhaseFiveUsabilityTest extends TestCase
         });
         $record = ComplianceRecord::firstOrFail();
         $followUp = $record->followUps()->create(['status' => 'In Progress', 'created_by' => $owner->id]);
-        $this->get('/compliance/monitoring?follow_up=open')->assertOk()->assertViewHas('records', fn ($records) => $records->contains('id', $record->id))->assertSee(route('compliance.checklist', $record->client), false);
+        $this->get('/compliance/monitoring?follow_up=open')->assertOk()->assertViewHas('records', fn ($records) => $records->contains('id', $record->id))->assertSee(route('compliance.show', $record).'#follow-ups', false);
         $followUp->update(['status' => 'Resolved']);
         $this->get('/compliance/monitoring?follow_up=open')->assertOk()->assertViewHas('records', fn ($records) => ! $records->contains('id', $record->id));
         $this->getJson('/requirements/monitoring?follow_up=invalid')->assertUnprocessable();

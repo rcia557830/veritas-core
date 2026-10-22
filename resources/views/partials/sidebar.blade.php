@@ -4,10 +4,14 @@
 <div class="nav-label">YOUR WORKSPACE</div>
 <nav id="mainNav" aria-label="Primary navigation">
 @foreach($navigation as $key => $group)
+@if(in_array($key, ['documents','accounting','compliance']))
+<a class="nav-item {{ $group['active'] ? 'active' : '' }}" data-nav-group="{{ $key }}" href="{{ $group['links'][0]['url'] }}" @if($group['active']) aria-current="page" @endif><i class="bi bi-{{ $group['icon'] }}" aria-hidden="true"></i><span>{{ $group['label'] }}</span></a>
+@else
 <details class="nav-group" data-nav-group="{{ $key }}" @if($group['active']) open @endif>
 <summary><i class="bi bi-{{ $group['icon'] }}" aria-hidden="true"></i><span>{{ $group['label'] }}</span></summary>
 <div class="nav-children">@foreach($group['links'] as $link)
 <a class="nav-item {{ $link['active'] ? 'active' : '' }}" href="{{ $link['url'] }}" @if($link['active']) aria-current="page" @endif>{{ $link['label'] }}</a>
 @endforeach</div></details>
+@endif
 @endforeach
 </nav></aside>

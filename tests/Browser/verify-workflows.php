@@ -36,8 +36,8 @@ $compliance = ComplianceRecord::where('requirement', 'SYNTHETIC Browser Complian
 $check($compliance->submission_deadline->toDateString() === '2026-12-21', 'Internal target is not ten days before filing.');
 $check($compliance->followUps()->where('remarks', 'SYNTHETIC browser follow-up saved')->exists(), 'Follow-up was not persisted.');
 $invoice = Invoice::whereHas('items', fn ($q) => $q->where('description', 'SYNTHETIC Browser Service'))->firstOrFail();
-$check($invoice->total_cents === 10000 && $invoice->paid_cents === 2500 && $invoice->balance_cents === 7500, 'Browser billing reconciliation failed.');
-$check($invoice->payments()->count() === 1, 'Browser payment count is incorrect.');
+$check($invoice->total_cents === 10000 && $invoice->paid_cents === 10000 && $invoice->balance_cents === 0, 'Browser billing reconciliation failed.');
+$check($invoice->payments()->count() === 2, 'Browser payment count is incorrect.');
 $check(LedgerEntry::posted()->whereColumn('created_by', 'reviewed_by')->count() === 0, 'Self-reviewed posting detected.');
 $check(Voucher::whereHas('journal', fn ($q) => $q->posted())->count() >= 4, 'Posted browser vouchers missing.');
 echo "PASS: Persisted browser client, attachment hash, requirement link, approval, onboarding, calendar, compliance target/follow-up, billing balance and independent voucher postings.\n";

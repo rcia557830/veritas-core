@@ -27,6 +27,10 @@ class Notify
 
     public static function isCurrent($record, array $data): bool
     {
+        if ($record instanceof Invoice && str_starts_with($data['title'] ?? '', 'Overdue invoice ')) {
+            // Keep notification history, but stop presenting resolved collection alerts.
+            return $record->status === 'Open' && $record->balance_cents > 0 && $record->due_date->lt(today());
+        }
         if (! $record instanceof ComplianceRecord) {
             return true;
         }
@@ -70,7 +74,7 @@ class Notify
                 ->whereNotIn('status', ['Filed', 'Completed'])
                 ->where(function ($q) use ($leadWindow) {
                     $q->whereDate('due_date', '<=', $leadWindow)
-                      ->orWhereDate('submission_deadline', '<=', today()->addDays(DeadlineCalculator::submissionApproachDays()));
+                        ->orWhereDate('submission_deadline', '<=', today()->addDays(DeadlineCalculator::submissionApproachDays()));
                 })
                 ->with('client')
                 ->chunkById(100, function ($records) use ($user) {

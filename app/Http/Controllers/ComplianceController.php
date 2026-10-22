@@ -23,10 +23,28 @@ class ComplianceController extends ModuleController
 {
     protected string $module = 'compliance';
 
+    public function index(Request $request)
+    {
+        return $this->monitor($request);
+    }
+
+    public function show($record)
+    {
+        Gate::authorize('view', $record);
+        $record->load(['followUps.assignee', 'followUps.creator']);
+        $users = User::where('status', 'Active')->orderBy('name')->get();
+
+        return view('records.show', $this->context() + compact('record', 'users'));
+    }
+
     public function monitor(Request $request)
     {
         Gate::authorize('viewAny', ComplianceRecord::class);
         $request->validate([
+            'view' => 'nullable|in:upcoming,overdue,completed',
+            'type' => 'nullable|string|max:255',
+            'from' => 'nullable|date_format:Y-m-d',
+            'to' => ['nullable', 'date_format:Y-m-d', Rule::when($request->filled('from'), 'after_or_equal:from')],
             'follow_up' => 'nullable|in:open',
             'q' => 'nullable|string|max:150',
             'agency' => 'nullable|string|max:255',
@@ -53,14 +71,26 @@ class ComplianceController extends ModuleController
                     ->orWhereHas('client', fn ($c) => $c->where('business_name', 'like', '%'.$search.'%'));
             });
         }
-        if ($agency = $request->query('agency')) {
+        if ($agency = $request->query('agency', $request->query('type'))) {
             $query->where('agency', $agency);
         }
         if ($period = $request->query('reporting_period')) {
             $query->where('reporting_period', $period);
         }
         if ($status = $request->query('status')) {
-            $query->where('status', $status);
+            if ($status === 'Overdue') {
+                $query->whereNotIn('status', DeadlineCalculator::TERMINAL)->whereDate('due_date', '<', DeadlineCalculator::today());
+            } else {
+                $query->where('status', $status);
+            }
+        }
+        foreach (['from' => '>=', 'to' => '<='] as $key => $operator) {
+            if ($request->filled($key)) {
+                $query->whereDate('due_date', $operator, $request->query($key));
+            }
+        }
+        if ($request->query('view') === 'completed') {
+            $query->whereIn('status', DeadlineCalculator::TERMINAL);
         }
         if ($clientId = $request->integer('client_id')) {
             $query->where('client_id', $clientId);
@@ -72,7 +102,7 @@ class ComplianceController extends ModuleController
         $perPage = Records::pageSize($request);
         $query->orderBy('due_date')->orderBy('id');
         $deadline = $request->query('deadline');
-        if ($deadline && $deadline !== 'all') {
+        if (($deadline && $deadline !== 'all') || in_array($request->query('view'), ['upcoming', 'overdue'])) {
             // Legacy deadlines may be derived using calendar or business days.
             // Apply the same predicates as the dashboard before counting pages,
             // retaining only this page in memory.
@@ -87,7 +117,13 @@ class ComplianceController extends ModuleController
                     'filing_overdue' => DeadlineCalculator::isFilingOverdue($r),
                     default => true,
                 };
-                if ($matchesDeadline) {
+                $overdue = DeadlineCalculator::isSubmissionOverdue($r) || DeadlineCalculator::isFilingOverdue($r);
+                $matchesView = match ($request->query('view')) {
+                    'upcoming' => ! $overdue && (DeadlineCalculator::isSubmissionApproaching($r) || DeadlineCalculator::isFilingApproaching($r)),
+                    'overdue' => $overdue,
+                    default => true,
+                };
+                if ($matchesDeadline && $matchesView) {
                     if ($matches >= ($page - 1) * $perPage && $items->count() < $perPage) {
                         $items->push($r);
                     }

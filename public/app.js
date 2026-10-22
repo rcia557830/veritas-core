@@ -81,18 +81,33 @@
   }
   function updateTotals(section) {
     if (section.dataset.lines === 'journal') {
-      let debit = 0n, credit = 0n, valid = true;
+      let debit = 0n, credit = 0n, valid = true, validLines = true;
       const cents = value => {
         if (!/^\d{1,9}(?:\.\d{1,2})?$/.test(value)) { valid = false; return 0n; }
         const [whole, fraction = ''] = value.split('.');
         return BigInt(whole) * 100n + BigInt(fraction.padEnd(2, '0'));
       };
       section.querySelectorAll('[data-line-body] tr').forEach(row => {
-        debit += cents(row.querySelector('[name$="[debit]"]').value);
-        credit += cents(row.querySelector('[name$="[credit]"]').value);
+        const lineDebit = cents(row.querySelector('[name$="[debit]"]').value);
+        const lineCredit = cents(row.querySelector('[name$="[credit]"]').value);
+        if ((lineDebit > 0n) === (lineCredit > 0n)) validLines = false;
+        debit += lineDebit; credit += lineCredit;
       });
       const format = value => 'PHP ' + (value / 100n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '.' + (value % 100n).toString().padStart(2, '0');
-      section.querySelector('[data-line-total]').textContent = valid ? `Debit ${format(debit)} · Credit ${format(credit)} · ${debit === credit && debit > 0n ? 'Balanced' : 'Unbalanced — Draft only'}` : 'Enter non-negative amounts with at most two decimal places.';
+      const difference = debit >= credit ? debit - credit : credit - debit;
+      [['debit', debit], ['credit', credit], ['difference', difference]].forEach(([name, value]) => {
+        const output = section.querySelector(`[data-total-${name}]`);
+        if (output) output.textContent = valid ? format(value) : '—';
+      });
+      const balanceMessage = section.querySelector('[data-line-total]');
+      balanceMessage.dataset.balance = !valid || !validLines ? 'invalid' : debit === credit ? 'balanced' : 'unbalanced';
+      balanceMessage.textContent = !valid
+        ? 'Invalid entry: Use non-negative amounts with at most two decimal places.'
+        : !validLines
+          ? 'Invalid entry: Enter a positive amount in either Debit or Credit for each line, not both.'
+          : debit === credit
+            ? 'Balanced: Total debits equal total credits.'
+            : `Unbalanced: Debits and credits differ by ${format(difference)}. ${section.closest('[data-voucher-form]') ? 'Balance the totals before saving this voucher.' : 'You can save a draft.'}`;
       return;
     }
     let debit = 0, credit = 0, subtotal = 0;

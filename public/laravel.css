@@ -86,20 +86,27 @@ h1 { font-size: 28px; font-weight: 600; }
 .financial-report-heading{text-align:center;border-bottom:3px solid var(--gold,#c9a55f);padding-bottom:16px;margin-bottom:24px}.financial-report .table{min-width:760px}.financial-report .table td{overflow-wrap:anywhere}.financial-report .detail-grid dd{font-variant-numeric:tabular-nums;overflow-wrap:anywhere}.report-warning{padding:16px;border:1px solid #957126;border-radius:8px;background:#fff8e8;color:#59420e}.report-reconciliation{font-weight:600}
 
 /* Phase 5: shared navigation and a compact, neutral workspace. */
-.nav-group { margin-bottom: 6px; }
-.nav-group > summary { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 6px; cursor: pointer; color: #e5ebf3; font-weight: 600; font-size: 14px; list-style: none; }
+.nav-group { margin-bottom: 5px; }
+#mainNav > .nav-item,
+.nav-group > summary { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 6px; cursor: pointer; color: #ccd6e3; font-weight: 600; font-size: 14px; list-style: none; text-decoration: none; border: 1px solid transparent; transition: all .15s ease; }
 .nav-group > summary::-webkit-details-marker { display: none; }
-.nav-group > summary::after { content: ''; width: 6px; height: 6px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(-45deg); margin-left: auto; flex-shrink: 0; opacity: .65; }
+.nav-group > summary::after { content: ''; width: 6px; height: 6px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(-45deg); margin-left: auto; flex-shrink: 0; opacity: .65; transition: transform .2s ease; }
 .nav-group[open] > summary::after { transform: rotate(45deg); }
-.nav-group > summary > i { width: 20px; text-align: center; font-size: 17px; color: var(--muted-dark); }
-.nav-group[open] > summary { color: white; }
-.nav-group > summary:hover { background: var(--ink-800); }
-.nav-children { padding: 0 0 4px 20px; border-left: 1px solid var(--dark-line); margin-left: 18px; }
-.nav-children .nav-item { padding: 9px 12px; }
-.workflow-tabs { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid var(--line); padding-bottom: 10px; margin-bottom: 24px; }
-.workflow-tabs a { text-decoration: none; padding: 9px 12px; border-radius: 6px; color: var(--ink-700); font-size: 13px; }
-.workflow-tabs a[aria-current] { background: var(--ink-950); color: white; font-weight: 600; }
-.workflow-tabs a:hover { text-decoration: underline; }
+#mainNav > .nav-item > i,
+.nav-group > summary > i { width: 20px; text-align: center; font-size: 16px; color: var(--muted-dark); flex-shrink: 0; }
+#mainNav > .nav-item:hover,
+.nav-group > summary:hover { background: var(--ink-800); color: #ffffff; border-color: transparent; }
+#mainNav > .nav-item.active { background: var(--ink-800); color: #ffffff; border-color: var(--dark-line); box-shadow: inset 3px 0 var(--brand); }
+#mainNav > .nav-item.active > i,
+.nav-group[open] > summary > i { color: var(--brand); }
+.nav-children { padding: 2px 0 6px 16px; border-left: 1px solid var(--dark-line); margin-left: 21px; }
+.nav-children .nav-item { display: flex; align-items: center; padding: 8px 12px; font-size: 13.5px; font-weight: 500; color: #a8b8cc; border-radius: 5px; margin-bottom: 2px; text-decoration: none; transition: all .15s ease; }
+.nav-children .nav-item:hover { background: var(--ink-800); color: #ffffff; }
+.nav-children .nav-item.active { background: var(--ink-800); color: #ffffff; font-weight: 600; box-shadow: inset 2.5px 0 var(--brand); }
+.workflow-tabs { display: flex; flex-wrap: wrap; gap: 6px; border-bottom: 1px solid var(--line); padding-bottom: 12px; margin-bottom: 24px; }
+.workflow-tabs a { text-decoration: none; padding: 8px 14px; border-radius: 6px; color: var(--ink-700); font-size: 13.5px; font-weight: 500; border: 1px solid transparent; transition: all .15s ease; }
+.workflow-tabs a:hover { background: var(--surface); color: var(--ink-950); border-color: var(--line); text-decoration: none; }
+.workflow-tabs a[aria-current] { background: var(--ink-950); color: #ffffff; font-weight: 600; border-color: var(--ink-950); box-shadow: 0 1px 3px rgba(16, 29, 48, 0.12); }
 .overview-heading { display: flex; justify-content: space-between; align-items: start; gap: 24px; margin: 4px 0 28px; }
 .overview-heading h2 { font-size: clamp(23px, 2vw, 30px); font-weight: 600; letter-spacing: -.035em; margin: 0 0 8px; }
 .overview-heading p, .overview-heading time { color: var(--ink-600); font-size: 14px; }
@@ -149,6 +156,32 @@ h1 { font-size: 28px; font-weight: 600; }
 @media (max-width: 575px) { .overview-cards { grid-template-columns: 1fr; } .overview-heading { flex-direction: column; } .workflow-tabs { gap: 2px; } .workflow-tabs a { text-decoration: none; padding: 8px; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }
 
+/* Focused workspaces share the existing brand and workflow status colors. */
+.workspace-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:24px; margin-bottom:24px; }
+.workspace-heading h2 { font-size:22px; font-weight:700; margin:0 0 8px; }
+.workspace-heading p { margin:0; max-width:64ch; }
+.workspace-tools { color:var(--ink-700); font-size:13px; }
+.workspace-tools summary { cursor:pointer; padding:6px 0; font-weight:600; user-select:none; }
+.workspace-tools summary:hover { color:var(--ink-950); }
+.workspace-tools .actions { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+.workspace-tools .actions a { display:inline-flex; align-items:center; padding:6px 12px; background:var(--card); border:1px solid var(--line); border-radius:var(--radius-sm); color:var(--ink-700); font-size:12.5px; font-weight:500; text-decoration:none; transition:all .15s ease; }
+.workspace-tools .actions a:hover { background:var(--surface); border-color:var(--ink-500); color:var(--ink-950); }
+.filter-details { flex-basis:100%; margin-top:4px; }
+.filter-details .filters { margin-bottom:8px; }
+.workspace-table { min-width:780px; }
+.workspace-table thead th { white-space:normal; }
+.workspace-table tbody td { overflow-wrap:anywhere; }
+.workspace-table .badge-status { min-width:0; width:auto; height:auto; padding:5px 8px; }
+.journal-totals { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; padding:16px 20px; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-md); margin-top:16px; }
+.journal-totals span { display:block; font-size:12px; font-weight:600; color:var(--ink-500); text-transform:uppercase; letter-spacing:.05em; }
+.journal-totals strong { display:block; font-size:20px; font-weight:700; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; margin-top:2px; }
+[data-line-total][data-balance="balanced"] { color:var(--success); background:var(--success-soft); border-color:var(--success-line); font-weight:600; }
+[data-line-total][data-balance="unbalanced"] { color:var(--warning); background:var(--warning-soft); border-color:var(--warning-line); font-weight:600; }
+[data-line-total][data-balance="invalid"] { color:var(--danger); background:var(--danger-soft); border-color:var(--danger-line); font-weight:600; }
+[id^="requirement-"], #follow-ups, #validation { scroll-margin-top:24px; }
+@media (max-width:767.98px) { .workspace-heading { flex-direction:column; gap:16px; } .journal-totals { gap:12px; padding:12px; } .journal-totals strong { font-size:15px; } }
+@media (max-width:380px) { .topbar { padding:10px 12px; min-height:64px; } .content-wrap { padding:12px; } .topbar h1 { font-size:18px; } .overview-card { padding:16px; } .overview-card .stat-value { font-size:26px; } .filters > label { min-width:100%; } }
+
 /* Notices use the shared workspace controls and a readable detail measure. */
 .notices-workspace .table { min-width: 680px; width: 100%; }
 .notices-workspace .table td:first-child { width: 42%; overflow-wrap: anywhere; }
@@ -157,3 +190,9 @@ h1 { font-size: 28px; font-weight: 600; }
 .notices-workspace .section-title { overflow-wrap: anywhere; }
 .notices-workspace .prose { max-width: 75ch; line-height: 1.75; }
 .notices-workspace textarea { min-height: 240px; }
+
+/* Phase 3: workflow refinements for document completeness and journal progression */
+.client-doc-overview { border-left: 3px solid var(--brand); }
+.mini-stat-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm); }
+.mini-stat-card strong { font-size: 18px; font-variant-numeric: tabular-nums; display: block; margin-top: 2px; }
+.workflow-status-tracker .badge { font-weight: 600; font-size: 12px; padding: 5px 9px; letter-spacing: .02em; }

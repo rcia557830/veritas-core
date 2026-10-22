@@ -29,7 +29,23 @@ export async function runFinalWorkflows({ cdp, evaluate, fill, click, go, loaded
   await fill('[name=reference_number]', 'SYNTHETIC-BROWSER-PAYMENT');
   await submit('form[action$="/payments"]', 'Payment recorded successfully.');
   await hasText('SYNTHETIC-BROWSER-PAYMENT');
+  await hasText('Payment overdue');
   await shot('billing-partial-payment-desktop');
+  await fill('[name=amount]', '75');
+  await fill('[name=payment_method]', 'Cash');
+  await fill('[name=reference_number]', 'SYNTHETIC-BROWSER-FINAL-PAYMENT');
+  await submit('form[action$="/payments"]', 'Payment recorded successfully.');
+  await hasText('Paid in full');
+  assert.equal(await evaluate('!!document.querySelector(\'form[action$="/payments"]\')'), false);
+  await shot('billing-paid-desktop');
+  const invoicePath = await evaluate('location.pathname');
+  await go(`${invoicePath}/print`, 'table');
+  await cdp('Emulation.setEmulatedMedia', { media: 'print' });
+  await hasText('SYNTHETIC Browser Service');
+  await shot('billing-paid-print');
+  await cdp('Emulation.setEmulatedMedia', { media: '' });
+  const pdf = await evaluate(`fetch(${JSON.stringify(invoicePath + '/pdf')}).then(async response => ({status:response.status, signature:(await response.text()).slice(0,4)}))`);
+  assert.deepEqual(pdf, {status:200, signature:'%PDF'}, 'Invoice PDF downloads');
 
   await cdp('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
   for (const [url, label] of [['/knowledge', 'knowledge'], ['/billing', 'billing']]) {

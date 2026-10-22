@@ -1,6 +1,6 @@
 <input type="hidden" name="type" value="{{ $voucher->type }}">
 @unless($voucher->exists)<input type="hidden" name="creation_token" value="{{ old('creation_token', (string)\Illuminate\Support\Str::uuid()) }}">@endunless
-<p class="system-alert">{{ $voucher->reference ?? 'Reference assigned on first save' }} · Provisional numbering: {{ $voucher->type }}-000001 onward, separately for each client and voucher type. Issued references and types are fixed; cancellation and voiding are not configured.</p>
+<p class="system-alert mb-3"><i class="bi bi-info-circle me-1" aria-hidden="true"></i> <strong>{{ $voucher->reference ?? 'Reference assigned on first save' }}</strong> · Sequential numbering: {{ $voucher->type }}-000001 onward per client. Designate required accounts below.</p>
 @if($voucher->type !== 'JV')
 <div class="row"><div class="col-md-6"><x-field name="party" :label="$voucher->type === 'CR' ? 'Payer / source' : 'Payee'" :value="\App\Support\DemoLabels::display($voucher->party)" :required="true"/></div>
 <div class="col-md-6"><x-field name="amount" :label="$voucher->type === 'CR' ? 'Amount received' : 'Amount paid'" :value="$voucher->amount" :required="true"/></div>

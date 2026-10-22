@@ -24,7 +24,7 @@ export async function runJournal({ cdp, evaluate, fill, click, go, loaded, hasTe
     const forbidden = role === 'super-admin' ? '/clients' : '/admin/users';
     assert.equal(await evaluate(`fetch(${JSON.stringify(forbidden)}).then(r => r.status)`), 403);
     if (role !== 'super-admin') {
-      await go('/clients?q=Amihan'); await hasText('Amihan Paper Trading (Fictional)');
+      await go('/clients?q=Amihan'); await hasText('Amihan Paper Trading');
       await go('/knowledge?q=Independent'); await hasText('Independent accounting review');
       const pdf = await evaluate('fetch("/documents/1/download").then(async r => ({status:r.status, body:(await r.text()).slice(0,5)}))');
       assert.deepEqual(pdf, {status:200, body:'%PDF-'});
@@ -32,7 +32,7 @@ export async function runJournal({ cdp, evaluate, fill, click, go, loaded, hasTe
       if (role === 'bookkeeper') {
         assert.equal(await evaluate('fetch("/clients/6").then(r => r.status)'), 403);
         await go('/clients?q=Habagat');
-        assert.ok(!await evaluate('document.querySelector("main").innerText.includes("Habagat Hardware (Fictional)")'));
+        assert.ok(!await evaluate('document.querySelector("main").innerText.includes("Habagat Hardware")'));
       }
     }
     if (role === 'owner') {

@@ -6,6 +6,8 @@ param(
     [switch]$SecurityBrowser,
     [switch]$RoleBrowser,
     [switch]$DemoBrowser,
+    [switch]$ResponsiveBrowser,
+    [switch]$ReportBrowser,
     [string]$Filter = ''
 )
 $ErrorActionPreference = 'Stop'
@@ -73,7 +75,8 @@ log-error=$($artifacts.Replace('\','/'))/mysql.log
     }
     if (! $SkipBrowser) {
         $prepareArgs = @('tests/Browser/prepare.php', '--journal', '--vouchers')
-        if ($SecurityBrowser -or $RoleBrowser) { $prepareArgs += '--security' }
+        if ($ReportBrowser) { $prepareArgs += @('--general-ledger', '--financial-reports') }
+        if ($SecurityBrowser -or $RoleBrowser -or $ResponsiveBrowser) { $prepareArgs += '--security' }
         if ($DemoBrowser) { $prepareArgs = @('tests/Browser/prepare-demo.php') }
         $prepared = & php @prepareArgs
         $prepared | Write-Output
@@ -85,9 +88,11 @@ log-error=$($artifacts.Replace('\','/'))/mysql.log
         $workflow = if ($SecurityBrowser) { 'tests/Browser/employee-security.mjs' } else { 'tests/Browser/onboarding.mjs' }
         if ($RoleBrowser) { $workflow = 'tests/Browser/role-dashboards.mjs' }
         if ($DemoBrowser) { $workflow = 'tests/Browser/demo-data.mjs' }
+        if ($ResponsiveBrowser) { $workflow = 'tests/Browser/responsive-phase4.mjs' }
+        if ($ReportBrowser) { $workflow = 'tests/Browser/release-reports.mjs' }
         Run-Checked 'node' @('tests/Browser/chart-of-accounts.mjs', "http://127.0.0.1:$webPort", $Browser, "$artifacts/browser", $workflow)
         if ($DemoBrowser) { Run-Checked 'php' @('tests/Browser/verify-demo.php') }
-        if (! $SecurityBrowser -and ! $RoleBrowser -and ! $DemoBrowser) { Run-Checked 'php' @('tests/Browser/verify-workflows.php') }
+        if (! $SecurityBrowser -and ! $RoleBrowser -and ! $DemoBrowser -and ! $ResponsiveBrowser -and ! $ReportBrowser) { Run-Checked 'php' @('tests/Browser/verify-workflows.php') }
     }
 } finally {
     if ($web -and ! $web.HasExited) { Stop-Process -Id $web.Id }
