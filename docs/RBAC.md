@@ -80,4 +80,4 @@ php vendor/bin/phpunit --configuration phpunit.mysql.xml
 
 `tests/Feature/RbacTest.php` covers Owner-only URLs, forged role and approval changes, independent ledger review, compliance restrictions, draft article ownership, notice posting/privacy, module permission revocation and role dashboards. Existing `WorkspaceTest` continues to cover authentication, uploads, CRUD, payment calculations and reports. Tests use isolated SQLite/MySQL databases.
 
-`docs/RBAC-CODE.md` contains the complete final code grouped in implementation order, with exact file locations. `docs/ERD.md` includes the new tables and role mapping.
+`docs/archive/RBAC-CODE.md` contains the archived code snapshot grouped in implementation order, with exact file locations. `docs/ERD.md` includes the new tables and role mapping.

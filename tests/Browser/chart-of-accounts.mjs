@@ -29,6 +29,7 @@ try {
   let id = 0;
   const waiting = new Map();
   const errors = [];
+  const loadedPages = new Set();
   socket.onmessage = event => {
     const message = JSON.parse(event.data);
     if (message.id) {
@@ -36,6 +37,7 @@ try {
       waiting.delete(message.id);
       if (message.error) pending.reject(new Error(message.error.message)); else pending.resolve(message.result);
     } else if (message.method === 'Runtime.exceptionThrown') errors.push(message.params.exceptionDetails.text + ': ' + (message.params.exceptionDetails.exception?.description ?? ''));
+    else if (message.method === 'Page.lifecycleEvent' && message.params.name === 'load') loadedPages.add(message.params.loaderId);
   };
   function cdp(method, params = {}) {
     return new Promise((resolve, reject) => { const key = ++id; waiting.set(key, { resolve, reject }); socket.send(JSON.stringify({ id: key, method, params })); });
@@ -47,13 +49,19 @@ try {
   };
   const text = () => evaluate('document.body.innerText');
   const loaded = async (selector) => until(() => evaluate(`document.readyState === 'complete' && !!document.querySelector(${JSON.stringify(selector)})`), selector);
-  const go = async (url, selector = 'main') => { await cdp('Page.navigate', { url: base + url }); await loaded(selector); };
+  const go = async (url, selector = 'main') => {
+    const navigation = await cdp('Page.navigate', { url: base + url });
+    assert.equal(navigation.errorText, undefined, `Navigation: ${url}`);
+    if (navigation.loaderId) await until(() => loadedPages.has(navigation.loaderId), `Page load: ${url}`);
+    await loaded(selector);
+  };
   const fill = (selector, value) => evaluate(`document.querySelector(${JSON.stringify(selector)}).value = ${JSON.stringify(value)}`);
   const click = selector => evaluate(`document.querySelector(${JSON.stringify(selector)}).click()`);
   const hasText = value => until(async () => (await text()).includes(value), value);
   const submit = async (selector, expected) => { await evaluate(`document.querySelector(${JSON.stringify(selector)}).requestSubmit()`); await hasText(expected); await loaded('main'); };
   const shot = async name => { const result = await cdp('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true }); await writeFile(path.join(artifacts, name + '.png'), Buffer.from(result.data, 'base64')); };
   await cdp('Page.enable'); await cdp('Runtime.enable');
+  await cdp('Page.setLifecycleEventsEnabled', { enabled: true });
   await cdp('Emulation.setDeviceMetricsOverride', { width: 1440, height: 1000, deviceScaleFactor: 1, mobile: false });
   if (process.argv[5]?.endsWith('/demo-data.mjs')) {
     const workflow = await import(pathToFileURL(path.resolve(process.argv[5])).href);

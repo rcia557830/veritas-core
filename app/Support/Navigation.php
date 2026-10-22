@@ -33,28 +33,26 @@ final class Navigation
             ]],
             'documents' => ['label' => 'Documents', 'icon' => 'folder2-open', 'links' => [
                 $link('All Documents', 'documents.index', $can(Document::class), [], 'documents.*'),
-                $link('Requirements', 'requirements.index', $can(DocumentRequirement::class), [], 'requirements.*'),
-                $link('Missing Documents', 'requirements.monitoring', $can(DocumentRequirement::class), ['state' => 'missing']),
-                $link('Validation', 'documents.index', $can(Document::class) && Gate::allows('document.validate'), ['queue' => 'validation']),
+                $link('Needs Validation', 'documents.index', $can(Document::class) && Gate::allows('document.validate'), ['queue' => 'validation']),
+                $link('Missing Requirements', 'requirements.monitoring', $can(DocumentRequirement::class), ['state' => 'missing'], 'requirements.*'),
                 $link('Follow-Ups', 'requirements.monitoring', $can(DocumentRequirement::class), ['follow_up' => 'open']),
             ]],
             'accounting' => ['label' => 'Accounting', 'icon' => 'journal-text', 'links' => [
                 $link('General Journal', 'ledger.index', $can(LedgerEntry::class), [], 'ledger.*'),
-                $link('My Journals', 'ledger.index', $can(LedgerEntry::class) && Gate::allows('create', LedgerEntry::class), ['work' => 'mine']),
-                $link('Journal Review Queue', 'ledger.index', $can(LedgerEntry::class) && Gate::allows('bookkeeping.review'), ['work' => 'reviewable']),
                 $link('Accounting Vouchers', 'vouchers.index', $can(LedgerEntry::class), [], 'vouchers.*'),
                 $link('General Ledger', 'general-ledger.index', $business && Gate::allows('generalLedger', LedgerEntry::class), [], 'general-ledger.*'),
+                $link('Financial Reports', 'financial-reports.index', $business && Gate::allows('financialReports', LedgerEntry::class), [], 'financial-reports.*'),
                 $link('Chart of Accounts', 'accounts.index', $can(Account::class), [], 'accounts.*'),
                 $link('Billing and Payments', 'billing.index', $can(Invoice::class), [], 'billing.*'),
-                $link('Financial Reports', 'financial-reports.index', $business && Gate::allows('financialReports', LedgerEntry::class), [], 'financial-reports.*'),
                 $link('Financial Audit Trail', 'financial-audit.index', $business && Gate::allows('generalLedger', LedgerEntry::class), [], ['financial-audit.*', 'admin.audit.*']),
                 $link('Accounting Settings', 'accounting-periods.index', $can(Account::class), [], ['accounting-periods.*', 'account-templates.*']),
                 $link('Record Reports', 'reports.index', $business && Gate::allows('report.view') && Gate::allows('report.generate'), [], 'reports.*'),
             ]],
             'compliance' => ['label' => 'Compliance', 'icon' => 'calendar2-check', 'links' => [
-                $link('Requirements', 'compliance.index', $can(ComplianceRecord::class), [], 'compliance.*'),
-                $link('Deadline Monitoring', 'compliance.monitoring', $can(ComplianceRecord::class)),
-                $link('Follow-Ups', 'compliance.monitoring', $can(ComplianceRecord::class), ['follow_up' => 'open']),
+                $link('All Requirements', 'compliance.index', $can(ComplianceRecord::class), [], 'compliance.*'),
+                $link('Upcoming', 'compliance.index', $can(ComplianceRecord::class), ['view' => 'upcoming'], 'compliance.*'),
+                $link('Overdue', 'compliance.index', $can(ComplianceRecord::class), ['view' => 'overdue'], 'compliance.*'),
+                $link('Completed', 'compliance.index', $can(ComplianceRecord::class), ['view' => 'completed'], 'compliance.*'),
             ]],
             'knowledge' => ['label' => 'Knowledge Base', 'icon' => 'book', 'links' => [
                 $link('Articles', 'knowledge.index', $can(KnowledgeArticle::class), [], 'knowledge.*'),
@@ -94,6 +92,11 @@ final class Navigation
             }
         }
         unset($group);
+
+        // Requirement setup/checklists belong to Documents even without a queue filter.
+        if (request()->routeIs('requirements.*') && isset($groups['documents'])) {
+            $groups['documents']['active'] = true;
+        }
 
         return array_filter($groups, fn ($group) => count($group['links']) > 0);
     }

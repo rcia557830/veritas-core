@@ -28,6 +28,9 @@ class Records
         if ($module === 'billing') {
             $query->with(['items', 'payments']);
         }
+        if ($module === 'documents') {
+            $query->with('requirements');
+        }
         if ($module === 'ledger') {
             $query->with('items');
         }

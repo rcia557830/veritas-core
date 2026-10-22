@@ -6,6 +6,7 @@ use App\Http\Requests\RecordRequest;
 use App\Models\Client;
 use App\Models\Document;
 use App\Models\User;
+use App\Services\Accounting\JournalEvidence;
 use App\Services\Accounting\JournalWriter;
 use App\Support\Modules;
 use App\Support\Money;
@@ -134,13 +135,13 @@ class RecordWriter
                             }
 
                             // Check retained legacy files without rewriting/backfilling them.
-                            return $existing->file_path && Storage::disk('local')->exists($existing->file_path)
-                                && hash_file('sha256', Storage::disk('local')->path($existing->file_path)) === $data['file_sha256'];
+                            return $existing->file_path && Storage::disk(config('filesystems.documents'))->exists($existing->file_path)
+                                && JournalEvidence::digest($existing->file_path) === $data['file_sha256'];
                         });
                     if ($duplicate) {
                         throw ValidationException::withMessages(['file' => 'This file has already been submitted for this client, document type and received date.']);
                     }
-                    $path = $file->store('documents', 'local');
+                    $path = $file->store('documents', config('filesystems.documents'));
                     $data['file_path'] = $path;
                     $data['original_file_name'] = $file->getClientOriginalName();
                     $data['mime_type'] = $file->getMimeType();
@@ -191,7 +192,7 @@ class RecordWriter
             });
         } catch (\Throwable $error) {
             if ($path) {
-                Storage::disk('local')->delete($path);
+                Storage::disk(config('filesystems.documents'))->delete($path);
             }throw $error;
         }
         if ($module === 'documents') {

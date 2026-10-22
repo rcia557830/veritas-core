@@ -6,6 +6,7 @@ use App\Models\Client;
 use App\Models\ComplianceRecord;
 use App\Models\Document;
 use App\Models\Invoice;
+use App\Models\KnowledgeArticle;
 use App\Models\LedgerEntry;
 use App\Models\Setting;
 use App\Models\User;
@@ -36,7 +37,7 @@ class DemoDataSeederTest extends TestCase
         $this->assertDatabaseCount('clients', 30);
         $this->assertDatabaseCount('document_requirements', 210);
         $this->assertDatabaseCount('documents', 204);
-        $this->assertDatabaseCount('knowledge_articles', 8);
+        $this->assertDatabaseCount('knowledge_articles', 36);
         $this->assertDatabaseCount('compliance_records', 120);
         $this->assertDatabaseCount('ledger_entries', 360);
         $this->assertDatabaseCount('vouchers', 360);
@@ -84,8 +85,17 @@ class DemoDataSeederTest extends TestCase
         $this->assertSame(13350000, Invoice::all()->sum->balance_cents);
         $bookkeeper = User::where('email', 'bookkeeper@demo.example.test')->sole();
         $this->assertSame(25, Access::query(Client::class, $bookkeeper)->count());
+        $this->actingAs($bookkeeper);
+        foreach ([['/knowledge', 36], ['/knowledge?type=Internal%20Procedure', 14], ['/knowledge?q=template', 8], ['/knowledge?q=guideline', 8], ['/ledger?work=mine', 300]] as [$url, $count]) {
+            $this->get($url)->assertOk()->assertViewHas('records', fn ($records) => $records->total() === $count);
+        }
+        $article = KnowledgeArticle::where('title', 'Accounting Voucher Template')->sole();
+        $this->get('/knowledge/'.$article->id)->assertOk()->assertSee('COMPLETION CHECK');
+        $this->get('/knowledge?q=template&page=2')->assertOk();
+        $this->get('/ledger?work=mine&client_id=6')->assertOk()->assertViewHas('records', fn ($records) => $records->total() === 0);
+        $this->actingAs(User::where('email', 'owner@demo.example.test')->sole());
         $this->assertFalse(Hash::check('password123', $bookkeeper->password));
-        $tables = ['users', 'clients', 'documents', 'document_requirements', 'ledger_entries', 'ledger_items', 'vouchers', 'payments', 'audit_logs'];
+        $tables = ['users', 'clients', 'documents', 'document_requirements', 'ledger_entries', 'ledger_items', 'vouchers', 'payments', 'audit_logs', 'knowledge_articles'];
         $counts = collect($tables)->mapWithKeys(fn ($table) => [$table => DB::table($table)->count()]);
         $hash = $bookkeeper->password;
         $this->seed(DemoDataSeeder::class);

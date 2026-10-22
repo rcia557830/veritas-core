@@ -11,6 +11,15 @@ use Illuminate\Support\Facades\Storage;
 
 class SettingController extends Controller
 {
+    public function logo()
+    {
+        $path = Setting::firstOrFail()->logo_path;
+        $disk = Storage::disk(config('filesystems.logos'));
+        abort_unless($path && $disk->exists($path), 404);
+
+        return $disk->response($path, null, ['X-Content-Type-Options' => 'nosniff', 'Cache-Control' => 'private, no-store']);
+    }
+
     public function edit()
     {
         Gate::authorize('workspace.manage');
@@ -29,16 +38,16 @@ class SettingController extends Controller
         $old = $setting->logo_path;
         try {
             if ($request->hasFile('logo')) {
-                $newPath = $request->file('logo')->store('logos', 'public');
+                $newPath = $request->file('logo')->store('logos', config('filesystems.logos'));
                 $data['logo_path'] = $newPath;
             }$setting->update($data);
         } catch (\Throwable $e) {
             if ($newPath) {
-                Storage::disk('public')->delete($newPath);
+                Storage::disk(config('filesystems.logos'))->delete($newPath);
             }throw $e;
         }
         if ($newPath && $old) {
-            Storage::disk('public')->delete($old);
+            Storage::disk(config('filesystems.logos'))->delete($old);
         }
         Audit::record('settings', 'workspace', $setting, 'Firm settings updated.');
         AccountSecurity::record('workspace.updated');

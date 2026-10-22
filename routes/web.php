@@ -42,6 +42,9 @@ Route::middleware('guest')->group(function () {
     Route::get('/reset-password/{token}', [AuthController::class, 'resetForm'])->name('password.reset');
     Route::post('/reset-password', [AuthController::class, 'reset'])->middleware('throttle:5,1')->name('password.update');
 });
+Route::get('/workspace/logo', [SettingController::class, 'logo'])
+    ->middleware(['auth', 'active', 'role:super-admin,owner,bookkeeper,office-manager'])
+    ->name('workspace.logo');
 Route::middleware(['auth', 'active', 'role:owner,bookkeeper,office-manager'])->group(function () {
     Route::get('/accounting-periods', [AccountingPeriodController::class, 'index'])->name('accounting-periods.index');
     Route::post('/clients/{client}/accounting-years', [AccountingPeriodController::class, 'storeYear'])->name('accounting-periods.year');

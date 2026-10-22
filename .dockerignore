@@ -1,0 +1,16 @@
+*
+!app/**
+!bootstrap/**
+!config/**
+!database/migrations/**
+!public/**
+!resources/**
+!routes/**
+!artisan
+!composer.json
+!composer.lock
+!docker/**
+bootstrap/cache/*.php
+public/storage
+public/hot
+public/build

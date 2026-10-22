@@ -150,4 +150,19 @@ class ComplianceNotificationTest extends TestCase
         $this->assertSame($count, $this->owner->notifications()->count());
         $this->assertNotNull($this->owner->notifications()->find($current));
     }
+
+    public function test_notifications_expose_independent_current_deadline_warnings(): void
+    {
+        $this->record->update(['due_date' => today(), 'submission_deadline' => today()->subDay()]);
+        $item = $this->activeItems()[0];
+        $this->assertSame(['label' => 'Submission Overdue', 'tone' => 'danger'], $item['warnings']['submission']);
+        $this->assertSame(['label' => 'Filing Due Today', 'tone' => 'warning'], $item['warnings']['filing']);
+        $this->record->update(['status' => 'Ready for Filing']);
+        $item = $this->activeItems()[0];
+        $this->assertStringStartsWith('Filing Due Today:', $item['title']);
+        $this->assertSame(['label' => 'Completed', 'tone' => 'success'], $item['warnings']['submission']);
+        $this->assertSame('warning', $item['warnings']['filing']['tone']);
+        $this->record->delete();
+        $this->assertSame([], $this->activeItems());
+    }
 }

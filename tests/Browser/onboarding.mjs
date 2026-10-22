@@ -55,6 +55,14 @@ export async function runJournal(helpers) {
   await submit('form[action$="/link"]', 'Document linked to requirement.');
   await hasText('Awaiting verification');
   await go(documentPath);
+  await fill('#validation_status', 'Needs Clarification');
+  await fill('form[action$="/validate"] [name=notes]', 'SYNTHETIC registration clarification');
+  await submit('form[action$="/validate"]', 'Document validation saved.');
+  await go(`/clients/${clientId}`);
+  await hasText('required document(s) need clarification.');
+  assert.equal(await evaluate('document.body.innerText.includes("Statutory documents verified.")'), false);
+  await shot('client-statutory-clarification');
+  await go(documentPath);
   await fill('#validation_status', 'Approved');
   await submit('form[action$="/validate"]', 'Document validation saved.');
   await go(`/clients/${clientId}/onboarding`);
@@ -86,10 +94,13 @@ export async function runJournal(helpers) {
   await fill('[name=status]', 'Awaiting Client Documents');
   await submit('#viewRoot form', 'Requirement created successfully.');
   await hasText('Dec 21, 2026');
-  await go(`/clients/${clientId}/compliance`);
+  await hasText('Follow-ups');
   await fill('form[action$="/follow-ups"] [name=remarks]', 'SYNTHETIC browser follow-up saved');
   await submit('form[action$="/follow-ups"]', 'Follow-up recorded.');
   await hasText('SYNTHETIC browser follow-up saved');
+  await click('#follow-ups details summary');
+  await fill('#follow-ups details form [name=status]', 'In Progress');
+  await submit('#follow-ups details form', 'Follow-up updated.');
   await go(`/compliance/monitoring?client_id=${clientId}`);
   await hasText('SYNTHETIC Browser Compliance');
   await shot('compliance-deadline-followup');
@@ -103,13 +114,22 @@ export async function runJournal(helpers) {
   await go('/dashboard');
   await hasText('Owner overview');
   assert.equal(await evaluate('document.querySelectorAll(".overview-card").length'), 6, 'Business overview has six actionable cards');
-  assert.equal(await evaluate('document.querySelectorAll("#mainNav > details").length'), 6, 'Business navigation has six permitted groups');
+  assert.equal(await evaluate('document.querySelectorAll("#mainNav > [data-nav-group]").length'), 6, 'Business navigation has six permitted groups');
   assert.equal(await evaluate('!!document.querySelector("[data-nav-group=administration]")'), false, 'Owner cannot see technical administration');
-  await click('[data-nav-group=accounting] summary');
-  await until(() => evaluate('document.querySelector("[data-nav-group=accounting]").open'), 'Accounting submenu expands');
   await shot('dashboard-desktop');
+  await click('[data-nav-group=accounting]'); await loaded('[name=work]');
+  await hasText('Financial Reports');
 
   // 5. Document requirements monitoring.
+  await go(`/documents?client_id=${clientId}`);
+  await hasText('SYNTHETIC Browser Registration Requirement');
+  await hasText('Next required action');
+  await shot('documents-workspace-desktop');
+  const missingLink = await evaluate(`document.querySelector('.workflow-tabs a[href*="state=missing"]').getAttribute('href')`);
+  assert.ok(missingLink.includes(`client_id=${clientId}`), 'Document views retain the selected client');
+  const missingUrl = new URL(missingLink);
+  await go(missingUrl.pathname + missingUrl.search); await hasText('Missing Requirements');
+  await hasText('Nothing outstanding');
   await go('/requirements/monitoring');
   await shot('requirements-monitoring-desktop');
 
@@ -117,30 +137,40 @@ export async function runJournal(helpers) {
   await go('/compliance/monitoring');
   await shot('compliance-monitoring-desktop');
 
-  // 7. Mobile viewport checks (no horizontal overflow, sidebar collapses).
-  await cdp('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
-  for (const [url, label] of [['/clients/onboarding', 'onboarding'], ['/dashboard', 'dashboard'], ['/compliance/monitoring', 'compliance']]) {
-    await go(url);
-    await until(() => evaluate('document.documentElement.scrollWidth <= 390'), `${url} fits mobile`);
-    assert.equal(await evaluate('document.documentElement.scrollWidth <= innerWidth'), true, `${url} should not overflow horizontally`);
-    if (url === '/dashboard') {
-      await click('#sidebarToggle');
-      await until(() => evaluate('document.querySelector("#sidebarToggle").getAttribute("aria-expanded") === "true"'), 'Mobile navigation opens');
-      await until(() => evaluate('Math.abs(document.querySelector("#sidebar").getBoundingClientRect().left) < 1'), 'Mobile sidebar transition finishes');
-      await click('[data-nav-group=documents] summary');
-      await until(() => evaluate('document.querySelector("[data-nav-group=documents]").open'), 'Mobile documents submenu expands');
-      await shot('phase5-navigation-mobile');
-      // Restore Chrome page focus after capture before sending a real keyboard event.
-      await cdp('Page.bringToFront');
-      await cdp('Emulation.setFocusEmulationEnabled', { enabled: true });
-      await evaluate('document.querySelector("#sidebarClose").focus()');
-      assert.equal(await evaluate('document.hasFocus()'), true, 'Chrome page has keyboard focus');
-      await cdp('Input.dispatchKeyEvent', {type:'keyDown', key:'Escape', code:'Escape', windowsVirtualKeyCode:27});
-      await cdp('Input.dispatchKeyEvent', {type:'keyUp', key:'Escape', code:'Escape', windowsVirtualKeyCode:27});
-      await until(() => evaluate('document.querySelector("#sidebarToggle").getAttribute("aria-expanded") === "false"'), 'Escape closes navigation');
-      assert.equal(await evaluate('document.activeElement.id'), 'sidebarToggle', 'Focus returns to navigation toggle');
+  // 7. Responsive viewport checks across all target breakpoints: 320px, 390px, 768px, 1024px, 1440px, 1920px.
+  for (const { width, height, mobile } of [
+    { width: 320, height: 568, mobile: true },
+    { width: 390, height: 844, mobile: true },
+    { width: 768, height: 1024, mobile: false },
+    { width: 1024, height: 768, mobile: false },
+    { width: 1440, height: 900, mobile: false },
+    { width: 1920, height: 1080, mobile: false },
+  ]) {
+    await cdp('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile });
+    for (const [url, label] of [['/clients/onboarding', 'onboarding'], ['/dashboard', 'dashboard'], ['/compliance/monitoring', 'compliance'], [`/documents?client_id=${clientId}`, 'documents-workspace']]) {
+      await go(url);
+      await until(() => evaluate(`document.documentElement.scrollWidth <= ${width}`), `${url} fits ${width}px`);
+      assert.equal(await evaluate('document.documentElement.scrollWidth <= innerWidth'), true, `${url} should not overflow horizontally at ${width}px`);
+      if (width === 390 && url === '/dashboard') {
+        await click('#sidebarToggle');
+        await until(() => evaluate('document.querySelector("#sidebarToggle").getAttribute("aria-expanded") === "true"'), 'Mobile navigation opens');
+        await until(() => evaluate('Math.abs(document.querySelector("#sidebar").getBoundingClientRect().left) < 1'), 'Mobile sidebar transition finishes');
+        assert.equal(await evaluate('document.querySelector("[data-nav-group=documents]").tagName'), 'A', 'Documents opens directly');
+        await shot('phase5-navigation-mobile');
+        // Restore Chrome page focus after capture before sending a real keyboard event.
+        await cdp('Page.bringToFront');
+        await cdp('Emulation.setFocusEmulationEnabled', { enabled: true });
+        await evaluate('document.querySelector("#sidebarClose").focus()');
+        assert.equal(await evaluate('document.hasFocus()'), true, 'Chrome page has keyboard focus');
+        await cdp('Input.dispatchKeyEvent', {type:'keyDown', key:'Escape', code:'Escape', windowsVirtualKeyCode:27});
+        await cdp('Input.dispatchKeyEvent', {type:'keyUp', key:'Escape', code:'Escape', windowsVirtualKeyCode:27});
+        await until(() => evaluate('document.querySelector("#sidebarToggle").getAttribute("aria-expanded") === "false"'), 'Escape closes navigation');
+        assert.equal(await evaluate('document.activeElement.id'), 'sidebarToggle', 'Focus returns to navigation toggle');
+      }
+      if (width <= 390) {
+        await shot(`${label}-${width}`);
+      }
     }
-    await shot(`${label}-mobile`);
   }
   await cdp('Emulation.setDeviceMetricsOverride', { width: 1440, height: 1000, deviceScaleFactor: 1, mobile: false });
 

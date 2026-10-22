@@ -25,7 +25,7 @@ export async function verifyRoleDashboards({ cdp, evaluate, fill, click, go, loa
       const cards = await evaluate('Object.fromEntries([...document.querySelectorAll(".overview-card")].map(card => [card.querySelector(".stat-label").textContent.trim(), card.querySelector(".stat-value").textContent.trim()]))');
       assert.deepEqual(cards, expected.cards[role], `${role} ${size}: database counts`);
       assert.equal(await evaluate('document.documentElement.scrollWidth <= innerWidth'), true, `${role}: viewport fits`);
-      const groups = await evaluate('[...document.querySelectorAll("#mainNav details")].map(group => ({key:group.dataset.navGroup, links:group.querySelectorAll("a").length}))');
+      const groups = await evaluate('[...document.querySelectorAll("#mainNav > [data-nav-group]")].map(group => ({key:group.dataset.navGroup, links:group.tagName.toLowerCase() === "a" ? 1 : group.querySelectorAll("a").length}))');
       assert.ok(groups.every(group => group.links > 0), 'No empty navigation groups');
       assert.equal(groups.some(group => group.key === 'administration'), role === 'super-admin');
       assert.equal(groups.some(group => group.key === 'accounting'), role !== 'super-admin');
@@ -54,12 +54,17 @@ export async function verifyRoleDashboards({ cdp, evaluate, fill, click, go, loa
       for (const url of forbidden) assert.equal(await evaluate(`fetch(${JSON.stringify(url)}).then(r => r.status)`), 403, `${role}: direct ${url} denied`);
       await shot(`role-${role}-${size}`);
       if (size === 'mobile') {
-        const group = role === 'super-admin' ? 'administration' : 'accounting';
         await click('#sidebarToggle');
         await until(() => evaluate('document.querySelector("#sidebarToggle").getAttribute("aria-expanded") === "true"'), 'Drawer opens');
         await until(() => evaluate('Math.abs(document.querySelector("#sidebar").getBoundingClientRect().left) < 1'), 'Drawer transition finishes');
-        await click(`[data-nav-group="${group}"] summary`);
-        await until(() => evaluate(`document.querySelector("[data-nav-group=${group}]").open`), 'Submenu expands');
+        if (role === 'super-admin') {
+          await click('[data-nav-group="administration"] summary');
+          await until(() => evaluate('document.querySelector("[data-nav-group=administration]").open'), 'Submenu expands');
+        } else {
+          assert.equal(await evaluate('document.querySelector("[data-nav-group=accounting]").tagName'), 'A', 'Accounting opens directly');
+          await click('[data-nav-group="clients"] summary');
+          await until(() => evaluate('document.querySelector("[data-nav-group=clients]").open'), 'Submenu expands');
+        }
         await shot(`role-${role}-navigation-mobile`);
         // The preceding link-following fetches can leave the page without input
         // focus, making a CDP key event unreliable. Real Escape delivery is
@@ -71,7 +76,7 @@ export async function verifyRoleDashboards({ cdp, evaluate, fill, click, go, loa
       }
     }
   }
-  await cdp('Emulation.setDeviceMetricsOverride', { width:1440, height:1000, deviceScaleFactor:1, mobile:false });
+  await cdp('Emulation.setDeviceMetricsOverride', { width: 1440, height: 1000, deviceScaleFactor: 1, mobile: false });
   await login('owner@veritascore.local', 'password123');
   console.log('PASS: Four distinct dashboards, independent database counts, all visible links, direct access restrictions, client isolation and mobile navigation for every role at desktop/mobile sizes.');
 }

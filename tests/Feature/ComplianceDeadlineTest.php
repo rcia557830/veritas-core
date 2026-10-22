@@ -6,6 +6,7 @@ use App\Models\Client;
 use App\Models\ComplianceRecord;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 class ComplianceDeadlineTest extends TestCase
@@ -84,6 +85,7 @@ class ComplianceDeadlineTest extends TestCase
 
         $this->assertSame(today()->addDays(20)->toDateString(), $record->fresh()->submission_deadline->toDateString());
     }
+
     public function test_manual_override_is_preserved_when_filing_deadline_changes(): void
     {
         $this->actingAs($this->owner)->post('/compliance', $this->data([
@@ -152,5 +154,23 @@ class ComplianceDeadlineTest extends TestCase
             ->assertRedirect()->assertSessionHasNoErrors();
 
         $this->assertSame('Awaiting Client Documents', $record->fresh()->status);
+    }
+
+    public function test_compliance_pages_render_both_warnings_separately_from_workflow(): void
+    {
+        $this->travelTo(Carbon::parse('2026-10-10 12:00:00', config('app.timezone')));
+        $record = ComplianceRecord::create($this->data([
+            'due_date' => '2026-10-10', 'submission_deadline' => '2026-10-09',
+            'created_by' => $this->owner->id,
+        ]));
+        $this->actingAs($this->owner);
+        foreach (['/compliance', '/compliance/'.$record->id, '/compliance/monitoring', route('compliance.checklist', $this->client), '/dashboard'] as $url) {
+            $this->get($url)->assertOk()->assertSee('Submission Overdue')->assertSee('Filing Due Today')
+                ->assertSee('deadline-tone-danger')->assertSee('deadline-tone-warning');
+        }
+        $this->assertSame('Pending', $record->fresh()->status);
+        $record->delete();
+        $this->get('/compliance')->assertDontSee('Monthly VAT return');
+        $this->get('/compliance/monitoring')->assertDontSee('Monthly VAT return');
     }
 }

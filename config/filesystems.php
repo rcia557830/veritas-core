@@ -14,6 +14,9 @@ return [
     */
 
     'default' => env('FILESYSTEM_DISK', 'local'),
+    // Existing object keys are preserved across a storage migration.
+    'documents' => env('DOCUMENTS_DISK', 'local'),
+    'logos' => env('LOGOS_DISK', 'public'),
 
     /*
     |--------------------------------------------------------------------------
@@ -49,6 +52,7 @@ return [
 
         's3' => [
             'driver' => 's3',
+            'visibility' => 'private',
             'key' => env('AWS_ACCESS_KEY_ID'),
             'secret' => env('AWS_SECRET_ACCESS_KEY'),
             'region' => env('AWS_DEFAULT_REGION'),

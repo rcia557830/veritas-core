@@ -28,7 +28,7 @@
           <h2 class="modal-title mb-1">{{ $record->requirement }}</h2>
           <div class="subtext">{{ $record->agency }}@if($record->reporting_period) · {{ $record->reporting_period }}@endif</div>
         </div>
-        <div class="actions"><x-badge :status="$record->status"/><x-badge :status="$record->urgency"/></div>
+        <div class="actions"><x-badge :status="$record->status" :compliance="true"/><x-compliance-warnings :record="$record"/></div>
       </div>
       <dl class="detail-grid">
         <div><dt>Official filing deadline</dt><dd>{{ $record->due_date->format('M j, Y') }}</dd></div>

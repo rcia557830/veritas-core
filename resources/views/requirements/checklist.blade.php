@@ -4,6 +4,8 @@
 <div class="toolbar">
   <a class="btn btn-outline-secondary" href="{{ route('clients.show',$client) }}">← {{ $client->business_name }}</a>
   <div class="actions">
+    @can('create',App\Models\Document::class)<a class="btn btn-primary" href="{{ route('documents.create',['client_id'=>$client->id]) }}">Upload / register document</a>@endcan
+    <a class="btn btn-outline-secondary" href="{{ route('documents.index',['client_id'=>$client->id]) }}">Client documents</a>
     @can('create',App\Models\DocumentRequirement::class)<a class="btn btn-primary" href="{{ route('requirements.create',['client_id'=>$client->id]) }}"><i class="bi bi-plus-lg" aria-hidden="true"></i>Add requirement</a>@endcan
   </div>
 </div>
@@ -25,7 +27,7 @@
   @php($state=\App\Services\DocumentCompleteness::stateOf($requirement))
   @php($representative=\App\Services\DocumentCompleteness::representativeDocument($requirement))
   <div class="col-12">
-    <article class="panel panel-pad {{ $requirement->is_active?'':'opacity-50' }}">
+    <article id="requirement-{{ $requirement->id }}" class="panel panel-pad {{ $requirement->is_active?'':'opacity-50' }}">
       <div class="toolbar mb-2">
         <div>
           <h2 class="modal-title mb-1">{{ $requirement->name }}</h2>

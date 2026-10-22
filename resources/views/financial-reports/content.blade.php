@@ -1,15 +1,43 @@
 @php($money = fn(int $cents) => \App\Support\Money::formatExact(\App\Support\Money::decimal($cents)))
-<header class="financial-report-heading"><p>VERITAS CORE · Financial Reports</p><h2>{{ $client->business_name }}</h2><h3>{{ $types[$filters['type']] }}</h3>
-<p>{{ in_array($filters['type'], ['trial-balance','balance-sheet']) ? 'As of '.$filters['end_date'] : $filters['start_date'].' through '.$filters['end_date'].' (inclusive)' }}</p>
-@if($period)<p>Accounting period: {{ $period->label }} · {{ $period->status }}</p>@endif</header>
+<header class="financial-report-heading panel panel-pad bg-light border mb-4">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+        <div>
+            <div class="eyebrow text-uppercase text-muted" style="letter-spacing: 0.5px; font-size: 11px;">RBCIA ACCOUNTING FIRM · VERITAS CORE</div>
+            <h2 class="h3 text-navy mb-1">{{ $client->business_name }}</h2>
+            <h3 class="h4 text-muted mb-0">{{ $types[$filters['type']] }}</h3>
+        </div>
+        <div class="text-end">
+            <span class="badge bg-secondary text-white mb-1"><i class="bi bi-clock me-1" aria-hidden="true"></i>Generated: {{ now()->format('M j, Y') }}</span>
+            <div class="subtext">Based exclusively on Posted journals</div>
+        </div>
+    </div>
+    <div class="pt-2 border-top d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <p class="mb-0 fw-bold text-navy">
+            {{ in_array($filters['type'], ['trial-balance','balance-sheet']) ? 'As of '.$filters['end_date'] : $filters['start_date'].' through '.$filters['end_date'].' (inclusive)' }}
+        </p>
+        @if($period)
+            <div class="subtext">
+                Accounting period: <strong>{{ $period->label }}</strong> · <span class="badge {{ $period->status === 'Open' ? 'bg-info text-dark' : 'bg-secondary text-white' }}">{{ $period->status }}</span>
+            </div>
+        @endif
+    </div>
+</header>
+
 @if($filters['type'] === 'accounts-ledger')
 @php($ledger = $result['ledger'])
-<h4>{{ $ledger['account']->code }} · {{ $ledger['account']->name }} · {{ $ledger['account']->classification }}</h4>
-<dl class="detail-grid"><div><dt>Opening balance</dt><dd data-report-opening>{{ \App\Support\Money::balance($ledger['balance']->opening) }}</dd></div><div><dt>Period debits</dt><dd>{{ $money($ledger['balance']->debits) }}</dd></div><div><dt>Period credits</dt><dd>{{ $money($ledger['balance']->credits) }}</dd></div><div><dt>Closing balance</dt><dd data-report-closing>{{ \App\Support\Money::balance($ledger['balance']->closing) }}</dd></div></dl>
-<p>Complete report · {{ $ledger['count'] }} movements. Opening includes posted movements before {{ $filters['start_date'] }}.</p>
+<div class="panel panel-pad bg-white border mb-3">
+    <h4 class="h5 mb-2">{{ $ledger['account']->code }} · {{ $ledger['account']->name }} · <span class="badge bg-light text-dark border">{{ $ledger['account']->classification }}</span></h4>
+    <dl class="detail-grid mb-2">
+        <div><dt>Opening balance</dt><dd data-report-opening>{{ \App\Support\Money::balance($ledger['balance']->opening) }}</dd></div>
+        <div><dt>Period debits</dt><dd>{{ $money($ledger['balance']->debits) }}</dd></div>
+        <div><dt>Period credits</dt><dd>{{ $money($ledger['balance']->credits) }}</dd></div>
+        <div><dt>Closing balance</dt><dd data-report-closing>{{ \App\Support\Money::balance($ledger['balance']->closing) }}</dd></div>
+    </dl>
+    <p class="subtext mb-0">Complete report · {{ $ledger['count'] }} movements. Opening includes posted movements before {{ $filters['start_date'] }}.</p>
+</div>
 <div class="table-responsive" tabindex="0" role="region" aria-label="Accounts Ledger"><table class="table"><thead><tr><th>Date</th><th>Journal / reference</th><th>Description</th><th class="numeric">Debit</th><th class="numeric">Credit</th><th class="numeric">Running balance</th></tr></thead><tbody>
 @forelse($ledger['rows'] as $line)<tr data-report-line><td>{{ $line['date'] }}</td><td><a href="{{ route('ledger.show', $line['journal_id']) }}">Journal #{{ $line['journal_id'] }}</a><div>{{ $line['reference'] }}</div></td><td>{{ $line['description'] }}</td><td class="numeric">{{ $money($line['debit']) }}</td><td class="numeric">{{ $money($line['credit']) }}</td><td class="numeric">{{ \App\Support\Money::balance($line['running']) }}</td></tr>
-@empty<tr><td colspan="6">No posted movements in this date range. Any opening balance is carried forward.</td></tr>@endforelse
+@empty<tr><td colspan="6" class="text-center py-3 text-muted">No posted movements in this date range. Any opening balance is carried forward.</td></tr>@endforelse
 </tbody><tfoot><tr><th colspan="3">Period totals / closing balance</th><th class="numeric">{{ $money($ledger['balance']->debits) }}</th><th class="numeric">{{ $money($ledger['balance']->credits) }}</th><th class="numeric">{{ \App\Support\Money::balance($ledger['balance']->closing) }}</th></tr></tfoot></table></div>
 @else
 @php($valid = $result['difference'] === 0 && ($filters['type'] !== 'balance-sheet' || $result['equationDifference'] === 0))

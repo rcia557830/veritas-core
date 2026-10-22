@@ -2,9 +2,16 @@
 @if($group['active'] && $key !== 'dashboard' && count($group['links']) > 1)
 <nav class="workflow-tabs" aria-label="{{ $group['label'] }} workflows">
     @foreach($group['links'] as $link)
-    <a href="{{ $link['url'] }}" @if($link['active']) aria-current="page" @endif>{{ $link['label'] }}</a>
+    @if(!($key === 'accounting' && in_array($link['route'], ['billing.index','financial-audit.index','reports.index'])))
+    <a href="{{ in_array($key,['documents','accounting','compliance']) && request('client_id') ? route($link['route'], $link['query'] + ['client_id'=>request('client_id')]) : $link['url'] }}" @if($link['active']) aria-current="page" @endif>{{ $link['label'] }}</a>
+    @endif
     @endforeach
 </nav>
+@if($key === 'accounting')
+<details class="workspace-tools mb-3" @if(request()->routeIs('billing.*','financial-audit.*','reports.*','admin.audit.*')) open @endif><summary>Billing, exports and audit history</summary><div class="actions mt-2">
+@foreach($group['links'] as $link) @if(in_array($link['route'], ['billing.index','financial-audit.index','reports.index']))<a href="{{ request('client_id') ? route($link['route'], $link['query'] + ['client_id'=>request('client_id')]) : $link['url'] }}">{{ $link['label'] }}</a>@endif @endforeach
+</div></details>
+@endif
 @endif
 @endforeach
 @if(request()->routeIs('accounting-periods.*', 'account-templates.*'))

@@ -38,9 +38,14 @@ export async function runJournal({ cdp, evaluate, fill, click, go, loaded, hasTe
   assert.equal(await evaluate('document.querySelectorAll("[data-line-body] tr").length'), 3);
   assert.equal(await evaluate(`document.querySelector('[name="items[2][account_id]"]').value`), '');
   await fill('[name="items[2][account_id]"]', asset); await fill('[name="items[2][debit]"]', '0.20'); await input('[name="items[2][debit]"]');
-  await hasText('Debit PHP 0.30 · Credit PHP 0.30 · Balanced');
+  await hasText('Balanced: Total debits equal total credits.');
+  assert.equal(await evaluate("document.querySelector('[data-total-difference]').textContent"), 'PHP 0.00');
+  await fill('[name="items[0][credit]"]', '0.10'); await input('[name="items[0][credit]"]');
+  await hasText('Invalid entry: Enter a positive amount in either Debit or Credit for each line, not both.');
+  await fill('[name="items[0][credit]"]', '0'); await input('[name="items[0][credit]"]');
   await click('[data-line-body] tr:last-child [data-remove-line]');
   assert.equal(await evaluate('document.querySelectorAll("[data-line-body] tr").length'), 2);
+  await hasText('Unbalanced: Debits and credits differ by PHP 0.20.');
   await click('[data-add-line]');
   await fill('[name="items[2][account_id]"]', asset); await fill('[name="items[2][debit]"]', '0.20'); await input('[name="items[2][debit]"]');
   await click('[name="document_ids[]"]');

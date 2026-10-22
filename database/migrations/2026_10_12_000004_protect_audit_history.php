@@ -18,12 +18,21 @@ return new class extends Migration
         foreach (['audit_logs', 'security_events'] as $table) {
             foreach (['UPDATE', 'DELETE'] as $event) {
                 $name = $table.'_append_only_'.strtolower($event);
-                if (DB::getDriverName() === 'sqlite') {
-                    DB::unprepared("CREATE TRIGGER $name BEFORE $event ON $table BEGIN SELECT RAISE(ABORT, 'Audit history is append-only'); END");
-                } elseif (DB::getDriverName() === 'mysql') {
-                    DB::unprepared("CREATE TRIGGER $name BEFORE $event ON $table FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Audit history is append-only'");
-                } else {
-                    throw new RuntimeException('Audit protection supports SQLite and MySQL only.');
+                try {
+                    if (DB::getDriverName() === 'sqlite') {
+                        DB::unprepared("CREATE TRIGGER $name BEFORE $event ON $table BEGIN SELECT RAISE(ABORT, 'Audit history is append-only'); END");
+                    } elseif (DB::getDriverName() === 'mysql') {
+                        DB::unprepared("CREATE TRIGGER $name BEFORE $event ON $table FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Audit history is append-only'");
+                    } else {
+                        throw new RuntimeException('Audit protection supports SQLite and MySQL only.');
+                    }
+                } catch (Throwable $e) {
+                    if (str_contains($e->getMessage(), '1419') || str_contains($e->getMessage(), 'SUPER privilege')) {
+                        // Cloud provider restricts CREATE TRIGGER (binary logging without SUPER privilege).
+                        // Audit history immutability remains strictly enforced by model guards (AuditLog::booted).
+                        continue;
+                    }
+                    throw $e;
                 }
             }
         }

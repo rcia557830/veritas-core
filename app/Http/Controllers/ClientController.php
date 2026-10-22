@@ -24,7 +24,7 @@ class ClientController extends ModuleController
     {
         Gate::authorize('view', $record);
         $related = [];
-        foreach (['Documents' => 'documents', 'Ledger Review' => 'ledger', 'Compliance' => 'compliance', 'Billing' => 'billing'] as $label => $module) {
+        foreach (['Documents' => 'documents', 'General Journal' => 'ledger', 'Compliance' => 'compliance', 'Billing' => 'billing'] as $label => $module) {
             $model = Modules::get($module)['model'];
             if (! Gate::allows('viewAny', $model)) {
                 continue;

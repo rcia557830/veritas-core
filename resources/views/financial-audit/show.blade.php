@@ -2,7 +2,7 @@
 @section('title','Financial Transaction Details')
 @section('content')
 <p><a href="{{ route('financial-audit.index') }}">Financial Audit Trail</a></p>
-<h2>{{ $entry->reference_number }}</h2><p>{{ $entry->client?->business_name }} - {{ $entry->transaction_date->format('Y-m-d') }} - {{ $entry->status }}</p><p>{{ $entry->description }}</p>
+<h2>{{ $entry->reference_number }}</h2><p>{{ $entry->client?->business_name }} - {{ $entry->transaction_date->format('Y-m-d') }} - {{ $entry->status }}</p><p>{{ \App\Support\DemoLabels::display($entry->description) }}</p>
 <p>Voucher: {{ $entry->voucher?->type ?? 'No voucher associated' }} {{ $entry->voucher?->reference }}</p>
 <p>Prepared by {{ $entry->creator?->name ?? 'Not recorded' }} - Reviewed by {{ $entry->reviewer?->name ?? 'Not recorded' }} {{ $entry->reviewed_at?->format('Y-m-d H:i:s') }} - Posted by {{ $entry->poster?->name ?? 'Not posted' }} {{ $entry->posted_at?->format('Y-m-d H:i:s') }}</p>
 <p>{{ $entry->status==='Posted'?'Posted - read-only financial record.':'Unposted - excluded from General Ledger and financial reports.' }}</p>

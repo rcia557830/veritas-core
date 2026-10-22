@@ -17,10 +17,10 @@ class DocumentController extends ModuleController
     public function download($record)
     {
         Gate::authorize('download', $record);
-        abort_unless($record->file_path && Storage::disk('local')->exists($record->file_path), 404, 'Attachment not found.');
+        abort_unless($record->file_path && Storage::disk(config('filesystems.documents'))->exists($record->file_path), 404, 'Attachment not found.');
         Audit::record('download', 'documents', $record, 'Document downloaded.');
 
-        return Storage::disk('local')->download($record->file_path, $record->original_file_name, ['X-Content-Type-Options' => 'nosniff']);
+        return Storage::disk(config('filesystems.documents'))->download($record->file_path, $record->original_file_name, ['X-Content-Type-Options' => 'nosniff', 'Cache-Control' => 'private, no-store']);
     }
 
     public function validation($record)

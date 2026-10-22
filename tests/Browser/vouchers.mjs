@@ -32,7 +32,7 @@ export async function runJournal(helpers) {
     await fill('[name="items[0][debit]"]', incoming ? amount : '0'); await fill('[name="items[0][credit]"]', incoming ? '0' : amount);
     await fill('[name="items[1][debit]"]', incoming ? '0' : amount); await fill('[name="items[1][credit]"]', incoming ? amount : '0');
     await evaluate(`document.querySelector('[name="items[0][debit]"]').dispatchEvent(new Event('input', {bubbles:true}))`);
-    assert.ok((await evaluate(`document.querySelector('[data-line-total]').textContent`)).endsWith('Balanced'));
+    assert.equal(await evaluate(`document.querySelector('[data-line-total]').textContent`), 'Balanced: Total debits equal total credits.');
     if (type !== 'JV') {
       await fill('[name=party]', 'SYNTHETIC Browser Counterparty'); await fill('[name=amount]', amount); await fill('[name=cash_account_id]', cash);
     }
