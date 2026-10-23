@@ -311,3 +311,54 @@ kbd, .key-button { font: 10px var(--font-body); background: var(--surface); bord
   .hero { background: var(--card); color: var(--ink-900); border: 1px solid var(--line); }
   .hero-date, .hero-note, .hero .eyebrow { color: var(--ink-500); }
 }
+
+/* Financial audit: scoped layout for filters, totals, and journal activity. */
+.financial-audit-page { display: grid; gap: 16px; }
+.financial-audit-page .audit-heading, .financial-audit-page .audit-section-heading, .financial-audit-page .audit-card-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.financial-audit-page h2 { font-size: 20px; margin: 0 0 6px; }
+.financial-audit-page h3 { font-size: 14px; margin: 0; }
+.financial-audit-page .audit-heading p, .financial-audit-page .audit-section-heading p { color: var(--ink-500); font-size: 12px; margin: 4px 0 0; max-width: 720px; }
+.financial-audit-page .audit-heading > .btn { flex-shrink: 0; }
+.financial-audit-page .audit-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.financial-audit-page .audit-total-card { padding: 20px; border-top: 3px solid var(--line); }
+.financial-audit-page .audit-total-card[data-group="posted"] { border-top-color: var(--brand); }
+.financial-audit-page .audit-ledger-note { font-size: 11px; color: var(--ink-500); }
+.financial-audit-page .audit-amounts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 20px 0 0; }
+.financial-audit-page .audit-amounts > div + div { border-left: 1px solid var(--line); padding-left: 20px; }
+.financial-audit-page .audit-amounts dt { color: var(--ink-500); font-size: 12px; font-weight: 500; }
+.financial-audit-page .audit-amounts dd { font-size: clamp(18px, 2vw, 26px); font-weight: 700; margin: 4px 0 0; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.financial-audit-page .audit-scope-note { font-size: 12px; color: var(--ink-500); margin: -5px 0 0; }
+.financial-audit-page .audit-filter-panel { padding: 20px; }
+.financial-audit-page .audit-filter-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; align-items: end; margin-top: 16px; }
+.financial-audit-page .audit-filter-grid label { display: grid; gap: 6px; min-width: 0; font-size: 12px; color: var(--ink-600); }
+.financial-audit-page .audit-filter-grid input, .financial-audit-page .audit-filter-grid select { width: 100%; min-width: 0; }
+.financial-audit-page .audit-search { grid-column: span 2; }
+.financial-audit-page .audit-filter-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; border-top: 1px solid var(--line); padding-top: 14px; }
+.financial-audit-page .audit-results > .audit-section-heading { padding: 20px; border-bottom: 1px solid var(--line); }
+.financial-audit-page .audit-count { display: inline-block; margin-left: 8px; padding: 4px 8px; border-radius: 6px; background: var(--surface); color: var(--ink-500); font-size: 11px; font-weight: 500; }
+.financial-audit-page .audit-table-hint { margin: 12px 20px; color: var(--ink-500); font-size: 11px; }
+.financial-audit-page .audit-table { margin-bottom: 0; }
+.financial-audit-page .audit-table td { vertical-align: top; }
+.financial-audit-page .audit-money { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.financial-audit-page .audit-reference { font-weight: 600; white-space: nowrap; }
+.financial-audit-page .audit-cell-secondary { display: block; margin-top: 4px; color: var(--ink-500); font-size: 11px; }
+.financial-audit-page .audit-description { min-width: 200px; max-width: 300px; white-space: normal; overflow-wrap: anywhere; }
+.financial-audit-page .audit-people { min-width: 180px; }
+.financial-audit-page .audit-people span { display: block; margin-bottom: 4px; }
+.financial-audit-page .audit-people small { display: inline-block; min-width: 58px; color: var(--ink-500); }
+.financial-audit-page .audit-empty { padding: 40px 20px; }
+.financial-audit-page .audit-empty > i { display: inline-grid; place-items: center; width: 48px; height: 48px; margin-bottom: 16px; border-radius: 12px; background: var(--brand-soft); color: var(--brand-text); font-size: 24px; }
+.financial-audit-page .audit-empty h3 { margin-bottom: 8px; }
+.financial-audit-page .audit-empty p { max-width: 460px; }
+@media (max-width: 1000px) {
+  .financial-audit-page .audit-card-heading { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .financial-audit-page .audit-filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .financial-audit-page .audit-heading { flex-direction: column; align-items: stretch; }
+  .financial-audit-page .audit-summary, .financial-audit-page .audit-filter-grid { grid-template-columns: minmax(0, 1fr); }
+  .financial-audit-page .audit-search { grid-column: auto; }
+  .financial-audit-page .audit-filter-actions .btn { width: 100%; }
+}
+.financial-audit-page > * { min-width: 0; }
+.financial-audit-page .audit-results .table-responsive { position: relative; width: 100%; max-width: 100%; overflow-x: auto; }
