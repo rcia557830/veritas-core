@@ -52,6 +52,11 @@ class LedgerController extends ModuleController
         return [
             'accounts' => $client->accounts()->where('is_active', true)->orderBy('code')->get(['id', 'code', 'name', 'classification'])->toArray(),
             'periods' => $client->accountingPeriods()->where('status', 'Open')->orderBy('starts_on')->get(['id', 'label', 'starts_on', 'ends_on'])->toArray(),
+            'setup' => [
+                'years' => $client->accountingYears()->orderBy('starts_on')->get(['id', 'starts_on', 'ends_on'])->toArray(),
+                'accounts_url' => Gate::allows('create', [Account::class, $client]) ? route('accounts.index', ['client_id' => $client->id]) : null,
+                'periods_url' => Gate::allows('create', [Account::class, $client]) ? route('accounting-periods.index', ['client_id' => $client->id]) : null,
+            ],
             'documents' => Access::query(Document::class)->where('client_id', $client->id)->orderBy('document_number')->get()->filter(fn ($d) => ! $d->file_path || Gate::allows('download', $d))->map(fn ($d) => ['id' => $d->id, 'label' => $d->document_number.' - '.$d->title])->values()->all(),
         ];
     }

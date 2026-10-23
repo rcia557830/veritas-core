@@ -34,6 +34,7 @@
 @php($cblReq = $readiness['requirements']->first(fn($r) => \App\Services\OnboardingReadiness::isCbl($r)))
 @php($corReq = $readiness['requirements']->first(fn($r) => \App\Services\OnboardingReadiness::isCor($r)))
 @php($accountsCount = \Illuminate\Support\Facades\Gate::allows('viewAny', \App\Models\Account::class) ? \App\Models\Account::where('client_id', $record->id)->where('is_active', true)->count() : 0)
+@php($accountingYearsCount = $record->accountingYears()->count())
 @php($openPeriodsCount = \App\Models\AccountingPeriod::where('client_id', $record->id)->where('status', 'Open')->count())
 
 <section class="panel panel-pad mb-4">
@@ -106,16 +107,21 @@
       <div class="card p-3 h-100 bg-light border">
         <div class="d-flex justify-content-between align-items-center mb-2">
           <strong class="small text-uppercase text-muted">3. Accounting Setup</strong>
-          <span class="badge {{ $accountsCount > 0 && $openPeriodsCount > 0 ? 'bg-success' : 'bg-secondary' }}">
-            {{ $accountsCount > 0 ? $accountsCount.' accounts' : 'Uninitialized' }}
+          <span class="badge {{ $accountsCount > 0 && $accountingYearsCount > 0 && $openPeriodsCount > 0 ? 'bg-success' : 'bg-secondary' }}">
+            {{ $accountsCount > 0 && $accountingYearsCount > 0 && $openPeriodsCount > 0 ? 'Configured' : 'Needs setup' }}
           </span>
         </div>
         <div class="subtext mb-2">
-          <span>{{ $accountsCount }} active account(s) · {{ $openPeriodsCount }} open period(s)</span>
+          <ul class="list-unstyled mb-0">
+            <li>{{ $accountsCount > 0 ? '✓' : '!' }} Active accounts: {{ $accountsCount }}</li>
+            <li>{{ $accountingYearsCount > 0 ? '✓' : '!' }} Accounting years: {{ $accountingYearsCount }}</li>
+            <li>{{ $openPeriodsCount > 0 ? '✓' : '!' }} Open periods: {{ $openPeriodsCount }}</li>
+          </ul>
+          <p class="mb-0 mt-2">The voucher form checks whether the transaction date is covered.</p>
         </div>
         <div class="actions">
           @can('viewAny', \App\Models\Account::class)<a class="btn btn-sm btn-outline-secondary" href="{{ route('accounts.index',['client_id'=>$record->id]) }}">Accounts</a>@endcan
-          @can('viewAny', \App\Models\Account::class)<a class="btn btn-sm btn-outline-secondary" href="{{ route('accounting-periods.index') }}">Periods</a>@endcan
+          @can('viewAny', \App\Models\Account::class)<a class="btn btn-sm btn-outline-secondary" href="{{ route('accounting-periods.index', ['client_id' => $record->id]) }}">Periods</a>@endcan
         </div>
       </div>
     </div>

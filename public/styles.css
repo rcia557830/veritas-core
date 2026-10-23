@@ -362,3 +362,21 @@ kbd, .key-button { font: 10px var(--font-body); background: var(--surface); bord
 }
 .financial-audit-page > * { min-width: 0; }
 .financial-audit-page .audit-results .table-responsive { position: relative; width: 100%; max-width: 100%; overflow-x: auto; }
+
+/* Client accounting prerequisites, shared by journal and voucher forms. */
+.client-accounting-setup { padding: 18px; margin: 4px 0 20px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.client-accounting-setup .setup-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.client-accounting-setup h3 { font-size: 14px; margin: 0; }
+.client-accounting-setup [data-setup-summary] { font-size: 12px; font-weight: 600; }
+.client-accounting-setup > .subtext { margin: 6px 0 16px; }
+.client-accounting-setup .setup-checks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; padding: 0; margin: 0; list-style: none; }
+.client-accounting-setup .setup-checks li { display: flex; align-items: flex-start; gap: 10px; padding: 14px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; }
+.client-accounting-setup .setup-check-symbol { display: inline-grid; place-items: center; flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; background: var(--surface); color: var(--ink-500); font-weight: 700; }
+.client-accounting-setup [data-state="complete"] .setup-check-symbol { background: #e7f4ec; color: #24603c; }
+.client-accounting-setup [data-state="missing"] .setup-check-symbol { background: var(--brand-soft); color: var(--brand-text); }
+.client-accounting-setup .setup-checks strong { display: block; font-size: 12px; }
+.client-accounting-setup [data-setup-detail] { display: block; font-size: 12px; color: var(--ink-600); margin-top: 4px; }
+.client-accounting-setup [data-setup-link] { display: inline-block; font-size: 12px; margin-top: 8px; text-decoration: underline; }
+.client-accounting-setup [data-setup-link][hidden] { display: none; }
+.client-accounting-setup .setup-guidance { font-size: 12px; color: var(--ink-600); margin: 14px 0 0; }
+@media (max-width: 900px) { .client-accounting-setup .setup-checks { grid-template-columns: minmax(0, 1fr); } }

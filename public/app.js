@@ -126,10 +126,49 @@
     if (section) updateTotals(section);
   });
   document.querySelectorAll('[data-lines]').forEach(updateTotals);
+  function updateClientSetup(form, setup, message = '') {
+    const panel = form.querySelector('[data-client-setup]');
+    if (!panel) return;
+    if (setup !== undefined) panel.dataset.setup = JSON.stringify(setup);
+    const data = JSON.parse(panel.dataset.setup || 'null');
+    const date = form.querySelector('[name="transaction_date"]')?.value || '';
+    const validDate = /^\d{4}-\d{2}-\d{2}$/.test(date);
+    const covers = items => validDate && items.some(item => item.starts_on <= date && item.ends_on >= date);
+    const ready = { accounts: !!data && data.account_count > 0, year: !!data && covers(data.years), period: !!data && covers(data.periods) };
+    const descriptions = {
+      accounts: ['No active accounts', 'Active accounts available'],
+      year: ['No year covers this date', 'Transaction date is covered'],
+      period: ['No open period covers this date', 'Open period covers this date'],
+    };
+    panel.querySelectorAll('[data-setup-check]').forEach(item => {
+      const key = item.dataset.setupCheck, pending = !data || (key !== 'accounts' && !validDate);
+      item.dataset.state = pending ? 'pending' : ready[key] ? 'complete' : 'missing';
+      item.querySelector('[data-setup-symbol]').textContent = pending ? '\u2014' : ready[key] ? '\u2713' : '!';
+      item.querySelector('[data-setup-detail]').textContent = !data ? (message || 'Select a client to check') : pending ? 'Enter a transaction date' : descriptions[key][Number(ready[key])];
+      const link = item.querySelector('[data-setup-link]'), url = data?.[key === 'accounts' ? 'accounts_url' : 'periods_url'];
+      link.hidden = !url;
+      if (url) link.href = url; else link.removeAttribute('href');
+    });
+    const count = Object.values(ready).filter(Boolean).length;
+    panel.querySelector('[data-setup-summary]').textContent = !data ? (message || 'Select a client') : `${count} of 3 complete`;
+    panel.querySelector('[data-setup-guidance]').textContent = !data
+      ? (message || 'Choose a client to see what is ready and what needs setup.')
+      : count === 3
+        ? 'Setup is complete for this date. Select the matching period below; accounts, amounts, and permissions are still checked when saving.'
+        : data.accounts_url
+          ? 'Complete the missing setup before entering your voucher. Use an existing year or period if it already covers your dates.'
+          : 'Ask an Owner or Office Manager to complete the missing setup for this client.';
+  }
+  document.addEventListener('input', event => {
+    const form = event.target.closest('[data-journal-form]');
+    if (form && event.target.name === 'transaction_date') updateClientSetup(form);
+  });
   const journalRequests = new WeakMap();
   document.addEventListener('change', async event => {
     const form = event.target.closest('[data-journal-form]');
-    if (!form || event.target.name !== 'client_id') return;
+    if (!form) return;
+    if (event.target.name === 'transaction_date') { updateClientSetup(form); return; }
+    if (event.target.name !== 'client_id') return;
     journalRequests.get(form)?.abort();
     const controller = new AbortController(); journalRequests.set(form, controller);
     const client = event.target.value, status = form.querySelector('[data-journal-options-status]');
@@ -139,6 +178,7 @@
     const period = form.querySelector('[name=accounting_period_id]'); reset(period, 'Select an open period');
     const documents = form.querySelector('[data-journal-documents]'); documents.replaceChildren();
     status.textContent = client ? 'Loading client accounts, periods and documents…' : 'Choose a client.';
+    updateClientSetup(form, null, client ? 'Checking client setup...' : '');
     if (!client) return;
     try {
       const response = await fetch(form.dataset.optionsUrl + '?client_id=' + encodeURIComponent(client), { signal: controller.signal, headers: { Accept: 'application/json' }, credentials: 'same-origin' });
@@ -146,14 +186,15 @@
       const data = await response.json();
       if (controller.signal.aborted || event.target.value !== client) return;
       accountSelects().forEach(select => data.accounts.filter(account => select.name !== 'cash_account_id' || account.classification === 'Asset').forEach(account => select.add(new Option(account.code + ' · ' + account.name, account.id))));
+      updateClientSetup(form, data.setup ? { ...data.setup, account_count: data.accounts.length, periods: data.periods } : null, data.setup ? '' : 'Setup could not be verified. Reload this page.');
       data.periods.forEach(item => period.add(new Option(`${item.label} · ${item.starts_on} – ${item.ends_on}`, item.id)));
       data.documents.forEach(item => {
         const wrap = node('div', '', 'form-check'), input = document.createElement('input'), label = node('label', item.label, 'form-check-label');
         input.type = 'checkbox'; input.name = 'document_ids[]'; input.value = item.id; input.id = 'journal_doc_' + item.id; input.className = 'form-check-input'; label.htmlFor = input.id; wrap.append(input, label); documents.append(wrap);
       });
       if (!data.documents.length) documents.append(node('p', 'No accessible documents for this client.', 'subtext'));
-      status.textContent = data.accounts.length ? (data.periods.length ? 'Client options loaded. Previous client selections were cleared.' : 'No open periods configured. You may save a Draft, but cannot submit it yet.') : 'No active accounts. An authorized employee must configure this client’s Chart of Accounts.';
-    } catch (error) { if (error.name !== 'AbortError') status.textContent = error.message; }
+      status.textContent = data.accounts.length ? (data.periods.length ? 'Client options loaded. Previous client selections were cleared.' : (form.hasAttribute('data-voucher-form') ? 'No open periods configured. Complete period setup before saving a voucher.' : 'No open periods configured. You may save a Draft, but cannot submit it yet.')) : 'No active accounts. An authorized employee must configure this client’s Chart of Accounts.';
+    } catch (error) { if (error.name !== 'AbortError' && !controller.signal.aborted && event.target.value === client) { status.textContent = error.message; updateClientSetup(form, null, 'Setup could not be checked. Select the client again to retry.'); } }
   });
   document.addEventListener('submit', event => {
     const form = event.target;
