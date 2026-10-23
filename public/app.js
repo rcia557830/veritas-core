@@ -108,6 +108,103 @@
           : debit === credit
             ? 'Balanced: Total debits equal total credits.'
             : `Unbalanced: Debits and credits differ by ${format(difference)}. ${section.closest('[data-voucher-form]') ? 'Balance the totals before saving this voucher.' : 'You can save a draft.'}`;
+
+      const form = section.closest('form');
+      const guide = form?.querySelector('[data-debit-credit-guide]');
+      if (guide) {
+        const isVoucher = form.hasAttribute('data-voucher-form');
+        const periodSelect = form.querySelector('[name="accounting_period_id"]');
+        const setupPanel = form.querySelector('[data-client-setup]');
+        const setup = JSON.parse(setupPanel?.dataset.setup || 'null');
+        const date = form.querySelector('[name="transaction_date"]')?.value || '';
+        const hasPeriod = Boolean(periodSelect?.value && setup?.periods?.some(period =>
+          String(period.id) === periodSelect.value && date >= period.starts_on && date <= period.ends_on));
+        const rows = section.querySelectorAll('[data-line-body] tr');
+        let allAccountsSelected = true;
+        let anyLineHasAmount = false;
+        rows.forEach(row => {
+          const acc = row.querySelector('[name$="[account_id]"]')?.value;
+          const deb = cents(row.querySelector('[name$="[debit]"]')?.value || '0');
+          const cred = cents(row.querySelector('[name$="[credit]"]')?.value || '0');
+          if (deb > 0n || cred > 0n) {
+            anyLineHasAmount = true;
+            if (!acc) allAccountsSelected = false;
+          }
+        });
+        if (!anyLineHasAmount) allAccountsSelected = false;
+        const isBalanced = valid && validLines && debit === credit && debit > 0n;
+
+        const setCheck = (key, state, sym) => {
+          const item = guide.querySelector(`[data-guide-check="${key}"]`);
+          if (item) {
+            item.dataset.state = state;
+            const icon = item.querySelector('.guide-check-symbol');
+            if (icon) icon.textContent = sym;
+          }
+        };
+
+        setCheck('single-sided', validLines ? 'complete' : 'invalid', validLines ? '\u2713' : '!');
+        setCheck('valid-amounts', valid ? 'complete' : 'invalid', valid ? '\u2713' : '!');
+        setCheck('accounts-assigned', allAccountsSelected ? 'complete' : 'missing', allAccountsSelected ? '\u2713' : '\u2014');
+        setCheck('totals-balanced', isBalanced ? 'complete' : 'missing', isBalanced ? '\u2713' : '\u2014');
+        setCheck('period-selected', hasPeriod ? 'complete' : 'missing', hasPeriod ? '\u2713' : '\u2014');
+
+        const balText = guide.querySelector('[data-balanced-text]');
+        if (balText) {
+          balText.textContent = isBalanced
+            ? 'Totals balance (Difference: PHP 0.00)'
+            : `Totals balance (Difference: ${valid ? format(difference) : '—'})`;
+        }
+
+        const badge = guide.querySelector('[data-live-balance-badge]');
+        if (badge) {
+          badge.textContent = !valid || !validLines ? 'Invalid' : isBalanced ? 'Balanced' : 'Unbalanced';
+          badge.className = 'badge ' + (!valid || !validLines ? 'bg-danger' : isBalanced ? 'bg-success' : 'bg-warning text-dark');
+        }
+
+        const blockReason = guide.querySelector('[data-guidance-block-reason]');
+        const banner = form.querySelector('[data-save-status-banner]');
+        const bannerText = form.querySelector('[data-save-status-text]');
+
+        let message = '';
+        if (!valid) {
+          message = 'Saving is blocked: Use non-negative amounts with at most two decimal places.';
+        } else if (!validLines) {
+          message = 'Saving is blocked: Each line must have an amount in either Debit or Credit, not both.';
+        } else if (!allAccountsSelected) {
+          message = 'Saving is blocked: Select an active account for each line.';
+        } else if (isVoucher) {
+          if (!isBalanced) {
+            message = `Saving voucher is blocked: Total Debits must equal Total Credits. Adjust lines to resolve the ${format(difference)} difference.`;
+          } else if (!hasPeriod) {
+            message = 'Saving voucher is blocked: Select an open accounting period for the transaction date.';
+          } else if (!allAccountsSelected) {
+            message = 'Saving voucher is blocked: Select an active account for each line.';
+          } else {
+            message = 'Ready to save: Debits and credits balance and open period is selected.';
+          }
+        } else {
+          if (!validLines) {
+            message = 'Saving draft is blocked: Enter an amount in either Debit or Credit for each line, not both.';
+          } else if (!isBalanced) {
+            message = `Draft can be saved. Submitting for review will be blocked until lines balance (Difference: ${format(difference)}) and an open period is selected.`;
+          } else if (!hasPeriod) {
+            message = 'Draft can be saved. Submitting for review requires selecting an open accounting period.';
+          } else if (!allAccountsSelected) {
+            message = 'Draft can be saved, but each line needs an account before review submission.';
+          } else {
+            message = 'Ready for review: Totals balance and open period is selected.';
+          }
+        }
+
+        if (blockReason) blockReason.textContent = message;
+        if (banner && bannerText) {
+          const isWarning = (!valid || !validLines || !allAccountsSelected || (isVoucher && (!isBalanced || !hasPeriod)));
+          banner.hidden = false;
+          banner.className = 'system-alert mb-3 ' + (isWarning ? 'alert-warning' : 'alert-info');
+          bannerText.textContent = message;
+        }
+      }
       return;
     }
     let debit = 0, credit = 0, subtotal = 0;
@@ -161,13 +258,18 @@
   }
   document.addEventListener('input', event => {
     const form = event.target.closest('[data-journal-form]');
-    if (form && event.target.name === 'transaction_date') updateClientSetup(form);
+    if (form && event.target.name === 'transaction_date') { updateClientSetup(form); const section = form.querySelector('[data-lines]'); if (section) updateTotals(section); }
   });
   const journalRequests = new WeakMap();
   document.addEventListener('change', async event => {
     const form = event.target.closest('[data-journal-form]');
     if (!form) return;
-    if (event.target.name === 'transaction_date') { updateClientSetup(form); return; }
+    if (event.target.name === 'accounting_period_id' || event.target.name?.endsWith('[account_id]')) {
+      const section = form.querySelector('[data-lines]');
+      if (section) updateTotals(section);
+      return;
+    }
+    if (event.target.name === 'transaction_date') { updateClientSetup(form); const section = form.querySelector('[data-lines]'); if (section) updateTotals(section); return; }
     if (event.target.name !== 'client_id') return;
     journalRequests.get(form)?.abort();
     const controller = new AbortController(); journalRequests.set(form, controller);
@@ -177,17 +279,63 @@
     accountSelects().forEach(select => reset(select, 'Choose an active account'));
     const period = form.querySelector('[name=accounting_period_id]'); reset(period, 'Select an open period');
     const documents = form.querySelector('[data-journal-documents]'); documents.replaceChildren();
+    const periodHelp = form.querySelector('[data-period-empty-help]');
+    if (periodHelp) periodHelp.hidden = true;
+    const accountHelp = form.querySelector('[data-account-empty-help]');
+    if (accountHelp) accountHelp.hidden = true;
+    const cashHelp = form.querySelector('[data-voucher-cash-empty-help]');
+    if (cashHelp) cashHelp.hidden = true;
     status.textContent = client ? 'Loading client accounts, periods and documents…' : 'Choose a client.';
     updateClientSetup(form, null, client ? 'Checking client setup...' : '');
+    const currentLines = form.querySelector('[data-lines]');
+    if (currentLines) updateTotals(currentLines);
     if (!client) return;
     try {
       const response = await fetch(form.dataset.optionsUrl + '?client_id=' + encodeURIComponent(client), { signal: controller.signal, headers: { Accept: 'application/json' }, credentials: 'same-origin' });
       if (!response.ok) throw new Error('Client options could not load. Select the client again to retry.');
       const data = await response.json();
       if (controller.signal.aborted || event.target.value !== client) return;
-      accountSelects().forEach(select => data.accounts.filter(account => select.name !== 'cash_account_id' || account.classification === 'Asset').forEach(account => select.add(new Option(account.code + ' · ' + account.name, account.id))));
-      updateClientSetup(form, data.setup ? { ...data.setup, account_count: data.accounts.length, periods: data.periods } : null, data.setup ? '' : 'Setup could not be verified. Reload this page.');
+      const isVoucher = form.hasAttribute('data-voucher-form');
+      const accountsUrl = data.setup?.accounts_url;
+      const periodsUrl = data.setup?.periods_url;
+      const periodPrompt = data.periods.length ? (isVoucher ? 'Select an open period (required to save)' : 'Accounting period required before submission') : 'No open periods for this client';
+      reset(period, periodPrompt);
       data.periods.forEach(item => period.add(new Option(`${item.label} · ${item.starts_on} – ${item.ends_on}`, item.id)));
+      if (periodHelp) {
+        periodHelp.hidden = data.periods.length > 0;
+        const link = periodHelp.querySelector('[data-setup-period-link]');
+        const restricted = periodHelp.querySelector('[data-setup-period-restricted]');
+        if (link) { link.hidden = !periodsUrl; if (periodsUrl) link.href = periodsUrl; else link.removeAttribute('href'); }
+        if (restricted) restricted.hidden = !!periodsUrl;
+      }
+      const lineSelects = form.querySelectorAll('[name$="[account_id]"]');
+      const accountPrompt = data.accounts.length ? 'Choose an active account' : 'No active accounts for this client';
+      lineSelects.forEach(select => {
+        reset(select, accountPrompt);
+        data.accounts.forEach(account => select.add(new Option(account.code + ' · ' + account.name, account.id)));
+      });
+      if (accountHelp) {
+        accountHelp.hidden = data.accounts.length > 0;
+        const link = accountHelp.querySelector('[data-setup-account-link]');
+        const restricted = accountHelp.querySelector('[data-setup-account-restricted]');
+        if (link) { link.hidden = !accountsUrl; if (accountsUrl) link.href = accountsUrl; else link.removeAttribute('href'); }
+        if (restricted) restricted.hidden = !!accountsUrl;
+      }
+      const cashSelect = form.querySelector('[name="cash_account_id"]');
+      if (cashSelect) {
+        const assetAccounts = data.accounts.filter(account => account.classification === 'Asset');
+        const cashPrompt = assetAccounts.length ? 'Choose a same-client asset account' : (data.accounts.length ? 'No active asset accounts for this client' : 'No active accounts for this client');
+        reset(cashSelect, cashPrompt);
+        assetAccounts.forEach(account => cashSelect.add(new Option(account.code + ' · ' + account.name, account.id)));
+        if (cashHelp) {
+          cashHelp.hidden = assetAccounts.length > 0;
+          const link = cashHelp.querySelector('[data-setup-account-link]');
+          const restricted = cashHelp.querySelector('[data-setup-account-restricted]');
+          if (link) { link.hidden = !accountsUrl; if (accountsUrl) link.href = accountsUrl; else link.removeAttribute('href'); }
+          if (restricted) restricted.hidden = !!accountsUrl;
+        }
+      }
+      updateClientSetup(form, data.setup ? { ...data.setup, account_count: data.accounts.length, periods: data.periods } : null, data.setup ? '' : 'Setup could not be verified. Reload this page.');
       data.documents.forEach(item => {
         const wrap = node('div', '', 'form-check'), input = document.createElement('input'), label = node('label', item.label, 'form-check-label');
         input.type = 'checkbox'; input.name = 'document_ids[]'; input.value = item.id; input.id = 'journal_doc_' + item.id; input.className = 'form-check-input'; label.htmlFor = input.id; wrap.append(input, label); documents.append(wrap);

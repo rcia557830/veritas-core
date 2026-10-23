@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1720" viewBox="0 0 1200 1720" role="img" aria-labelledby="title desc">
+<title id="title">VERITAS CORE V2 use-case diagram</title>
+<desc id="desc">Four actors around a tall system boundary containing sixteen gray oval use cases grouped into administration, clients and documents, accounting, and operations.</desc>
+<rect width="100%" height="100%" fill="white"/>
+<line x1="1090" y1="240" x2="870" y2="183" stroke="#ADB2B8" stroke-width="1"/>
+<line x1="1090" y1="240" x2="870" y2="259" stroke="#ADB2B8" stroke-width="1"/>
+<line x1="1090" y1="240" x2="870" y2="335" stroke="#ADB2B8" stroke-width="1"/>
+<line x1="110" y1="520" x2="330" y2="491" stroke="#ADB2B8" stroke-width="1"/>
+<line x1="110" y1="520" x2="330" y2="567" stroke="#ADB2B8" stroke-width="1"/>
+<line x1="110" y1="520" x2="330" y2="643" stroke="#ADB2B8" stroke-width="1"/>
+<line x1="110" y1="520" x2="330" y2="719" stroke="#ADB2B8" stroke-width="1"/>
+<line x1="110" y1="520" x2="330" y2="875" stroke="#ADB2B8" stroke-width="1"/>
+<line x1="110" y1="520" x2="330" y2="951" stroke="#ADB2B8" stroke-width="1"/>
+<line x1="110" y1="520" x2="330" y2="1027" stroke="#ADB2B8" stroke-width="1"/>
+<line x1="110" y1="520" x2="330" y2="1103" stroke="#ADB2B8" stroke-width="1"/>
+<line x1="110" y1="520" x2="330" y2="1179" stroke="#ADB2B8" stroke-width="1"/>
+<line x1="110" y1="520" x2="330" y2="1335" stroke="#ADB2B8" stroke-width="1"/>
+<line x1="110" y1="520" x2="330" y2="1411" stroke="#ADB2B8" stroke-width="1"/>
+<line x1="110" y1="520" x2="330" y2="1487" stroke="#ADB2B8" stroke-width="1"/>
+<line x1="110" y1="520" x2="330" y2="1563" stroke="#ADB2B8" stroke-width="1"/>
+<line x1="1090" y1="930" x2="870" y2="491" stroke="#ADB2B8" stroke-width="1"/>
+<line x1="1090" y1="930" x2="870" y2="567" stroke="#ADB2B8" stroke-width="1"/>
+<line x1="1090" y1="930" x2="870" y2="643" stroke="#ADB2B8" stroke-width="1"/>
+<line x1="1090" y1="930" x2="870" y2="719" stroke="#ADB2B8" stroke-width="1"/>
+<line x1="1090" y1="930" x2="870" y2="875" stroke="#ADB2B8" stroke-width="1"/>
+<line x1="1090" y1="930" x2="870" y2="1103" stroke="#ADB2B8" stroke-width="1"/>
+<line x1="1090" y1="930" x2="870" y2="1179" stroke="#ADB2B8" stroke-width="1"/>
+<line x1="1090" y1="930" x2="870" y2="1335" stroke="#ADB2B8" stroke-width="1"/>
+<line x1="1090" y1="930" x2="870" y2="1411" stroke="#ADB2B8" stroke-width="1"/>
+<line x1="1090" y1="930" x2="870" y2="1487" stroke="#ADB2B8" stroke-width="1"/>
+<line x1="1090" y1="930" x2="870" y2="1563" stroke="#ADB2B8" stroke-width="1"/>
+<line x1="110" y1="1200" x2="330" y2="491" stroke="#ADB2B8" stroke-width="1"/>
+<line x1="110" y1="1200" x2="330" y2="643" stroke="#ADB2B8" stroke-width="1"/>
+<line x1="110" y1="1200" x2="330" y2="1027" stroke="#ADB2B8" stroke-width="1"/>
+<line x1="110" y1="1200" x2="330" y2="1179" stroke="#ADB2B8" stroke-width="1"/>
+<line x1="110" y1="1200" x2="330" y2="1335" stroke="#ADB2B8" stroke-width="1"/>
+<line x1="110" y1="1200" x2="330" y2="1411" stroke="#ADB2B8" stroke-width="1"/>
+<line x1="110" y1="1200" x2="330" y2="1487" stroke="#ADB2B8" stroke-width="1"/>
+<line x1="300" y1="35" x2="900" y2="35" stroke="#535A61" stroke-width="1.5"/>
+<line x1="900" y1="35" x2="900" y2="1640" stroke="#535A61" stroke-width="1.5"/>
+<line x1="900" y1="1640" x2="300" y2="1640" stroke="#535A61" stroke-width="1.5"/>
+<line x1="300" y1="1640" x2="300" y2="35" stroke="#535A61" stroke-width="1.5"/>
+<text x="600" y="66" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif" font-size="22" font-weight="700" fill="#20252B">VERITAS CORE V2</text>
+<text x="600" y="93" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#20252B">WEB APPLICATION</text>
+<text x="600" y="135" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#20252B">ACCESS AND ADMINISTRATION</text>
+<text x="600" y="443" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#20252B">CLIENTS AND DOCUMENTS</text>
+<text x="600" y="827" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#20252B">ACCOUNTING</text>
+<text x="600" y="1287" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#20252B">OPERATIONS</text>
+<ellipse cx="600" cy="183" rx="270" ry="29" fill="#D1D3D6" stroke="#B8BDC3"/>
+<text x="600" y="173.5" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#20252B">Manage employee accounts</text>
+<text x="600" y="192.5" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#20252B">and role assignments</text>
+<ellipse cx="600" cy="259" rx="270" ry="29" fill="#D1D3D6" stroke="#B8BDC3"/>
+<text x="600" y="259.0" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#20252B">Configure workspace</text>
+<ellipse cx="600" cy="335" rx="270" ry="29" fill="#D1D3D6" stroke="#B8BDC3"/>
+<text x="600" y="325.5" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#20252B">View system activity</text>
+<text x="600" y="344.5" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#20252B">and security logs</text>
+<ellipse cx="600" cy="491" rx="270" ry="29" fill="#D1D3D6" stroke="#B8BDC3"/>
+<text x="600" y="491.0" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#20252B">Maintain client records</text>
+<ellipse cx="600" cy="567" rx="270" ry="29" fill="#D1D3D6" stroke="#B8BDC3"/>
+<text x="600" y="567.0" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#20252B">Complete client onboarding</text>
+<ellipse cx="600" cy="643" rx="270" ry="29" fill="#D1D3D6" stroke="#B8BDC3"/>
+<text x="600" y="643.0" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#20252B">Upload and access documents</text>
+<ellipse cx="600" cy="719" rx="270" ry="29" fill="#D1D3D6" stroke="#B8BDC3"/>
+<text x="600" y="709.5" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#20252B">Manage document requirements</text>
+<text x="600" y="728.5" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#20252B">and validate documents</text>
+<ellipse cx="600" cy="875" rx="270" ry="29" fill="#D1D3D6" stroke="#B8BDC3"/>
+<text x="600" y="865.5" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#20252B">Manage client accounts</text>
+<text x="600" y="884.5" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#20252B">and accounting periods</text>
+<ellipse cx="600" cy="951" rx="270" ry="29" fill="#D1D3D6" stroke="#B8BDC3"/>
+<text x="600" y="941.5" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#20252B">Manage account templates</text>
+<text x="600" y="960.5" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#20252B">and initialize client accounts</text>
+<ellipse cx="600" cy="1027" rx="270" ry="29" fill="#D1D3D6" stroke="#B8BDC3"/>
+<text x="600" y="1017.5" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#20252B">Prepare and submit</text>
+<text x="600" y="1036.5" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#20252B">journals and vouchers</text>
+<ellipse cx="600" cy="1103" rx="270" ry="29" fill="#D1D3D6" stroke="#B8BDC3"/>
+<text x="600" y="1103.0" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#20252B">Review and post journals</text>
+<ellipse cx="600" cy="1179" rx="270" ry="29" fill="#D1D3D6" stroke="#B8BDC3"/>
+<text x="600" y="1169.5" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#20252B">View ledger and financial audit trail;</text>
+<text x="600" y="1188.5" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#20252B">generate reports</text>
+<ellipse cx="600" cy="1335" rx="270" ry="29" fill="#D1D3D6" stroke="#B8BDC3"/>
+<text x="600" y="1325.5" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#20252B">Monitor compliance</text>
+<text x="600" y="1344.5" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#20252B">and record follow-ups</text>
+<ellipse cx="600" cy="1411" rx="270" ry="29" fill="#D1D3D6" stroke="#B8BDC3"/>
+<text x="600" y="1401.5" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#20252B">Manage billing</text>
+<text x="600" y="1420.5" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#20252B">and record payments</text>
+<ellipse cx="600" cy="1487" rx="270" ry="29" fill="#D1D3D6" stroke="#B8BDC3"/>
+<text x="600" y="1477.5" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#20252B">Read and draft</text>
+<text x="600" y="1496.5" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#20252B">Knowledge Base content</text>
+<ellipse cx="600" cy="1563" rx="270" ry="29" fill="#D1D3D6" stroke="#B8BDC3"/>
+<text x="600" y="1553.5" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#20252B">Publish Knowledge Base content</text>
+<text x="600" y="1572.5" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#20252B">and manage notices</text>
+<ellipse cx="90" cy="482" rx="11" ry="11" fill="white" stroke="#535A61"/>
+<line x1="90" y1="493" x2="90" y2="536" stroke="#535A61" stroke-width="1.5"/>
+<line x1="70" y1="511" x2="110" y2="511" stroke="#535A61" stroke-width="1.5"/>
+<line x1="90" y1="536" x2="72" y2="563" stroke="#535A61" stroke-width="1.5"/>
+<line x1="90" y1="536" x2="108" y2="563" stroke="#535A61" stroke-width="1.5"/>
+<text x="90" y="586" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif" font-size="17" font-weight="700" fill="#20252B">Owner</text>
+<ellipse cx="90" cy="1162" rx="11" ry="11" fill="white" stroke="#535A61"/>
+<line x1="90" y1="1173" x2="90" y2="1216" stroke="#535A61" stroke-width="1.5"/>
+<line x1="70" y1="1191" x2="110" y2="1191" stroke="#535A61" stroke-width="1.5"/>
+<line x1="90" y1="1216" x2="72" y2="1243" stroke="#535A61" stroke-width="1.5"/>
+<line x1="90" y1="1216" x2="108" y2="1243" stroke="#535A61" stroke-width="1.5"/>
+<text x="90" y="1266" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif" font-size="17" font-weight="700" fill="#20252B">Bookkeeper</text>
+<ellipse cx="1110" cy="202" rx="11" ry="11" fill="white" stroke="#535A61"/>
+<line x1="1110" y1="213" x2="1110" y2="256" stroke="#535A61" stroke-width="1.5"/>
+<line x1="1090" y1="231" x2="1130" y2="231" stroke="#535A61" stroke-width="1.5"/>
+<line x1="1110" y1="256" x2="1092" y2="283" stroke="#535A61" stroke-width="1.5"/>
+<line x1="1110" y1="256" x2="1128" y2="283" stroke="#535A61" stroke-width="1.5"/>
+<text x="1110" y="306" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif" font-size="17" font-weight="700" fill="#20252B">Super Admin</text>
+<ellipse cx="1110" cy="892" rx="11" ry="11" fill="white" stroke="#535A61"/>
+<line x1="1110" y1="903" x2="1110" y2="946" stroke="#535A61" stroke-width="1.5"/>
+<line x1="1090" y1="921" x2="1130" y2="921" stroke="#535A61" stroke-width="1.5"/>
+<line x1="1110" y1="946" x2="1092" y2="973" stroke="#535A61" stroke-width="1.5"/>
+<line x1="1110" y1="946" x2="1128" y2="973" stroke="#535A61" stroke-width="1.5"/>
+<text x="1110" y="996" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif" font-size="17" font-weight="700" fill="#20252B">Office Manager</text>
+<text x="600" y="1670" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#20252B">Access remains subject to role permissions, client scope, and workflow rules.</text>
+<text x="600" y="1693" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#20252B">Journal creators cannot review or post their own entries.</text>
+</svg>

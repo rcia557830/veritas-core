@@ -41,7 +41,8 @@ class Audit
         // Explicit allowlist: never serialize credentials, tokens or file contents.
         $state = $record->only(['id', 'client_id', 'status', 'reference_number', 'transaction_date',
             'description', 'created_by', 'reviewed_by', 'reviewed_at', 'posted_by', 'posted_at',
-            'review_digest', 'accounting_period_id', 'label', 'starts_on', 'ends_on', 'closed_by', 'closed_at']);
+            'review_digest', 'accounting_period_id', 'label', 'starts_on', 'ends_on', 'closed_by', 'closed_at',
+            'code', 'name', 'classification', 'is_active']);
         if ($record instanceof LedgerEntry && $record->exists) {
             $state['lines'] = $record->items()->orderBy('id')->get()->map(fn ($line) => $line->only(['id', 'account_id', 'account_name', 'debit', 'credit']))->all();
             $state['voucher'] = $record->voucher()->first()?->only(['id', 'type', 'reference', 'amount', 'cash_account_id', 'party', 'check_number', 'check_date']);

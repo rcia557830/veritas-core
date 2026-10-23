@@ -380,3 +380,47 @@ kbd, .key-button { font: 10px var(--font-body); background: var(--surface); bord
 .client-accounting-setup [data-setup-link][hidden] { display: none; }
 .client-accounting-setup .setup-guidance { font-size: 12px; color: var(--ink-600); margin: 14px 0 0; }
 @media (max-width: 900px) { .client-accounting-setup .setup-checks { grid-template-columns: minmax(0, 1fr); } }
+
+/* Helpful empty dropdown hints and setup links */
+[data-period-empty-help], [data-account-empty-help], [data-voucher-cash-empty-help] { font-size: 12px; color: var(--ink-600); }
+[data-period-empty-help][hidden], [data-account-empty-help][hidden], [data-voucher-cash-empty-help][hidden] { display: none !important; }
+[data-period-empty-help] a, [data-account-empty-help] a, [data-voucher-cash-empty-help] a { color: var(--info); font-weight: 600; }
+
+/* Debit and credit guidance sidebar */
+.debit-credit-guidance-card { padding: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-md); margin-bottom: 20px; }
+.debit-credit-guidance-card .guidance-card-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 14px; }
+.debit-credit-guidance-card .guidance-card-title { font-size: 14px; font-weight: 600; margin: 0; display: flex; align-items: center; }
+.debit-credit-guidance-card .guidance-rule-box { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 12px; }
+.debit-credit-guidance-card .equation-badge { display: inline-block; background: var(--brand-soft); color: var(--brand-text); font-weight: 700; font-size: 12px; padding: 4px 10px; border-radius: 6px; letter-spacing: .02em; }
+.debit-credit-guidance-card .guidance-example-box { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 12px; }
+.debit-credit-guidance-card .example-header { font-size: 12px; font-weight: 600; color: var(--ink-700); margin-bottom: 8px; }
+.debit-credit-guidance-card .example-table { display: flex; flex-direction: column; gap: 6px; }
+.debit-credit-guidance-card .example-row { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.debit-credit-guidance-card .badge-dr { background: #e7f4ec; color: #24603c; font-weight: 700; font-size: 10px; padding: 2px 6px; border-radius: 4px; }
+.debit-credit-guidance-card .badge-cr { background: #edf3fc; color: #315da0; font-weight: 700; font-size: 10px; padding: 2px 6px; border-radius: 4px; }
+.debit-credit-guidance-card .guidance-checklist { list-style: none; padding: 0; margin: 8px 0 12px; display: flex; flex-direction: column; gap: 6px; }
+.debit-credit-guidance-card .guidance-checklist li { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--ink-700); }
+.debit-credit-guidance-card .guide-check-symbol { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: var(--surface); color: var(--ink-500); font-size: 11px; font-weight: 700; flex-shrink: 0; }
+.debit-credit-guidance-card [data-state="complete"] .guide-check-symbol { background: #e7f4ec; color: #24603c; }
+.debit-credit-guidance-card [data-state="invalid"] .guide-check-symbol { background: #fceef0; color: #a0313b; }
+.debit-credit-guidance-card [data-state="missing"] .guide-check-symbol { background: var(--brand-soft); color: var(--brand-text); }
+.debit-credit-guidance-card .guidance-block-reason { font-size: 12px; line-height: 1.45; }
+@media (min-width: 992px) { .journal-guidance-sticky { position: sticky; top: 24px; } }
+
+/* Consistent Audit History and Diff Styling */
+.audit-event-card { border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--card); }
+.audit-diff-details summary { cursor: pointer; user-select: none; font-size: 13px; }
+.audit-diff-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm); word-break: break-word; }
+.journal-audit-event { overflow-wrap: anywhere; word-break: break-word; }
+
+/* Actionable Dashboard Priority Highlights */
+.action-hub-panel { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-md); }
+.action-highlight-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm); transition: transform .15s var(--ease), box-shadow .15s var(--ease), border-color .15s var(--ease); }
+.action-highlight-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); border-color: var(--brand-line); }
+.action-highlight-card.tone-danger { border-left: 3px solid var(--danger); }
+.action-highlight-card.tone-warning { border-left: 3px solid #d97706; }
+.action-highlight-card.tone-info { border-left: 3px solid var(--info); }
+.action-highlight-card.tone-secondary { border-left: 3px solid var(--ink-400); }
+.action-card-icon { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px; background: var(--card); }
+.action-card-title { color: var(--ink-950); }
+.action-card-link { font-weight: 600; font-size: 12px; }

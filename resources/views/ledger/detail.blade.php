@@ -52,6 +52,25 @@ $visibleEvidence=$record->evidence()->orderBy('id')->get()->filter(fn($e)=>$e->d
 @else<p class="system-alert">Posting requires an authorized Owner or Office Manager who did not create this entry.</p>@endcan
 @else<p class="form-text">Only independently Reviewed journals can be posted.</p>@endif
 <h3 class="section-title mt-4">Journal audit history</h3>
-@foreach(\App\Services\Audit::visible()->where('module', 'ledger')->where('record_id', $record->id)->orderBy('id')->get() as $event)
-<p class="subtext journal-audit-event">{{ $event->created_at?->format('M j, Y H:i') }} | {{ $event->action }} | {{ $event->description }}</p>
-@endforeach
+@forelse(\App\Services\Audit::visible()->with('user')->where('module', 'ledger')->where('record_id', $record->id)->orderBy('id')->get() as $event)
+<div class="journal-audit-entry border-bottom py-2">
+    <p class="subtext journal-audit-event mb-1">{{ $event->created_at?->format('M j, Y H:i') }} | {{ $event->action }} | by {{ $event->user?->name ?? 'System' }} | {{ \App\Support\AuditHistory::description($event->description) }}</p>
+    @php($diff = \App\Support\AuditHistory::diff($event->evidence['before'] ?? null, $event->evidence['after'] ?? null))
+    @if(!empty($diff))
+    <details class="audit-diff-details mt-1">
+        <summary class="subtext">Previous / new values ({{ count($diff) }} {{ count($diff) === 1 ? 'change' : 'changes' }})</summary>
+        <div class="audit-diff-card p-2 mt-1 rounded bg-light border small">
+            @foreach($diff as $change)
+            <div class="mb-1">
+                <strong>{{ $change['label'] }}:</strong>
+                <span class="text-danger text-decoration-line-through me-1">{{ $change['old'] }}</span>
+                <span class="text-success fw-semibold">→ {{ $change['new'] }}</span>
+            </div>
+            @endforeach
+        </div>
+    </details>
+    @endif
+</div>
+@empty
+<p class="subtext">No audit history recorded yet.</p>
+@endforelse

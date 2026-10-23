@@ -4,6 +4,23 @@
 @if($voucher->type !== 'JV')
 <div class="row"><div class="col-md-6"><x-field name="party" :label="$voucher->type === 'CR' ? 'Payer / source' : 'Payee'" :value="\App\Support\DemoLabels::display($voucher->party)" :required="true"/></div>
 <div class="col-md-6"><x-field name="amount" :label="$voucher->type === 'CR' ? 'Amount received' : 'Amount paid'" :value="$voucher->amount" :required="true"/></div>
-<div class="col-md-6"><label class="form-label" for="voucher_cash">Cash / bank account</label><select class="form-select mb-3" name="cash_account_id" id="voucher_cash" required><option value="">Choose a same-client asset account</option>@foreach($options['accounts'] as $account)@if($account['classification'] === 'Asset')<option value="{{ $account['id'] }}" @selected((string)old('cash_account_id',$voucher->cash_account_id)===(string)$account['id'])>{{ $account['code'] }} · {{ $account['name'] }}</option>@endif @endforeach</select><p class="form-text">Designate the actual cash/bank asset account. Its journal {{ $voucher->type === 'CR' ? 'debits' : 'credits' }} must equal the amount exactly.</p></div>
+@php
+$hasClient = !empty($options['setup']);
+$assetAccounts = collect($options['accounts'] ?? [])->where('classification', 'Asset');
+$hasAssetAccounts = $assetAccounts->isNotEmpty();
+$cashPrompt = $hasClient && !$hasAssetAccounts
+  ? (empty($options['accounts']) ? 'No active accounts for this client' : 'No active asset accounts for this client')
+  : 'Choose a same-client asset account';
+@endphp
+<div class="col-md-6"><label class="form-label" for="voucher_cash">Cash / bank account</label><select class="form-select @if($hasAssetAccounts || !$hasClient) mb-3 @endif" name="cash_account_id" id="voucher_cash" required><option value="">{{ $cashPrompt }}</option>@foreach($options['accounts'] as $account)@if($account['classification'] === 'Asset')<option value="{{ $account['id'] }}" @selected((string)old('cash_account_id',$voucher->cash_account_id)===(string)$account['id'])>{{ $account['code'] }} · {{ $account['name'] }}</option>@endif @endforeach</select>
+<div data-voucher-cash-empty-help class="form-text mb-3" @if($hasAssetAccounts || !$hasClient) hidden @endif>
+<span class="text-warning-emphasis">{{ empty($options['accounts']) ? 'No active accounts for this client.' : 'No active asset accounts for this client.' }}</span>
+@if(!empty($options['setup']['accounts_url']))
+<a href="{{ $options['setup']['accounts_url'] }}" data-setup-account-link class="ms-1 text-decoration-underline">Set up accounts</a>
+@else
+<span class="subtext ms-1" data-setup-account-restricted>Ask an Owner or Office Manager to set up accounts.</span>
+@endif
+</div>
+<p class="form-text">Designate the actual cash/bank asset account. Its journal {{ $voucher->type === 'CR' ? 'debits' : 'credits' }} must equal the amount exactly.</p></div>
 @if($voucher->type === 'CV')<div class="col-md-6"><x-field name="check_number" label="Check number" :value="$voucher->check_number" :required="true"/><x-field name="check_date" label="Check date" type="date" :value="$voucher->check_date?->toDateString()" :required="true"/></div>@endif</div>
 @endif

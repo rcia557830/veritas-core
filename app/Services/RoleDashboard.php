@@ -6,6 +6,7 @@ use App\Models\Account;
 use App\Models\Client;
 use App\Models\ComplianceRecord;
 use App\Models\Document;
+use App\Models\DocumentRequirement;
 use App\Models\Invoice;
 use App\Models\LedgerEntry;
 use App\Support\Modules;
@@ -83,6 +84,87 @@ final class RoleDashboard
             ? Access::query(Document::class)->with('client')->whereIn('status', ['Submitted', 'Under Review'])->oldest()->orderBy('id')->limit(5)->get() : collect();
         $journals = $experience === 'bookkeeper' && $can(LedgerEntry::class)
             ? Access::query(LedgerEntry::class)->with('client')->where('created_by', $user->id)->whereIn('status', ['Draft', 'Needs Correction'])->oldest()->orderBy('id')->limit(5)->get() : collect();
+
+        $actionItems = [];
+        if ($can(LedgerEntry::class)) {
+            if ($experience === 'bookkeeper') {
+                $correctionCount = Records::query('ledger', Request::create('/', 'GET', ['work' => 'mine', 'status' => 'Needs Correction']))->count();
+                if ($correctionCount > 0) {
+                    $actionItems[] = [
+                        'type' => 'journals',
+                        'title' => 'Journals Needing Correction',
+                        'count' => $correctionCount,
+                        'description' => 'Returned entries requiring adjustments before resubmission',
+                        'url' => route('ledger.index', ['work' => 'mine', 'status' => 'Needs Correction']),
+                        'action_label' => 'Resolve returned journals',
+                        'tone' => 'warning',
+                        'icon' => 'journal-x',
+                    ];
+                }
+            } elseif (Gate::allows('bookkeeping.review')) {
+                $reviewableCount = Records::query('ledger', Request::create('/', 'GET', ['work' => 'reviewable']))->count();
+                $actionItems[] = [
+                    'type' => 'journals',
+                    'title' => 'Journals Awaiting Review',
+                    'count' => $reviewableCount,
+                    'description' => 'Staff entries awaiting independent review and approval',
+                    'url' => route('ledger.index', ['work' => 'reviewable']),
+                    'action_label' => 'Review journals',
+                    'tone' => $reviewableCount > 0 ? 'warning' : 'secondary',
+                    'icon' => 'journal-check',
+                ];
+            }
+        }
+        if ($can(DocumentRequirement::class)) {
+            $missingDocsCount = Access::query(DocumentRequirement::class)->where('is_active', true)->whereDoesntHave('documents')->count();
+            $actionItems[] = [
+                'type' => 'missing_documents',
+                'title' => 'Missing Statutory Documents',
+                'count' => $missingDocsCount,
+                'description' => 'Client document requirements with no source attachments',
+                'url' => route('requirements.monitoring', ['state' => 'missing']),
+                'action_label' => 'Track missing documents',
+                'tone' => $missingDocsCount > 0 ? 'danger' : 'secondary',
+                'icon' => 'folder-x',
+            ];
+        }
+        if ($can(ComplianceRecord::class)) {
+            $upcomingCount = $compliance['filing_approaching'] ?? 0;
+            $actionItems[] = [
+                'type' => 'deadlines',
+                'title' => 'Upcoming Compliance Deadlines',
+                'count' => $upcomingCount,
+                'description' => 'Statutory filing due dates approaching in the next 15 days',
+                'url' => route('compliance.monitoring', ['deadline' => 'filing_approaching']),
+                'action_label' => 'View upcoming deadlines',
+                'tone' => $upcomingCount > 0 ? 'info' : 'secondary',
+                'icon' => 'calendar-event',
+            ];
+        }
+        if ($experience === 'owner' && $can(Invoice::class)) {
+            $billingSummary = Summary::billing(Access::query(Invoice::class));
+            $unpaidCount = $billingSummary['open'];
+            $unpaidBalance = Money::format($billingSummary['outstanding']);
+            $actionItems[] = [
+                'type' => 'billing',
+                'title' => 'Unpaid Invoices',
+                'count' => $unpaidCount,
+                'amount' => $unpaidBalance,
+                'description' => 'Issued client invoices awaiting balance collection',
+                'url' => route('billing.index', ['queue' => 'outstanding']),
+                'action_label' => 'Manage unpaid invoices',
+                'tone' => $unpaidCount > 0 ? 'warning' : 'secondary',
+                'icon' => 'receipt',
+            ];
+        }
+
+        $reviewableJournals = ($can(LedgerEntry::class) && Gate::allows('bookkeeping.review'))
+            ? Access::query(LedgerEntry::class)->with(['client', 'creator'])->where('status', 'For Review')->where('created_by', '!=', $user->id)->oldest()->limit(5)->get()
+            : collect();
+        $unpaidInvoices = ($experience === 'owner' && $can(Invoice::class))
+            ? Access::query(Invoice::class)->with(['client', 'items', 'payments'])->whereNotIn('status', ['Draft', 'Cancelled'])->orderBy('due_date')->get()->filter(fn ($inv) => $inv->balance_cents > 0)->take(5)
+            : collect();
+
         $description = match ($experience) {
             'owner' => 'Business oversight: clients, finances and upcoming obligations.',
             'office-manager' => 'Daily operations: validate documents, complete onboarding and review accounting work.',
@@ -90,6 +172,6 @@ final class RoleDashboard
         };
         $role = $user->role->name;
 
-        return compact('experience', 'description', 'role', 'cards', 'tasks', 'shortcuts', 'deadlines', 'documents', 'journals');
+        return compact('experience', 'description', 'role', 'cards', 'tasks', 'shortcuts', 'deadlines', 'documents', 'journals', 'actionItems', 'reviewableJournals', 'unpaidInvoices');
     }
 }

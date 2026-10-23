@@ -4,7 +4,11 @@
 @php($hasFilters = collect($filters)->except(['page', 'per_page'])->contains(fn ($value) => $value !== null && $value !== ''))
 <div class="financial-audit-page">
     <header class="audit-heading">
-        <div><h2>Trace every journal entry</h2><p>Review account movements, supporting documents, and who prepared, reviewed, or posted each transaction.</p></div>
+        <div>
+            <h2>Trace every journal entry</h2>
+            <p class="mb-1">Review account movements, supporting documents, and who prepared, reviewed, or posted each transaction.</p>
+            <p class="subtext mb-0"><i class="bi bi-shield-check text-primary me-1" aria-hidden="true"></i> Financial audit trail is restricted to double-entry ledger journals and voucher workflows. Administrative and system activity logs are isolated under System Activity Logs.</p>
+        </div>
         @can('report.export')<a class="btn btn-outline-secondary" href="{{ route('financial-audit.export',request()->except('page')) }}"><i class="bi bi-download" aria-hidden="true"></i> Export filtered CSV</a>@endcan
     </header>
 
@@ -48,7 +52,7 @@
                     <td>{{ $entry->voucher?->type ?? 'Journal' }}<span class="audit-cell-secondary">{{ $entry->voucher?->reference ?? 'No voucher associated' }}</span></td>
                     <td><strong>{{ $line->account?->code }}</strong><span class="audit-cell-secondary">{{ $line->account?->name }}</span></td>
                     <td class="audit-money">{{ \App\Support\Money::formatExact($line->debit) }}</td><td class="audit-money">{{ \App\Support\Money::formatExact($line->credit) }}</td>
-                    <td class="audit-description">{{ \App\Support\DemoLabels::display($entry->description) }}</td>
+                    <td class="audit-description">{{ \App\Support\AuditHistory::description(\App\Support\DemoLabels::display($entry->description)) }}</td>
                     <td class="audit-people"><span><small>Prepared</small> {{ $entry->creator?->name ?? 'Not recorded' }}</span><span><small>Reviewed</small> {{ $entry->reviewer?->name ?? 'Not recorded' }}</span><span><small>Posted</small> {{ $entry->poster?->name ?? 'Not posted' }}</span></td>
                     <td><x-badge :status="$entry->status"/>@if($entry->status !== 'Posted')<span class="audit-cell-secondary">Excluded from GL</span>@endif</td>
                     <td><a href="{{ route('financial-audit.show',$entry) }}">View transaction<span class="visually-hidden"> {{ $entry->reference_number }}</span></a></td>

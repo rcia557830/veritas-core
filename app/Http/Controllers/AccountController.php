@@ -60,7 +60,7 @@ class AccountController extends Controller
     public function show(Account $account)
     {
         Gate::authorize('view', $account);
-        $history = AuditLog::where('module', 'accounts')->where('record_id', $account->id)->latest('id')->paginate(15);
+        $history = AuditLog::with('user')->where('module', 'accounts')->where('record_id', $account->id)->latest('id')->paginate(15);
 
         return view('accounts.show', compact('account', 'history'));
     }

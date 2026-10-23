@@ -45,7 +45,8 @@ final class ChartOfAccounts
             $before = $stored->only(['code', 'name', 'classification']);
             $stored->fill($data)->save();
             Audit::record($account ? 'updated' : 'created', 'accounts', $stored,
-                ($account ? 'Account updated from '.json_encode($before).' to ' : 'Account created: ').json_encode($data));
+                ($account ? 'Account updated from '.json_encode($before).' to ' : 'Account created: ').json_encode($data),
+                $account ? $before : null);
 
             return $stored;
         });
